@@ -1,5 +1,5 @@
 # moba_env
-gamecore is the folder containing all the moba game logic
+gamecore is the folder containing all the moba game logic, 
 gym_moba is the folder containing the interface needed to integrate the gamecore logic into gym env.
 
 Depends:
