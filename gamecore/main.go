@@ -8,6 +8,7 @@ import (
 	_ "image/png"
 	"log"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"time"
@@ -212,6 +213,11 @@ func mouse_button_call_back(w *glfw.Window, button glfw.MouseButton, action glfw
 }
 
 func main() {
+	root_dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	//	core.InitBuffConfig("./cfg/skills.json")
 	_target_frame_gap_time := flag.Float64("frame_gap", 0.03, "")
 	_fix_update := flag.Bool("fix_update", true, "a bool")
@@ -283,22 +289,26 @@ func main() {
 		gl.BindFragDataLocation(program, 0, gl.Str("outputColor\x00"))
 
 		// Load the texture
-		texture, err := newTexture("/home/gerrysun/work/ml-prjs/go-lang/moba/gamecore/map/3_corridors.png")
+		full_path := fmt.Sprintf("%s/map/3_corridors.png", root_dir)
+		texture, err := newTexture(full_path)
 		if err != nil {
 			log.Fatalln(err)
 		}
 
-		tex_footman, err := newTexture("/home/gerrysun/work/ml-prjs/go-lang/moba/gamecore/map/footman.png")
+		full_path = fmt.Sprintf("%s/map/footman.png", root_dir)
+		tex_footman, err := newTexture(full_path)
 		if err != nil {
 			log.Fatalln(err)
 		}
 
-		tex_bullet, err := newTexture("/home/gerrysun/work/ml-prjs/go-lang/moba/gamecore/map/bullet.png")
+		full_path = fmt.Sprintf("%s/map/bullet.png", root_dir)
+		tex_bullet, err := newTexture(full_path)
 		if err != nil {
 			log.Fatalln(err)
 		}
 
-		tex_hero, err := newTexture("/home/gerrysun/work/ml-prjs/go-lang/moba/gamecore/map/hero.png")
+		full_path = fmt.Sprintf("%s/map/hero.png", root_dir)
+		tex_hero, err := newTexture(full_path)
 		if err != nil {
 			log.Fatalln(err)
 		}
