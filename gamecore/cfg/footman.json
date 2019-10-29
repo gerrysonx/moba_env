@@ -1,0 +1,7 @@
+{
+	"attackFreq" : 0.8,
+	"attackRange" : 50,
+	"health" : 100,
+	"damage" : 10,
+	"speed" : 50
+}

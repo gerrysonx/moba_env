@@ -1,0 +1,148 @@
+package core
+
+import (
+	"fmt"
+	"time"
+
+	"github.com/ungerik/go3d/vec3"
+)
+
+type Blitzcrank struct {
+	Hero
+}
+
+func (hero *Blitzcrank) Tick(gap_time float64) {
+	game := &GameInst
+
+	// fmt.Printf("Hero is ticking, %v gap_time is:%v\n", now, gap_time)
+	// Hero's logic is very simple
+	// If there is any enemy within view-sight
+	// Start attack
+	// Else move towards target direction
+	pos := hero.Position()
+	isEnemyNearby, enemy := CheckEnemyNearby(hero.Camp(), hero.ViewRange(), &pos)
+	if isEnemyNearby {
+		pos_enemy := enemy.Position()
+		isEnemyCanAttack := CanAttackEnemy(hero, &pos_enemy)
+		if isEnemyCanAttack {
+
+			// Check if time to make hurt
+			now_seconds := game.LogicTime
+			if (hero.LastAttackTime() + hero.AttackFreq()) < float64(now_seconds) {
+				// Make damage
+				dir_a := enemy.Position()
+				dir_b := hero.Position()
+				dir := vec3.Sub(&dir_a, &dir_b)
+				bullet := new(Bullet).Init(hero.Camp(), hero.Position(), dir, hero.Damage())
+				game.AddUnits = append(game.AddUnits, bullet)
+
+				hero.SetLastAttackTime(now_seconds)
+			}
+		} else {
+			// March towards enemy pos
+			dir := hero.Direction()
+			dir = dir.Scaled(float32(gap_time))
+			dir = dir.Scaled(float32(hero.speed))
+			newPos := vec3.Add(&pos, &dir)
+			hero.SetPosition(newPos)
+
+			// Check milestone distance
+			targetPos := pos_enemy
+			dist := vec3.Distance(&newPos, &targetPos)
+			if dist < 5 {
+
+				// Already the last milestone
+
+			}
+			// Calculate new direction
+			hero.direction = targetPos
+			hero.direction.Sub(&newPos)
+			hero.direction.Normalize()
+		}
+	} else {
+		// March towards target direction
+		dir := hero.Direction()
+		dir = dir.Scaled(float32(gap_time))
+		dir = dir.Scaled(float32(hero.speed))
+		newPos := vec3.Add(&pos, &dir)
+		hero.SetPosition(newPos)
+
+		// Check milestone distance
+		targetPos := hero.TargetPos()
+		dist := vec3.Distance(&newPos, &targetPos)
+		if dist < 5 {
+
+			// Already the last milestone
+
+		}
+		// Calculate new direction
+		hero.direction = targetPos
+		hero.direction.Sub(&newPos)
+		hero.direction.Normalize()
+	}
+}
+
+var blitzcrank_template Blitzcrank
+
+func (hero *Blitzcrank) Init(a ...interface{}) BaseFunc {
+	wanted_camp := a[0].(int32)
+
+	if blitzcrank_template.health == 0 {
+		// Not initialized yet, initialize first, load config from json file
+		blitzcrank_template.InitFromJson("./cfg/blitzcrank.json")
+	} else {
+		// Already initialized, we can copy
+	}
+
+	*hero = blitzcrank_template
+
+	pos_x := a[1].(float32)
+	pos_y := a[2].(float32)
+	InitHeroWithCamp(hero, wanted_camp, pos_x, pos_y)
+	return hero
+}
+
+func (hero *Blitzcrank) UseSkill(skill_idx uint8, a ...interface{}) {
+
+	switch skill_idx {
+	case 0:
+		// Rocket Grab
+		fmt.Println("Skill Rocket Grab is used.")
+		// Clear skilltarget pos
+		hero.SetSkillTargetPos(0, 0)
+
+		go func(hero *Blitzcrank) {
+			//	old_callback_fn := GameInst.window.SetMouseButtonCallback(GameInst.func_call_back)
+			for {
+				time.Sleep(time.Duration(0.5 * float64(time.Second)))
+				// Wait for left button click to select position
+				skill_target_pos := hero.SkillTargetPos()
+				if skill_target_pos[0] != 0 || skill_target_pos[1] != 0 {
+					// Use skill
+					var target_v vec3.T
+					target_v[0] = skill_target_pos[0]
+					target_v[1] = skill_target_pos[1]
+					AoEDamage(target_v, 30.0, hero.Camp(), 200.0)
+					break
+				}
+			}
+			//	GameInst.window.SetMouseButtonCallback(old_callback_fn)
+
+		}(hero)
+	case 1:
+		// Overdrive
+		arr := []BaseFunc{hero}
+		AddSpeedBuff(arr, 0)
+		fmt.Println("Skill Overdrive is used.")
+	case 2:
+		// Power Fist
+		arr := []BaseFunc{hero}
+		AddSpeedBuff(arr, 1)
+		fmt.Println("Skill Power Fist is used.")
+	case 3:
+		// Static Field
+		fmt.Println("Skill Static Field is used.")
+
+	}
+
+}
