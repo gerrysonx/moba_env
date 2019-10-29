@@ -16,7 +16,11 @@ class MobaEnv(gym.Env):
 		self.state = np.zeros((6,))
 		self.reward = 0
 		self.info = None
-				
+		self.self_health = 0
+		self.oppo_health = 0
+		self.step_idx = 0	
+		self.full_self_health = 0
+		self.full_oppo_health = 0			
 		pass
 
 	def __init__(self):
@@ -35,42 +39,62 @@ class MobaEnv(gym.Env):
 
 	def step(self, action):
 		#time.sleep(1)
-		self.proc.stdin.write('{}\n'.format(action).encode())
+		self.step_idx += 1
+		encoded_action_val = (self.step_idx << 4) + action
+		self.proc.stdin.write('{}\n'.format(encoded_action_val).encode())
 		self.proc.stdin.flush()
-		json_str = self.proc.stdout.readline()
-		if json_str == None or len(json_str) == 0:
-			print('json_str == None or len(json_str) == 0')
-			self.done = True
-			self.reward = 0
-			return self.state, self.reward, self.done, self.info
 
-		try:
-			jobj = json.loads(json_str.decode("utf-8"))
-		#	print('moba_env v2 step called with action:{}, result:{}'.format(action, jobj))
-			if jobj['SelfWin'] != 0:
+		while True:
+			json_str = self.proc.stdout.readline()
+			if json_str == None or len(json_str) == 0:
+				print('json_str == None or len(json_str) == 0')
 				self.done = True
-				if 2 == jobj['SelfWin']:
-					self.reward = 0
-				elif -1 == jobj['SelfWin']:
-					self.reward = -1
-				else:
-					self.reward = jobj['SelfWin']
-			else:
 				self.reward = 0
-				self.done = False
-		except:
-			print('Parsing json failed, terminate this game.')
-			self.done = True
-			self.reward = 0
-			return self.state, self.reward, self.done, self.info			
+				return self.state, self.reward, self.done, self.info
+
+			try:
+				str_json = json_str.decode("utf-8")
+				parts = str_json.split('@')
+				if int(parts[0]) != self.step_idx:
+					print('Step::We expect:{}, while getting {}'.format(self.step_idx, int(parts[0])))
+					continue
+				jobj = json.loads(parts[1])	
+			#	print('moba_env v2 step called with action:{}, result:{}'.format(action, jobj))
+				if jobj['SelfWin'] != 0:
+					self.done = True
+					if 2 == jobj['SelfWin']:
+						self.reward = 0
+					elif -1 == jobj['SelfWin']:
+						self.reward = -1
+					else:
+						self.reward = jobj['SelfWin']
+				else:
+					harm_reward = 0.2
+					self.reward = 0
+					if self.self_health  > jobj['SelfHeroHealth']:
+						self.reward -= harm_reward
+					if self.oppo_health  > jobj['OppoHeroHealth']:
+						self.reward += harm_reward
+
+					self.oppo_health = jobj['OppoHeroHealth']
+					self.self_health = jobj['SelfHeroHealth']
+
+					self.done = False
+				break
+			except:
+				print('Parsing json failed, terminate this game.')
+				self.done = True
+				self.reward = 0
+				return self.state, self.reward, self.done, self.info	
+
 		norm_base = 1000.0	
 		self.state[0] = jobj['SelfHeroPosX'] / norm_base
 		self.state[1] = jobj['SelfHeroPosY'] / norm_base
-		self.state[2] = jobj['SelfHeroHealth'] / norm_base
+		self.state[2] = jobj['SelfHeroHealth'] / self.full_self_health 
 
 		self.state[3] = jobj['OppoHeroPosX'] / norm_base
 		self.state[4] = jobj['OppoHeroPosY'] / norm_base
-		self.state[5] = jobj['OppoHeroHealth'] / norm_base		
+		self.state[5] = jobj['OppoHeroHealth'] / self.full_oppo_health 		
 		return self.state, self.reward, self.done, self.info
 
 
@@ -78,12 +102,31 @@ class MobaEnv(gym.Env):
 		self.restart_proc()
 		# To avoid deadlocks: careful to: add \n to output, flush output, use
 		# readline() rather than read()
+		#self.proc.stdout.readline()
 		self.proc.stdin.write(b'9\n')
 		self.proc.stdin.flush()
-		self.proc.stdout.readline()
+		while True:
+			json_str = self.proc.stdout.readline()
+			if json_str == None or len(json_str) == 0:
+				print('When resetting env, json_str == None or len(json_str) == 0')
 
+				return self.state
 
+			try:
+				str_json = json_str.decode("utf-8")
+				parts = str_json.split('@')
+				if int(parts[0]) != self.step_idx:
+					print('Reset::We expect:{}, while getting {}'.format(self.step_idx, int(parts[0])))
+					continue
+				jobj = json.loads(parts[1])	
 
+				self.full_self_health = jobj['SelfHeroHealth']
+				self.self_health = self.full_self_health
+				self.full_oppo_health = jobj['OppoHeroHealth']
+				self.oppo_health = self.full_oppo_health
+				break
+			except:
+				print('When resetting env, parsing json failed.')
 	
 		return self.state
 
