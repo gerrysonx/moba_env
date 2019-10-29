@@ -9,5 +9,6 @@ Depends:
 
 Usage:
 1. Enter gamecore folder, run go build ./ 
-2. Enter gym_moba, run python ./setup.py
+2. Enter gym_moba, run pip install -e gym_moba --user
+
 3. Enter gym_moba/gym_moba/envs, edit moba_env.py, change subprocess.Popen gamecore path to your local compiled gamecore folder.
