@@ -427,6 +427,14 @@ func main() {
 		window.SetCharCallback(key_call_back)
 	}
 
+	file_handle, _err := os.Create("mobacore.log")
+	if _err != nil {
+		fmt.Println("Create log file failed.")
+		return
+	}
+
+	defer file_handle.Close()
+
 	if *_fix_update {
 		_last_input_time := core.GameInst.LogicTime
 		var action_code int // action code
@@ -434,7 +442,9 @@ func main() {
 			// Process input from user
 			if core.GameInst.LogicTime > _last_input_time+*_input_gap_time {
 				// Output game state to stdout
-				fmt.Printf("%d@%s\n", _action_stamp, core.GameInst.DumpGameState())
+				game_state_str := core.GameInst.DumpGameState()
+				// core.LogBytes(file_handle, game_state_str)
+				fmt.Printf("%d@%s\n", _action_stamp, game_state_str)
 				_last_input_time = core.GameInst.LogicTime
 				// Wait command from stdin
 				// core.GameInst.DefaultHero.SetTargetPos(float32(x), float32(1000-y))

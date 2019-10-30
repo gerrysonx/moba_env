@@ -28,6 +28,11 @@ ENV_NAME = 'gym_moba:moba-v0'
 RANDOM_START_STEPS = 30
 
 global g_step
+def stable_softmax(logits, name): 
+    a = logits - tf.reduce_max(logits, axis=-1, keepdims=True) 
+    ea = tf.exp(a) 
+    z = tf.reduce_sum(ea, axis=-1, keepdims=True) 
+    return tf.div(ea, z, name = name) 
 
 class Environment(object):
   def __init__(self):
@@ -182,6 +187,11 @@ class Agent():
             self.cumulative_r = tf.placeholder(tf.float32, [None, ], name='cumulative_r')
             self.adv = tf.placeholder(tf.float32, [None, ], name='adv')
 
+            tf.summary.histogram("input_state", self.s)
+            tf.summary.histogram("input_action", self.a)
+            tf.summary.histogram("input_cumulative_r", self.cumulative_r)
+            tf.summary.histogram("input_adv", self.adv)
+
     def _init_nn(self, *args):
         self.a_policy_new, self.a_policy_logits_new, self.value, self.summary_new = self._init_actor_net('policy_net_new', trainable=True)
         self.a_policy_old, self.a_policy_logits_old, _, self.summary_old = self._init_actor_net('policy_net_old', trainable=False)
@@ -237,7 +247,9 @@ class Agent():
             # Passing global_step to minimize() will increment it at each step.
             self.optimizer = tf.train.AdamOptimizer(learning_rate).minimize(self.total_loss)
             #self.optimizer = tf.train.AdamOptimizer(self.learning_rate).minimize(self.total_loss)
-    
+
+
+
     def _init_actor_net(self, scope, trainable=True):
         my_initializer = None#tf.contrib.layers.xavier_initializer()
         with tf.variable_scope(scope):
@@ -285,8 +297,9 @@ class Agent():
             tf.summary.histogram("fc1_b_a", fc1_b_a)            
 
             a_logits = tf.matmul(output3, fc1_W_a) + fc1_b_a
-            a_prob = tf.nn.softmax(a_logits)
-            
+            tf.summary.histogram("a_logits", a_logits)
+            a_prob = stable_softmax(a_logits, 'soft_logits') #tf.nn.softmax(a_logits)
+            tf.summary.histogram("policy_head", a_prob)
             # value network
             fc1_W_v = tf.get_variable(shape=[256, 1], name='fc1_W_v',
                 trainable=trainable, initializer=my_initializer)
@@ -298,25 +311,26 @@ class Agent():
 
             value = tf.matmul(output3, fc1_W_v) + fc1_b_v
             value = tf.reshape(value, [-1, ])
+            tf.summary.histogram("value_head", value)
             merged_summary = tf.summary.merge_all()
             return a_prob, a_logits, value, merged_summary
 
     def mask_invalid_action(self, s, distrib):
         new_distrib = distrib
         delta = 0.02
-        if s[0] < delta:
+        if s[0] < 0.4 + delta:
             new_distrib[1] = 0
             new_distrib[4] = 0
             new_distrib[6] = 0
-        if s[1] < delta:
+        if s[1] < 0.4 + delta:
             new_distrib[1] = 0
             new_distrib[2] = 0
             new_distrib[3] = 0
-        if s[0] > 1 - delta:
+        if s[0] > 0.6 - delta:
             new_distrib[3] = 0
             new_distrib[5] = 0
             new_distrib[8] = 0
-        if s[1] > 1 - delta:
+        if s[1] > 0.6 - delta:
             new_distrib[6] = 0
             new_distrib[7] = 0
             new_distrib[8] = 0
@@ -329,7 +343,14 @@ class Agent():
 
         new_distrib = self.mask_invalid_action(s[0,:,0], chosen_policy[0])
         try:
-            new_distrib /= new_distrib.sum()
+            sum_val = new_distrib.sum()
+            if sum_val < 1e-5:
+                print('After mask, new_distrib is:{}, sum is:{}'.format(new_distrib, sum_val))
+                new_distrib = np.ones((self.a_space,), dtype=np.float) / self.a_space
+                new_distrib = self.mask_invalid_action(s[0,:,0], new_distrib)
+                new_distrib /= new_distrib.sum()
+            else:
+                new_distrib /= new_distrib.sum()
         except:
             print('new_distrib devide exception encountered.')
             return 0

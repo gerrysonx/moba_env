@@ -25,7 +25,7 @@ type Game struct {
 	AddUnits    []BaseFunc
 	BattleField *BattleField
 	DefaultHero HeroFunc
-
+	OppoHero    HeroFunc
 	// Render related
 	window  *glfw.Window
 	program uint32
@@ -110,6 +110,7 @@ func (game *Game) Init() {
 	herobase := new(Blitzcrank)
 	hero0 := herobase.Init(int32(0), float32(520), float32(500))
 	game.BattleUnits = append(game.BattleUnits, hero0)
+	game.OppoHero = herobase
 	//fmt.Printf("->gameinit, len(game.BattleUnits) is:%d\n", len(game.BattleUnits))
 
 	/*
@@ -143,24 +144,23 @@ func (game *Game) HandleCallback() {
 
 func (game *Game) DumpGameState() []byte {
 	//fmt.Printf("->DumpGameState, len(game.BattleUnits) is:%d, logictime:%f\n", len(game.BattleUnits), game.LogicTime)
-	switch len(game.BattleUnits) {
-	case 0: // Neutral
-		game.train_state.SelfWin = 2
-	case 1:
-		// Self camp is 1
-		game.train_state.SelfWin = game.BattleUnits[0].Camp()
-		if game.train_state.SelfWin == 0 {
-			game.train_state.SelfWin = -1
-		}
-
-	case 2:
+	self_unit := game.DefaultHero.(BaseFunc)
+	oppo_unit := game.OppoHero.(BaseFunc)
+	if self_unit.Health() > 0 && oppo_unit.Health() > 0 {
 		game.train_state.SelfWin = 0
-		game.train_state.SelfHeroPosX = game.BattleUnits[0].Position()[0]
-		game.train_state.SelfHeroPosY = game.BattleUnits[0].Position()[1]
-		game.train_state.SelfHeroHealth = game.BattleUnits[0].Health()
-		game.train_state.OppoHeroPosX = game.BattleUnits[1].Position()[0]
-		game.train_state.OppoHeroPosY = game.BattleUnits[1].Position()[1]
-		game.train_state.OppoHeroHealth = game.BattleUnits[1].Health()
+		game.train_state.SelfHeroPosX = self_unit.Position()[0]
+		game.train_state.SelfHeroPosY = self_unit.Position()[1]
+		game.train_state.SelfHeroHealth = self_unit.Health()
+		game.train_state.OppoHeroPosX = oppo_unit.Position()[0]
+		game.train_state.OppoHeroPosY = oppo_unit.Position()[1]
+		game.train_state.OppoHeroHealth = oppo_unit.Health()
+
+	} else {
+		if self_unit.Health() <= 0 {
+			game.train_state.SelfWin = -1
+		} else {
+			game.train_state.SelfWin = 1
+		}
 	}
 
 	e, err := json.Marshal(game.train_state)

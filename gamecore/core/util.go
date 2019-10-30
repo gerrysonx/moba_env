@@ -1,8 +1,17 @@
 package core
 
 import (
+	"os"
+
 	"github.com/ungerik/go3d/vec3"
 )
+
+func LogBytes(file_handle *os.File, log []byte) {
+	file_handle.Write(log)
+	file_handle.WriteString("\n")
+	file_handle.Sync()
+
+}
 
 func remove(s []Buff, i int) []Buff {
 	s[i] = s[len(s)-1]

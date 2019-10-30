@@ -94,7 +94,12 @@ class MobaEnv(gym.Env):
 
 		self.state[3] = jobj['OppoHeroPosX'] / norm_base
 		self.state[4] = jobj['OppoHeroPosY'] / norm_base
-		self.state[5] = jobj['OppoHeroHealth'] / self.full_oppo_health 		
+		self.state[5] = jobj['OppoHeroHealth'] / self.full_oppo_health 	
+		for idx in range(6):
+			if self.state[idx] > 1:
+				#print('We get val bigger than 1, idx:{}, self.full_self_health:{}'.format(idx, self.full_self_health))
+				self.state[idx] = 1
+
 		return self.state, self.reward, self.done, self.info
 
 
@@ -124,6 +129,8 @@ class MobaEnv(gym.Env):
 				self.self_health = self.full_self_health
 				self.full_oppo_health = jobj['OppoHeroHealth']
 				self.oppo_health = self.full_oppo_health
+				if self.full_self_health != 100:
+					print('env reset has problem, self health is:{}'.format(self.full_self_health))
 				break
 			except:
 				print('When resetting env, parsing json failed.')
