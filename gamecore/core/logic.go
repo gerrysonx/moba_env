@@ -2,6 +2,7 @@ package core
 
 import (
 	"encoding/json"
+	"math/rand"
 	"time"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
@@ -102,13 +103,40 @@ func (game *Game) Init() {
 		hero0 := herobase.Init(int32(0), float32(rand.Intn(1000)), float32(rand.Intn(1000)))
 		game.BattleUnits = append(game.BattleUnits, hero0)
 	*/
+	rand_num_1 := rand.Intn(3)
+	rand_num_2 := rand.Intn(2)
+	var hero_pos [2][2]float32
+
+	switch rand_num_1 {
+	case 0:
+		// hero x not restrict, we must restrict y
+		hero_pos[0][0] = float32(400 + rand.Intn(200))
+		if rand_num_2 == 0 {
+			hero_pos[0][1] = float32(400 + rand.Intn(50))
+		} else {
+			hero_pos[0][1] = float32(550 + rand.Intn(50))
+		}
+	case 1:
+		// y is not restricted
+		hero_pos[0][0] = float32(400 + rand.Intn(50))
+		hero_pos[0][1] = float32(400 + rand.Intn(200))
+
+	case 2:
+		// y is not restricted
+		hero_pos[0][0] = float32(550 + rand.Intn(50))
+		hero_pos[0][1] = float32(400 + rand.Intn(200))
+	}
+
+	hero_pos[1][0] = 500.0
+	hero_pos[1][1] = 500.0
+
 	herobase2 := new(Ezreal)
-	hero1 := herobase2.Init(int32(1), float32(400), float32(500))
+	hero1 := herobase2.Init(int32(1), hero_pos[0][0], hero_pos[0][1])
 	game.BattleUnits = append(game.BattleUnits, hero1)
 	game.DefaultHero = herobase2
 
 	herobase := new(Blitzcrank)
-	hero0 := herobase.Init(int32(0), float32(520), float32(500))
+	hero0 := herobase.Init(int32(0), hero_pos[1][0], hero_pos[1][1])
 	game.BattleUnits = append(game.BattleUnits, hero0)
 	game.OppoHero = herobase
 	//fmt.Printf("->gameinit, len(game.BattleUnits) is:%d\n", len(game.BattleUnits))

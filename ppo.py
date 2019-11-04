@@ -73,6 +73,7 @@ class Data_Generator():
         '''
         t = 0
         ac = 0
+        tac = 0
         new = True # marks if we're on first timestep of an episode
         ob = self.env.reset()
 
@@ -94,7 +95,7 @@ class Data_Generator():
 
         while True:
             prevac = ac
-            ac, vpred = self.agent.predict(ob[np.newaxis, ...])
+            ac, tac, vpred = self.agent.predict(ob[np.newaxis, ...])
             #print('Action:', ac, 'Value:', vpred)
             # Slight weirdness here because we need value function at time T
             # before returning segment [0, T-1] so we get the correct
@@ -116,8 +117,9 @@ class Data_Generator():
             acs[i] = ac
             prevacs[i] = prevac
 
-            ob, unclipped_rew, new, _ = self.env.step(ac)
-            rew = float(np.sign(unclipped_rew))
+            ob, unclipped_rew, new, _ = self.env.step(tac)
+            rew = unclipped_rew
+            # rew = float(np.sign(unclipped_rew))
             rews[i] = rew
             unclipped_rews[i] = unclipped_rew
 
@@ -157,6 +159,8 @@ class Data_Generator():
         seg = self.seg_gen.__next__()
         self.add_vtarg_and_adv(seg, gamma=GAMMA, lam=LAMBDA)
         ob, ac, atarg, tdlamret = seg["ob"], seg["ac"], seg["adv"], seg["tdlamret"]
+        if atarg.std() < 1e-5:
+            print('atarg std too small')
         atarg = (atarg - atarg.mean()) / atarg.std() # standardized advantage function estimate
         return ob, ac, atarg, tdlamret, seg
 
@@ -172,6 +176,10 @@ class Agent():
         self.lenbuffer = deque(maxlen=100) # rolling buffer for episode lengths
         self.rewbuffer = deque(maxlen=100) # rolling buffer for clipped episode rewards
         self.unclipped_rewbuffer = deque(maxlen=100) # rolling buffer for unclipped episode rewards
+        self.restrict_x_min = -0.15
+        self.restrict_x_max = 0.15
+        self.restrict_y_min = -0.15
+        self.restrict_y_max = 0.15
 
         self._init_input()
         self._init_nn()
@@ -256,9 +264,9 @@ class Agent():
             flat_output_size = F*C
             flat_output = tf.reshape(self.s, [-1, flat_output_size], name='flat_output')
 
-            fc_W_1 = tf.get_variable(shape=[flat_output_size, 64], name='fc_W_1',
+            fc_W_1 = tf.get_variable(shape=[flat_output_size, 128], name='fc_W_1',
                 trainable=trainable, initializer=my_initializer)
-            fc_b_1 = tf.Variable(tf.zeros([64], dtype=tf.float32), name='fc_b_1',
+            fc_b_1 = tf.Variable(tf.zeros([128], dtype=tf.float32), name='fc_b_1',
                 trainable=trainable)
 
             tf.summary.histogram("fc_W_1", fc_W_1)
@@ -266,7 +274,7 @@ class Agent():
 
             output1 = tf.nn.relu(tf.matmul(flat_output, fc_W_1) + fc_b_1)
 
-            fc_W_2 = tf.get_variable(shape=[64, 128], name='fc_W_2',
+            fc_W_2 = tf.get_variable(shape=[128, 128], name='fc_W_2',
                 trainable=trainable, initializer=my_initializer)
             fc_b_2 = tf.Variable(tf.zeros([128], dtype=tf.float32), name='fc_b_2',
                 trainable=trainable)
@@ -296,10 +304,35 @@ class Agent():
             tf.summary.histogram("fc1_W_a", fc1_W_a)
             tf.summary.histogram("fc1_b_a", fc1_b_a)            
 
-            a_logits = tf.matmul(output3, fc1_W_a) + fc1_b_a
+            temp_val = tf.matmul(output3, fc1_W_a) + fc1_b_a
+            
+            # Add mask here
+            masked_val = -20.0
+
+            cond_x_less = tf.less(self.s[:,0,0], tf.constant(self.restrict_x_min))
+            mask_x_less = tf.Variable([0, masked_val, 0, 0, masked_val, 0, masked_val, 0, 0], tf.float32)
+            temp_val = tf.where(cond_x_less, tf.add(temp_val, mask_x_less), temp_val)
+            
+            
+            cond_y_less = tf.less(self.s[:,0,1], tf.constant(self.restrict_y_min))
+            mask_y_less = tf.Variable([masked_val, masked_val, masked_val, 0, 0, 0, 0, 0, 0], tf.float32)
+            temp_val = tf.where(cond_y_less, tf.add(temp_val, mask_y_less), temp_val)
+
+            cond_x_greater = tf.greater(self.s[:,0,0], tf.constant(self.restrict_x_max))
+            mask_x_greater = tf.Variable([0, 0, 0, masked_val, 0, masked_val, 0, 0, masked_val], tf.float32)
+            temp_val = tf.where(cond_x_greater, tf.add(temp_val, mask_x_greater), temp_val)
+
+            cond_y_greater = tf.greater(self.s[:,0,1], tf.constant(self.restrict_y_max))
+            mask_y_greater = tf.Variable([0, 0, 0, 0, 0, 0, masked_val, masked_val, masked_val], tf.float32)            
+            temp_val = tf.where(cond_y_greater, tf.add(temp_val, mask_y_greater), temp_val)
+            '''
+            '''
+
+            a_logits = temp_val
             tf.summary.histogram("a_logits", a_logits)
             a_prob = stable_softmax(a_logits, 'soft_logits') #tf.nn.softmax(a_logits)
             tf.summary.histogram("policy_head", a_prob)
+
             # value network
             fc1_W_v = tf.get_variable(shape=[256, 1], name='fc1_W_v',
                 trainable=trainable, initializer=my_initializer)
@@ -318,19 +351,19 @@ class Agent():
     def mask_invalid_action(self, s, distrib):
         new_distrib = distrib
         delta = 0.02
-        if s[0] < 0.4 + delta:
+        if s[0] < self.restrict_x_min + delta:
             new_distrib[1] = 0
             new_distrib[4] = 0
             new_distrib[6] = 0
-        if s[1] < 0.4 + delta:
+        if s[1] < self.restrict_y_min + delta:
             new_distrib[1] = 0
             new_distrib[2] = 0
             new_distrib[3] = 0
-        if s[0] > 0.6 - delta:
+        if s[0] > self.restrict_x_max - delta:
             new_distrib[3] = 0
             new_distrib[5] = 0
             new_distrib[8] = 0
-        if s[1] > 0.6 - delta:
+        if s[1] > self.restrict_y_max - delta:
             new_distrib[6] = 0
             new_distrib[7] = 0
             new_distrib[8] = 0
@@ -340,23 +373,15 @@ class Agent():
     def predict(self, s):
         # Calculate a eval prob.
         chosen_policy, value = self.session.run([self.a_policy_new, self.value], feed_dict={self.s: s})
+        ac = np.random.choice(range(chosen_policy.shape[1]), p=chosen_policy[0])
 
         new_distrib = self.mask_invalid_action(s[0,:,0], chosen_policy[0])
-        try:
-            sum_val = new_distrib.sum()
-            if sum_val < 1e-5:
-                print('After mask, new_distrib is:{}, sum is:{}'.format(new_distrib, sum_val))
-                new_distrib = np.ones((self.a_space,), dtype=np.float) / self.a_space
-                new_distrib = self.mask_invalid_action(s[0,:,0], new_distrib)
-                new_distrib /= new_distrib.sum()
-            else:
-                new_distrib /= new_distrib.sum()
-        except:
-            print('new_distrib devide exception encountered.')
-            return 0
-            
+           
         # Calculate action prob ratio between eval and target.
-        return np.random.choice(range(chosen_policy.shape[1]), p=new_distrib), value
+        tac = ac
+        if new_distrib[ac] == 0:
+            tac = 0
+        return ac, tac, value
 
     def learn_one_traj(self, timestep, ob, ac, atarg, tdlamret, seg, train_writer):
         global g_step

@@ -67,7 +67,7 @@ class MobaEnv(gym.Env):
 					elif -1 == jobj['SelfWin']:
 						self.reward = -1
 					else:
-						self.reward = jobj['SelfWin']
+						self.reward = 1#jobj['SelfWin']
 				else:
 					harm_reward = 0.2
 					self.reward = 0
@@ -88,13 +88,13 @@ class MobaEnv(gym.Env):
 				return self.state, self.reward, self.done, self.info	
 
 		norm_base = 1000.0	
-		self.state[0] = jobj['SelfHeroPosX'] / norm_base
-		self.state[1] = jobj['SelfHeroPosY'] / norm_base
-		self.state[2] = jobj['SelfHeroHealth'] / self.full_self_health 
+		self.state[0] = jobj['SelfHeroPosX'] / norm_base - 0.5
+		self.state[1] = jobj['SelfHeroPosY'] / norm_base - 0.5
+		self.state[2] = jobj['SelfHeroHealth'] / self.full_self_health - 0.5
 
-		self.state[3] = jobj['OppoHeroPosX'] / norm_base
-		self.state[4] = jobj['OppoHeroPosY'] / norm_base
-		self.state[5] = jobj['OppoHeroHealth'] / self.full_oppo_health 	
+		self.state[3] = jobj['OppoHeroPosX'] / norm_base - 0.5
+		self.state[4] = jobj['OppoHeroPosY'] / norm_base - 0.5
+		self.state[5] = jobj['OppoHeroHealth'] / self.full_oppo_health - 0.5
 		for idx in range(6):
 			if self.state[idx] > 1:
 				#print('We get val bigger than 1, idx:{}, self.full_self_health:{}'.format(idx, self.full_self_health))
