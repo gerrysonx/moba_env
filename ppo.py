@@ -265,9 +265,9 @@ class Agent():
             flat_output_size = F*C
             flat_output = tf.reshape(self.s, [-1, flat_output_size], name='flat_output')
 
-            fc_W_1 = tf.get_variable(shape=[flat_output_size, 256], name='fc_W_1',
+            fc_W_1 = tf.get_variable(shape=[flat_output_size, 64], name='fc_W_1',
                 trainable=trainable, initializer=my_initializer)
-            fc_b_1 = tf.Variable(tf.zeros([256], dtype=tf.float32), name='fc_b_1',
+            fc_b_1 = tf.Variable(tf.zeros([64], dtype=tf.float32), name='fc_b_1',
                 trainable=trainable)
 
             tf.summary.histogram("fc_W_1", fc_W_1)
@@ -275,9 +275,9 @@ class Agent():
 
             output1 = tf.nn.relu(tf.matmul(flat_output, fc_W_1) + fc_b_1)
 
-            fc_W_2 = tf.get_variable(shape=[256, 256], name='fc_W_2',
+            fc_W_2 = tf.get_variable(shape=[64, 64], name='fc_W_2',
                 trainable=trainable, initializer=my_initializer)
-            fc_b_2 = tf.Variable(tf.zeros([256], dtype=tf.float32), name='fc_b_2',
+            fc_b_2 = tf.Variable(tf.zeros([64], dtype=tf.float32), name='fc_b_2',
                 trainable=trainable)
 
             tf.summary.histogram("fc_W_2", fc_W_2)
@@ -286,9 +286,9 @@ class Agent():
             output2 = tf.nn.relu(tf.matmul(output1, fc_W_2) + fc_b_2)
 
 
-            fc_W_3 = tf.get_variable(shape=[256, 256], name='fc_W_3',
+            fc_W_3 = tf.get_variable(shape=[64, 64], name='fc_W_3',
                 trainable=trainable, initializer=my_initializer)
-            fc_b_3 = tf.Variable(tf.zeros([256], dtype=tf.float32), name='fc_b_3',
+            fc_b_3 = tf.Variable(tf.zeros([64], dtype=tf.float32), name='fc_b_3',
                 trainable=trainable)
 
             tf.summary.histogram("fc_W_3", fc_W_3)
@@ -297,7 +297,7 @@ class Agent():
             output3 = tf.nn.relu(tf.matmul(output2, fc_W_3) + fc_b_3)
 
             # actor network
-            fc1_W_a = tf.get_variable(shape=[256, self.a_space], name='fc1_W_a',
+            fc1_W_a = tf.get_variable(shape=[64, self.a_space], name='fc1_W_a',
                 trainable=trainable, initializer=my_initializer)
             fc1_b_a = tf.Variable(tf.zeros([self.a_space], dtype=tf.float32), name='fc1_b_a',
                 trainable=trainable)
@@ -335,7 +335,7 @@ class Agent():
             tf.summary.histogram("policy_head", a_prob)
 
             # value network
-            fc1_W_v = tf.get_variable(shape=[256, 1], name='fc1_W_v',
+            fc1_W_v = tf.get_variable(shape=[64, 1], name='fc1_W_v',
                 trainable=trainable, initializer=my_initializer)
             fc1_b_v = tf.Variable(tf.zeros([1], dtype=tf.float32), name='fc1_b_v',
                 trainable=trainable)
@@ -475,5 +475,22 @@ def play_game():
     pass
 
 if __name__=='__main__':
-  #   learn()
-    play_game()
+    is_train = True
+    try:
+        # Write control file
+        root_folder = os.path.split(os.path.abspath(__file__))[0]
+        ctrl_file_path = '{}/ctrl.txt'.format(root_folder)
+        file_handle = open(ctrl_file_path, 'w')
+        if is_train:
+            file_handle.write('1')
+        else:
+            file_handle.write('0')
+
+        file_handle.close()
+    except:
+        pass	  
+
+    if is_train:
+        learn()
+    else:
+        play_game()

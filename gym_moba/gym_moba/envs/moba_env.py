@@ -25,8 +25,27 @@ class MobaEnv(gym.Env):
 
 	def __init__(self):
 		# Create process, and communicate with std
-		#root_folder = os.path.split(os.path.abspath(__name__))[0]
-		self.proc = subprocess.Popen(['/home/gerrysun/work/ml-prjs/go-lang/moba/moba_env/gamecore/gamecore', '-render=true', '-manual_enemy=true'],
+		is_train = True
+		try:
+			# Read control file
+			root_folder = os.path.split(os.path.abspath(__file__))[0]
+			ctrl_file_path = '{}/../../../ctrl.txt'.format(root_folder)
+			file_handle = open(ctrl_file_path, 'r')
+			ctrl_str = file_handle.read()
+			file_handle.close()		
+			if int(ctrl_str) == 1:
+				is_train = True
+			else:
+				is_train = False
+
+		except:
+			pass		
+		
+		manual_str = '-manual_enemy=false'
+		if not is_train:
+			manual_str = '-manual_enemy=true'
+
+		self.proc = subprocess.Popen(['/home/gerrysun/work/ml-prjs/go-lang/moba/moba_env/gamecore/gamecore', '-render=true', manual_str],
 								stdin=subprocess.PIPE,
 								stdout=subprocess.PIPE,
 								stderr=subprocess.PIPE)
