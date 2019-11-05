@@ -10,6 +10,7 @@ import tensorflow as tf
 from collections import deque
 import gym, os
 import random, cv2
+import time
 
 EPSILON = 0.2
 
@@ -25,7 +26,7 @@ GAMMA = 0.99
 LAMBDA = 0.95
 NUM_STEPS = 5000
 ENV_NAME = 'gym_moba:moba-v0'
-RANDOM_START_STEPS = 30
+RANDOM_START_STEPS = 4
 
 global g_step
 def stable_softmax(logits, name): 
@@ -55,7 +56,7 @@ class Environment(object):
   def reset(self):
     self._screen = self.env.reset()
     ob, _1, _2, _3 = self.step(0) 
-    for _ in range(random.randint(0, self.random_start - 1)):
+    for _ in range(random.randint(3, self.random_start - 1)):
       ob, _1, _2, _3 = self.step(0)
 
     return ob
@@ -85,7 +86,7 @@ class Data_Generator():
         ep_lens = [] # lengths of ...
 
         # Initialize history arrays
-        obs = np.array([np.zeros(shape=(F,C), dtype=np.uint8) for _ in range(horizon)])
+        obs = np.array([np.zeros(shape=(F,C), dtype=np.float32) for _ in range(horizon)])
         rews = np.zeros(horizon, 'float32')
         unclipped_rews = np.zeros(horizon, 'float32')
         vpreds = np.zeros(horizon, 'float32')
@@ -264,9 +265,9 @@ class Agent():
             flat_output_size = F*C
             flat_output = tf.reshape(self.s, [-1, flat_output_size], name='flat_output')
 
-            fc_W_1 = tf.get_variable(shape=[flat_output_size, 128], name='fc_W_1',
+            fc_W_1 = tf.get_variable(shape=[flat_output_size, 256], name='fc_W_1',
                 trainable=trainable, initializer=my_initializer)
-            fc_b_1 = tf.Variable(tf.zeros([128], dtype=tf.float32), name='fc_b_1',
+            fc_b_1 = tf.Variable(tf.zeros([256], dtype=tf.float32), name='fc_b_1',
                 trainable=trainable)
 
             tf.summary.histogram("fc_W_1", fc_W_1)
@@ -274,9 +275,9 @@ class Agent():
 
             output1 = tf.nn.relu(tf.matmul(flat_output, fc_W_1) + fc_b_1)
 
-            fc_W_2 = tf.get_variable(shape=[128, 128], name='fc_W_2',
+            fc_W_2 = tf.get_variable(shape=[256, 256], name='fc_W_2',
                 trainable=trainable, initializer=my_initializer)
-            fc_b_2 = tf.Variable(tf.zeros([128], dtype=tf.float32), name='fc_b_2',
+            fc_b_2 = tf.Variable(tf.zeros([256], dtype=tf.float32), name='fc_b_2',
                 trainable=trainable)
 
             tf.summary.histogram("fc_W_2", fc_W_2)
@@ -285,7 +286,7 @@ class Agent():
             output2 = tf.nn.relu(tf.matmul(output1, fc_W_2) + fc_b_2)
 
 
-            fc_W_3 = tf.get_variable(shape=[128, 256], name='fc_W_3',
+            fc_W_3 = tf.get_variable(shape=[256, 256], name='fc_W_3',
                 trainable=trainable, initializer=my_initializer)
             fc_b_3 = tf.Variable(tf.zeros([256], dtype=tf.float32), name='fc_b_3',
                 trainable=trainable)
@@ -421,21 +422,25 @@ def learn(num_steps=NUM_STEPS):
     global g_step
     g_step = 0
     session = tf.Session()
-#    root_folder = os.path.split(os.path.abspath(__name__))[0]
-      
-
-    #summary_writer = tf.summary.create_file_writer('tfboard_gerry', flush_millis=10000)
-    #summary_writer.set_as_default()
-    #global_step = tf.compat.v1.train.get_or_create_global_step()   
 
     agent = Agent(session, 9)
     data_generator = Data_Generator(agent)
     train_writer = tf.summary.FileWriter('summary_log_gerry', graph=tf.get_default_graph()) 
+
+    saver = tf.train.Saver(max_to_keep=1)
+    model_file=tf.train.latest_checkpoint('ckpt/')
+    if model_file != None:
+        saver.restore(session,model_file)
+
+    _save_frequency = 10
     max_rew = -1000000
     for timestep in range(num_steps):
         ob, ac, atarg, tdlamret, seg = data_generator.get_one_step_data()
         entropy, kl_distance = agent.learn_one_traj(timestep, ob, ac, atarg, tdlamret, seg, train_writer)
         max_rew = max(max_rew, np.max(agent.unclipped_rewbuffer))
+        if timestep % _save_frequency == 0:
+            saver.save(session,'ckpt/mnist.ckpt', global_step=g_step)
+
         print('Timestep:', timestep,
             "\tEpLenMean:", '%.3f'%np.mean(agent.lenbuffer),
             "\tEpRewMean:", '%.3f'%np.mean(agent.rewbuffer),
@@ -444,6 +449,31 @@ def learn(num_steps=NUM_STEPS):
             "\tEntropy:", '%.3f'%entropy,
             "\tKL_distance:", '%.8f'%kl_distance)
 
+def play_game():
+    session = tf.Session()
+    agent = Agent(session, 9)
+
+    saver = tf.train.Saver(max_to_keep=1)
+    model_file=tf.train.latest_checkpoint('ckpt/')
+    if model_file != None:
+        saver.restore(session, model_file)
+
+    env = Environment()
+    
+    ob = env.reset()
+
+    while True:
+        time.sleep(0.1)
+        _, tac, _ = agent.predict(ob[np.newaxis, ...])
+        print('Predict :{}'.format(tac))
+
+        ob, reward, new, _ = env.step(tac)
+        if new:
+            print('Game is finishd, reward is:{}'.format(reward))
+            ob = env.reset()
+
+    pass
 
 if __name__=='__main__':
-    learn()
+  #   learn()
+    play_game()

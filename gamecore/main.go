@@ -186,12 +186,12 @@ func skill_rocket_grab_mouse_button_call_back(w *glfw.Window, button glfw.MouseB
 	switch {
 	case action == glfw.Release && button == glfw.MouseButtonLeft:
 
-		fmt.Println("->skill_rocket_grab_mouse_button_call_back, Left mouse button is released.", button, action, mod, x, y)
+		//	fmt.Println("->skill_rocket_grab_mouse_button_call_back, Left mouse button is released.", button, action, mod, x, y)
 		core.GameInst.DefaultHero.SetSkillTargetPos(float32(x), float32(1000-y))
 
 	case action == glfw.Release && button == glfw.MouseButtonRight:
 
-		fmt.Println("->skill_rocket_grab_mouse_button_call_back, Right mouse button is released.", button, action, mod, x, y)
+		//		fmt.Println("->skill_rocket_grab_mouse_button_call_back, Right mouse button is released.", button, action, mod, x, y)
 
 	}
 
@@ -202,12 +202,16 @@ func mouse_button_call_back(w *glfw.Window, button glfw.MouseButton, action glfw
 	switch {
 	case action == glfw.Release && button == glfw.MouseButtonLeft:
 
-		fmt.Println("Left mouse button is released.", button, action, mod, x, y)
-		core.GameInst.DefaultHero.SetTargetPos(float32(x), float32(1000-y))
+		//	fmt.Println("Left mouse button is released.", button, action, mod, x, y)
+		if core.GameInst.ManualCtrlEnemy {
+			core.GameInst.OppoHero.SetTargetPos(float32(x), float32(1000-y))
+		} else {
+			core.GameInst.DefaultHero.SetTargetPos(float32(x), float32(1000-y))
+		}
 
 	case action == glfw.Release && button == glfw.MouseButtonRight:
 
-		fmt.Println("Right mouse button is released.", button, action, mod, x, y)
+		//	fmt.Println("Right mouse button is released.", button, action, mod, x, y)
 
 	}
 }
@@ -223,10 +227,12 @@ func main() {
 	_fix_update := flag.Bool("fix_update", true, "a bool")
 	_run_render := flag.Bool("render", true, "a bool")
 	_input_gap_time := flag.Float64("input_gap", 0.1, "")
+	_manual_enemy := flag.Bool("manual_enemy", false, "a bool")
 	flag.Parse()
 
 	core.GameInst = core.Game{}
 	core.GameInst.Init()
+	core.GameInst.ManualCtrlEnemy = *_manual_enemy
 
 	now := time.Now()
 	_before_tick_time := float64(now.UnixNano()) / 1e9

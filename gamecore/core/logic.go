@@ -2,6 +2,7 @@ package core
 
 import (
 	"encoding/json"
+	"math"
 	"math/rand"
 	"time"
 
@@ -20,13 +21,14 @@ type GameTrainState struct {
 }
 
 type Game struct {
-	CurrentTime float64
-	LogicTime   float64
-	BattleUnits []BaseFunc
-	AddUnits    []BaseFunc
-	BattleField *BattleField
-	DefaultHero HeroFunc
-	OppoHero    HeroFunc
+	CurrentTime     float64
+	LogicTime       float64
+	BattleUnits     []BaseFunc
+	AddUnits        []BaseFunc
+	BattleField     *BattleField
+	DefaultHero     HeroFunc
+	OppoHero        HeroFunc
+	ManualCtrlEnemy bool
 	// Render related
 	window  *glfw.Window
 	program uint32
@@ -103,32 +105,57 @@ func (game *Game) Init() {
 		hero0 := herobase.Init(int32(0), float32(rand.Intn(1000)), float32(rand.Intn(1000)))
 		game.BattleUnits = append(game.BattleUnits, hero0)
 	*/
-	rand_num_1 := rand.Intn(3)
-	rand_num_2 := rand.Intn(2)
+
 	var hero_pos [2][2]float32
+	/*
+		rand_num_1 := rand.Intn(3)
+		rand_num_2 := rand.Intn(2)
+		switch rand_num_1 {
+		case 0:
+			// hero x not restrict, we must restrict y
+			hero_pos[0][0] = float32(400 + rand.Intn(200))
+			if rand_num_2 == 0 {
+				hero_pos[0][1] = float32(400 + rand.Intn(50))
+			} else {
+				hero_pos[0][1] = float32(550 + rand.Intn(50))
+			}
+		case 1:
+			// y is not restricted
+			hero_pos[0][0] = float32(400 + rand.Intn(50))
+			hero_pos[0][1] = float32(400 + rand.Intn(200))
 
-	switch rand_num_1 {
-	case 0:
-		// hero x not restrict, we must restrict y
-		hero_pos[0][0] = float32(400 + rand.Intn(200))
-		if rand_num_2 == 0 {
-			hero_pos[0][1] = float32(400 + rand.Intn(50))
-		} else {
-			hero_pos[0][1] = float32(550 + rand.Intn(50))
+		case 2:
+			// y is not restricted
+			hero_pos[0][0] = float32(550 + rand.Intn(50))
+			hero_pos[0][1] = float32(400 + rand.Intn(200))
 		}
-	case 1:
-		// y is not restricted
-		hero_pos[0][0] = float32(400 + rand.Intn(50))
-		hero_pos[0][1] = float32(400 + rand.Intn(200))
 
-	case 2:
-		// y is not restricted
-		hero_pos[0][0] = float32(550 + rand.Intn(50))
-		hero_pos[0][1] = float32(400 + rand.Intn(200))
+		hero_pos[1][0] = 500.0
+		hero_pos[1][1] = 500.0
+
+		rand_num_3 := rand.Intn(2)
+		if rand_num_3 == 0 {
+			hero_pos[0][0], hero_pos[0][1], hero_pos[1][0], hero_pos[1][1] = hero_pos[1][0], hero_pos[1][1], hero_pos[0][0], hero_pos[0][1]
+		} else {
+
+		}
+	*/
+
+	for {
+		now := time.Now()
+		rand.Seed(now.UnixNano())
+		rand_num_1 := rand.Intn(300)
+		rand_num_2 := rand.Intn(300)
+		rand_num_3 := rand.Intn(300)
+		rand_num_4 := rand.Intn(300)
+
+		if math.Pow(float64(rand_num_1-rand_num_3), 2.0)+math.Pow(float64(rand_num_2-rand_num_4), 2.0) < 400 {
+			continue
+		} else {
+			hero_pos[0][0], hero_pos[0][1], hero_pos[1][0], hero_pos[1][1] = float32(350+rand_num_1), float32(350+rand_num_2), float32(350+rand_num_3), float32(350+rand_num_4)
+			break
+		}
 	}
-
-	hero_pos[1][0] = 500.0
-	hero_pos[1][1] = 500.0
 
 	herobase2 := new(Ezreal)
 	hero1 := herobase2.Init(int32(1), hero_pos[0][0], hero_pos[0][1])

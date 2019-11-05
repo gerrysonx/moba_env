@@ -26,7 +26,7 @@ class MobaEnv(gym.Env):
 	def __init__(self):
 		# Create process, and communicate with std
 		#root_folder = os.path.split(os.path.abspath(__name__))[0]
-		self.proc = subprocess.Popen(['/home/gerrysun/work/ml-prjs/go-lang/moba/moba_env/gamecore/gamecore', '-render=true'],
+		self.proc = subprocess.Popen(['/home/gerrysun/work/ml-prjs/go-lang/moba/moba_env/gamecore/gamecore', '-render=true', '-manual_enemy=true'],
 								stdin=subprocess.PIPE,
 								stdout=subprocess.PIPE,
 								stderr=subprocess.PIPE)

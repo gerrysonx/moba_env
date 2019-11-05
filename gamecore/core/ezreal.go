@@ -58,7 +58,6 @@ func (hero *Ezreal) Tick(gap_time float64) {
 			hero.direction.Sub(&newPos)
 			hero.direction.Normalize()
 		}
-
 	}
 }
 
