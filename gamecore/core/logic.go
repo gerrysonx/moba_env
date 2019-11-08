@@ -175,18 +175,26 @@ func (game *Game) HandleCallback() {
 
 }
 
-func (game *Game) GetGameState() []float32 {
-	self_unit := game.DefaultHero.(BaseFunc)
-	oppo_unit := game.OppoHero.(BaseFunc)
+func (game *Game) GetGameState(reverse bool) []float32 {
+	var self_unit BaseFunc
+	var oppo_unit BaseFunc
+
+	if reverse {
+		oppo_unit = game.DefaultHero.(BaseFunc)
+		self_unit = game.OppoHero.(BaseFunc)
+	} else {
+		self_unit = game.DefaultHero.(BaseFunc)
+		oppo_unit = game.OppoHero.(BaseFunc)
+	}
 
 	game_state := make([]float32, 6)
-	game_state[3] = self_unit.Position()[0]/1000.0 - 0.5
-	game_state[4] = self_unit.Position()[1]/1000.0 - 0.5
-	game_state[5] = self_unit.Health()/350.0 - 0.5
+	game_state[0] = self_unit.Position()[0]/1000.0 - 0.5
+	game_state[1] = self_unit.Position()[1]/1000.0 - 0.5
+	game_state[2] = self_unit.Health()/100.0 - 0.5
 
-	game_state[0] = oppo_unit.Position()[0]/1000.0 - 0.5
-	game_state[1] = oppo_unit.Position()[1]/1000.0 - 0.5
-	game_state[2] = oppo_unit.Health()/100.0 - 0.5
+	game_state[3] = oppo_unit.Position()[0]/1000.0 - 0.5
+	game_state[4] = oppo_unit.Position()[1]/1000.0 - 0.5
+	game_state[5] = oppo_unit.Health()/350.0 - 0.5
 
 	return game_state
 }
