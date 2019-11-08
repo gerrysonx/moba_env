@@ -217,10 +217,30 @@ func mouse_button_call_back(w *glfw.Window, button glfw.MouseButton, action glfw
 }
 
 func main() {
+
 	root_dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
+
 	if err != nil {
 		log.Fatal(err)
 	}
+	/*
+		full_path := fmt.Sprintf("%s/../../model_%s", root_dir, "338944")
+			nn := nn.NeuralNet{}
+			nn.Load(full_path)
+			input_val := make([]float32, 6)
+			input_val[0] = 0.3
+			input_val[1] = -0.1
+			input_val[2] = 0.6
+			input_val[3] = -0.3
+			input_val[4] = 0.1
+			input_val[5] = 0.9
+
+			input_val2 := [][]float32{input_val, input_val, input_val, input_val}
+			input_val3 := [][][]float32{input_val2}
+			ret := nn.Ref(input_val3)
+			fmt.Println("%v", ret)
+			return
+	*/
 
 	//	core.InitBuffConfig("./cfg/skills.json")
 	_target_frame_gap_time := flag.Float64("frame_gap", 0.03, "")
@@ -457,6 +477,7 @@ func main() {
 				//
 
 				fmt.Scanf("%d\n", &action_code)
+				//action_code = 0
 				_action_stamp = action_code >> 4
 				action_code = action_code & 15
 				battle_unit := core.GameInst.DefaultHero.(core.BaseFunc)

@@ -2,7 +2,6 @@ package core
 
 import (
 	"encoding/json"
-	"math"
 	"math/rand"
 	"time"
 
@@ -69,94 +68,29 @@ func update_pos(vertice []float32, x_new float32, y_new float32, unit_width floa
 	vertice[26] = y_new - unit_width
 }
 
-func (game *Game) Init() {
-	game.LogicTime = 0
-	game.BattleField = &BattleField{}
-	// map_units := game.BattleField.LoadMap("./map/3_corridors.png")
-
-	game.BattleUnits = []BaseFunc{}
-	/*
-		game.BattleUnits = append(game.BattleUnits, map_units...)
-
-				for i := 0; i < 1; i += 1 {
-					footman := new(Footman).Init(int32(0), game.BattleField.Lanes[0][0])
-					game.BattleUnits = append(game.BattleUnits, footman)
-				}
-
-
-				for i := 0; i < 13; i += 1 {
-					footman := new(Footman).Init(int32(0), game.BattleField.Lanes[0][1])
-					game.BattleUnits = append(game.BattleUnits, footman)
-				}
-
-				for i := 0; i < 10; i += 1 {
-					footman := new(Footman).Init(int32(1), game.BattleField.Lanes[1][1])
-					game.BattleUnits = append(game.BattleUnits, footman)
-				}
-	*/
-
-	/*
-		herobase2 := new(Ezreal)
-		hero1 := herobase2.Init(int32(1), float32(rand.Intn(1000)), float32(rand.Intn(1000)))
-		game.BattleUnits = append(game.BattleUnits, hero1)
-		game.DefaultHero = herobase2
-
-		herobase := new(Blitzcrank)
-		hero0 := herobase.Init(int32(0), float32(rand.Intn(1000)), float32(rand.Intn(1000)))
-		game.BattleUnits = append(game.BattleUnits, hero0)
-	*/
-
+func (game *Game) Testcase1() {
 	var hero_pos [2][2]float32
-	/*
-		rand_num_1 := rand.Intn(3)
-		rand_num_2 := rand.Intn(2)
-		switch rand_num_1 {
-		case 0:
-			// hero x not restrict, we must restrict y
-			hero_pos[0][0] = float32(400 + rand.Intn(200))
-			if rand_num_2 == 0 {
-				hero_pos[0][1] = float32(400 + rand.Intn(50))
-			} else {
-				hero_pos[0][1] = float32(550 + rand.Intn(50))
-			}
-		case 1:
-			// y is not restricted
-			hero_pos[0][0] = float32(400 + rand.Intn(50))
-			hero_pos[0][1] = float32(400 + rand.Intn(200))
-
-		case 2:
-			// y is not restricted
-			hero_pos[0][0] = float32(550 + rand.Intn(50))
-			hero_pos[0][1] = float32(400 + rand.Intn(200))
-		}
-
-		hero_pos[1][0] = 500.0
-		hero_pos[1][1] = 500.0
-
-		rand_num_3 := rand.Intn(2)
-		if rand_num_3 == 0 {
-			hero_pos[0][0], hero_pos[0][1], hero_pos[1][0], hero_pos[1][1] = hero_pos[1][0], hero_pos[1][1], hero_pos[0][0], hero_pos[0][1]
-		} else {
-
-		}
-	*/
-
 	for {
 		now := time.Now()
 		rand.Seed(now.UnixNano())
-		rand_num_1 := rand.Intn(300)
-		rand_num_2 := rand.Intn(300)
-		rand_num_3 := rand.Intn(300)
-		rand_num_4 := rand.Intn(300)
-
-		if math.Pow(float64(rand_num_1-rand_num_3), 2.0)+math.Pow(float64(rand_num_2-rand_num_4), 2.0) < 400 {
-			continue
-		} else {
-			hero_pos[0][0], hero_pos[0][1], hero_pos[1][0], hero_pos[1][1] = float32(350+rand_num_1), float32(350+rand_num_2), float32(350+rand_num_3), float32(350+rand_num_4)
-			break
-		}
+		born_area_side_width := 100
+		//min_player_gap := 14.0
+		start_pos := (1000 - born_area_side_width) / 2
+		rand_num_1 := rand.Intn(born_area_side_width)
+		rand_num_2 := rand.Intn(born_area_side_width)
+		rand_num_3 := rand.Intn(born_area_side_width)
+		rand_num_4 := rand.Intn(born_area_side_width)
+		hero_pos[0][0], hero_pos[0][1], hero_pos[1][0], hero_pos[1][1] = float32(start_pos+rand_num_1), float32(start_pos+rand_num_2), float32(start_pos+rand_num_3), float32(start_pos+rand_num_4)
+		break
+		/*
+			if math.Pow(float64(rand_num_1-rand_num_3), 2.0)+math.Pow(float64(rand_num_2-rand_num_4), 2.0) < (min_player_gap * min_player_gap) {
+				continue
+			} else {
+				hero_pos[0][0], hero_pos[0][1], hero_pos[1][0], hero_pos[1][1] = float32(start_pos+rand_num_1), float32(start_pos+rand_num_2), float32(start_pos+rand_num_3), float32(start_pos+rand_num_4)
+				break
+			}
+		*/
 	}
-
 	herobase2 := new(Ezreal)
 	hero1 := herobase2.Init(int32(1), hero_pos[0][0], hero_pos[0][1])
 	game.BattleUnits = append(game.BattleUnits, hero1)
@@ -166,26 +100,70 @@ func (game *Game) Init() {
 	hero0 := herobase.Init(int32(0), hero_pos[1][0], hero_pos[1][1])
 	game.BattleUnits = append(game.BattleUnits, hero0)
 	game.OppoHero = herobase
-	//fmt.Printf("->gameinit, len(game.BattleUnits) is:%d\n", len(game.BattleUnits))
+}
 
-	/*
-		for i := 0; i < 10; i += 1 {
-			footman := new(Footman).Init(int32(0), game.BattleField.Lanes[0][2])
-			game.BattleUnits = append(game.BattleUnits, footman)
-		}
+func (game *Game) Testcase2() {
+	map_units := game.BattleField.LoadMap("./map/3_corridors.png")
+	game.BattleUnits = append(game.BattleUnits, map_units...)
 
+	for i := 0; i < 1; i += 1 {
+		footman := new(Footman).Init(int32(0), game.BattleField.Lanes[0][0])
+		game.BattleUnits = append(game.BattleUnits, footman)
+	}
 
+	for i := 0; i < 13; i += 1 {
+		footman := new(Footman).Init(int32(0), game.BattleField.Lanes[0][1])
+		game.BattleUnits = append(game.BattleUnits, footman)
+	}
 
-		for i := 0; i < 10; i += 1 {
-			footman := new(Footman).Init(int32(1), game.BattleField.Lanes[1][1])
-			game.BattleUnits = append(game.BattleUnits, footman)
-		}
+	for i := 0; i < 10; i += 1 {
+		footman := new(Footman).Init(int32(1), game.BattleField.Lanes[1][1])
+		game.BattleUnits = append(game.BattleUnits, footman)
+	}
+}
 
-		for i := 0; i < 10; i += 1 {
-			footman := new(Footman).Init(int32(1), game.BattleField.Lanes[1][2])
-			game.BattleUnits = append(game.BattleUnits, footman)
-		}
-	*/
+func (game *Game) Testcase3() {
+	var hero_pos [2][2]float32
+	for {
+		now := time.Now()
+		rand.Seed(now.UnixNano())
+		born_area_side_width := 100
+		//min_player_gap := 14.0
+		start_pos := (1000 - born_area_side_width) / 2
+		rand_num_1 := rand.Intn(born_area_side_width)
+		rand_num_2 := rand.Intn(born_area_side_width)
+		rand_num_3 := rand.Intn(born_area_side_width)
+		rand_num_4 := rand.Intn(born_area_side_width)
+		hero_pos[0][0], hero_pos[0][1], hero_pos[1][0], hero_pos[1][1] = float32(start_pos+rand_num_1), float32(start_pos+rand_num_2), float32(start_pos+rand_num_3), float32(start_pos+rand_num_4)
+		break
+		/*
+			if math.Pow(float64(rand_num_1-rand_num_3), 2.0)+math.Pow(float64(rand_num_2-rand_num_4), 2.0) < (min_player_gap * min_player_gap) {
+				continue
+			} else {
+				hero_pos[0][0], hero_pos[0][1], hero_pos[1][0], hero_pos[1][1] = float32(start_pos+rand_num_1), float32(start_pos+rand_num_2), float32(start_pos+rand_num_3), float32(start_pos+rand_num_4)
+				break
+			}
+		*/
+	}
+	herobase2 := new(Vi)
+	hero1 := herobase2.Init(int32(1), hero_pos[0][0], hero_pos[0][1])
+	game.BattleUnits = append(game.BattleUnits, hero1)
+	game.DefaultHero = herobase2
+
+	herobase := new(Jinx)
+	hero0 := herobase.Init(int32(0), hero_pos[1][0], hero_pos[1][1])
+	game.BattleUnits = append(game.BattleUnits, hero0)
+	game.OppoHero = herobase
+}
+
+func (game *Game) Init() {
+	game.LogicTime = 0
+	game.BattleField = &BattleField{}
+	// map_units := game.BattleField.LoadMap("./map/3_corridors.png")
+
+	game.BattleUnits = []BaseFunc{}
+
+	game.Testcase3()
 
 }
 
@@ -195,6 +173,22 @@ func (game *Game) HandleInput() {
 
 func (game *Game) HandleCallback() {
 
+}
+
+func (game *Game) GetGameState() []float32 {
+	self_unit := game.DefaultHero.(BaseFunc)
+	oppo_unit := game.OppoHero.(BaseFunc)
+
+	game_state := make([]float32, 6)
+	game_state[3] = self_unit.Position()[0]/1000.0 - 0.5
+	game_state[4] = self_unit.Position()[1]/1000.0 - 0.5
+	game_state[5] = self_unit.Health()/350.0 - 0.5
+
+	game_state[0] = oppo_unit.Position()[0]/1000.0 - 0.5
+	game_state[1] = oppo_unit.Position()[1]/1000.0 - 0.5
+	game_state[2] = oppo_unit.Health()/100.0 - 0.5
+
+	return game_state
 }
 
 func (game *Game) DumpGameState() []byte {

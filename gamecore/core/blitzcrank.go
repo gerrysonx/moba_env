@@ -2,6 +2,7 @@ package core
 
 import (
 	"fmt"
+	"math/rand"
 	"time"
 
 	"github.com/ungerik/go3d/vec3"
@@ -9,6 +10,60 @@ import (
 
 type Blitzcrank struct {
 	Hero
+}
+
+func (hero *Blitzcrank) Chase(pos_enemy vec3.T, gap_time float64) {
+	pos := hero.Position()
+
+	// Check milestone distance
+	targetPos := pos_enemy
+	dist := vec3.Distance(&pos, &targetPos)
+	if dist < hero.AttackRange() {
+		// Already the last milestone
+		hero.direction[0] = 0
+		hero.direction[1] = 0
+	} else {
+		// March towards enemy pos
+		dir := hero.Direction()
+		dir = dir.Scaled(float32(gap_time))
+		dir = dir.Scaled(float32(hero.speed))
+		newPos := vec3.Add(&pos, &dir)
+		hero.SetPosition(newPos)
+
+		// Calculate new direction
+		hero.direction = targetPos
+		hero.direction.Sub(&newPos)
+		hero.direction.Normalize()
+	}
+
+}
+
+func (hero *Blitzcrank) Escape(pos_enemy vec3.T, gap_time float64) {
+	pos := hero.Position()
+
+	// Escape from enemy pos
+	// Check milestone distance
+	targetPos := pos_enemy
+	dist := vec3.Distance(&pos, &targetPos)
+	if dist > 100 {
+		// Already the last milestone
+		hero.direction[0] = 0
+		hero.direction[1] = 0
+	} else {
+		dir := hero.Direction()
+		dir = dir.Scaled(float32(gap_time))
+		dir = dir.Scaled(float32(hero.speed))
+		newPos := vec3.Add(&pos, &dir)
+		hero.SetPosition(newPos)
+
+		// Calculate new direction
+		hero.direction = targetPos
+		hero.direction.Sub(&newPos)
+		// Revert the target direction, so we let the  hero escape
+		hero.direction[0] = -hero.direction[0]
+		hero.direction[1] = -hero.direction[1]
+		hero.direction.Normalize()
+	}
 }
 
 func (hero *Blitzcrank) Tick(gap_time float64) {
@@ -78,7 +133,6 @@ func (hero *Blitzcrank) Tick(gap_time float64) {
 		pos_enemy := enemy.Position()
 		isEnemyCanAttack := CanAttackEnemy(hero, &pos_enemy)
 		if isEnemyCanAttack {
-
 			// Check if time to make hurt
 			now_seconds := game.LogicTime
 			if (hero.LastAttackTime() + hero.AttackFreq()) < float64(now_seconds) {
@@ -92,46 +146,35 @@ func (hero *Blitzcrank) Tick(gap_time float64) {
 				hero.SetLastAttackTime(now_seconds)
 			}
 		} else {
-			// March towards enemy pos
+			// Random choose chase or escape
+			rand_num := rand.Intn(2)
+			if rand_num == 0 {
+				hero.Escape(pos_enemy, gap_time)
+			} else {
+				hero.Chase(pos_enemy, gap_time)
+			}
+		}
+	} else {
+		// Check milestone distance
+		targetPos := hero.TargetPos()
+		dist := vec3.Distance(&pos, &targetPos)
+		if dist < 5 {
+			// Already the last milestone
+			hero.direction[0] = 0
+			hero.direction[1] = 0
+		} else {
+			// March towards target direction
 			dir := hero.Direction()
 			dir = dir.Scaled(float32(gap_time))
 			dir = dir.Scaled(float32(hero.speed))
 			newPos := vec3.Add(&pos, &dir)
 			hero.SetPosition(newPos)
 
-			// Check milestone distance
-			targetPos := pos_enemy
-			dist := vec3.Distance(&newPos, &targetPos)
-			if dist < 5 {
-
-				// Already the last milestone
-
-			}
 			// Calculate new direction
 			hero.direction = targetPos
 			hero.direction.Sub(&newPos)
 			hero.direction.Normalize()
 		}
-	} else {
-		// March towards target direction
-		dir := hero.Direction()
-		dir = dir.Scaled(float32(gap_time))
-		dir = dir.Scaled(float32(hero.speed))
-		newPos := vec3.Add(&pos, &dir)
-		hero.SetPosition(newPos)
-
-		// Check milestone distance
-		targetPos := hero.TargetPos()
-		dist := vec3.Distance(&newPos, &targetPos)
-		if dist < 5 {
-
-			// Already the last milestone
-
-		}
-		// Calculate new direction
-		hero.direction = targetPos
-		hero.direction.Sub(&newPos)
-		hero.direction.Normalize()
 	}
 }
 
