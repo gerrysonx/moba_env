@@ -3,12 +3,15 @@
 Some of code copy from
 https://github.com/openai/baselines/blob/master/baselines/ppo1/pposgd_simple.py
 """
+
 import sys
 import copy
 import numpy as np
-import tensorflow as tf
+
 from collections import deque
 import gym, os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+import tensorflow as tf
 import random, cv2
 import time
 
@@ -21,7 +24,7 @@ NUM_FRAME_PER_ACTION = 4
 BATCH_SIZE = 64
 EPOCH_NUM = 4
 LEARNING_RATE = 1e-3
-TIMESTEPS_PER_ACTOR_BATCH = 256*8
+TIMESTEPS_PER_ACTOR_BATCH = 256*64
 GAMMA = 0.99
 LAMBDA = 0.95
 NUM_STEPS = 5000
@@ -29,6 +32,7 @@ ENV_NAME = 'gym_moba:moba-v0'
 RANDOM_START_STEPS = 4
 
 global g_step
+global g_out_tb
 def stable_softmax(logits, name): 
     a = logits - tf.reduce_max(logits, axis=-1, keepdims=True) 
     ea = tf.exp(a) 
@@ -48,10 +52,10 @@ class Environment(object):
     return 9
 
   def step(self, action):
-    self._screen, self.reward, self.terminal, _ = self.env.step(action)
+    self._screen, self.reward, self.terminal, info = self.env.step(action)
     self.obs[..., :-1] = self.obs[..., 1:]
     self.obs[..., -1] = self._screen
-    return self.obs, self.reward, self.terminal, _
+    return self.obs, self.reward, self.terminal, info
 
   def reset(self):
     self._screen = self.env.reset()
@@ -118,7 +122,7 @@ class Data_Generator():
             acs[i] = ac
             prevacs[i] = prevac
 
-            ob, unclipped_rew, new, _ = self.env.step(tac)
+            ob, unclipped_rew, new, step_info = self.env.step(tac)
             rew = unclipped_rew
             # rew = float(np.sign(unclipped_rew))
             rews[i] = rew
@@ -127,8 +131,8 @@ class Data_Generator():
             cur_ep_ret += rew
             cur_ep_unclipped_ret += unclipped_rew
             cur_ep_len += 1
-            if new:
-                if cur_ep_unclipped_ret == 0:
+            if new or step_info > 400:
+                if False:#cur_ep_unclipped_ret == 0:
                     pass
                 else:
                     ep_rets.append(cur_ep_ret)
@@ -177,10 +181,14 @@ class Agent():
         self.lenbuffer = deque(maxlen=100) # rolling buffer for episode lengths
         self.rewbuffer = deque(maxlen=100) # rolling buffer for clipped episode rewards
         self.unclipped_rewbuffer = deque(maxlen=100) # rolling buffer for unclipped episode rewards
-        self.restrict_x_min = -0.15
-        self.restrict_x_max = 0.15
-        self.restrict_y_min = -0.15
-        self.restrict_y_max = 0.15
+        
+        self.restrict_x_min = -0.5
+        self.restrict_x_max = 0.5
+        self.restrict_y_min = -0.5
+        self.restrict_y_max = 0.5
+
+        # Full connection layer node size
+        self.layer_size = 32
 
         self._init_input()
         self._init_nn()
@@ -259,15 +267,15 @@ class Agent():
 
 
 
-    def _init_actor_net(self, scope, trainable=True):
+    def _init_actor_net(self, scope, trainable=True):        
         my_initializer = None#tf.contrib.layers.xavier_initializer()
         with tf.variable_scope(scope):
             flat_output_size = F*C
             flat_output = tf.reshape(self.s, [-1, flat_output_size], name='flat_output')
 
-            fc_W_1 = tf.get_variable(shape=[flat_output_size, 64], name='fc_W_1',
+            fc_W_1 = tf.get_variable(shape=[flat_output_size, self.layer_size], name='fc_W_1',
                 trainable=trainable, initializer=my_initializer)
-            fc_b_1 = tf.Variable(tf.zeros([64], dtype=tf.float32), name='fc_b_1',
+            fc_b_1 = tf.Variable(tf.zeros([self.layer_size], dtype=tf.float32), name='fc_b_1',
                 trainable=trainable)
 
             tf.summary.histogram("fc_W_1", fc_W_1)
@@ -275,9 +283,9 @@ class Agent():
 
             output1 = tf.nn.relu(tf.matmul(flat_output, fc_W_1) + fc_b_1)
 
-            fc_W_2 = tf.get_variable(shape=[64, 64], name='fc_W_2',
+            fc_W_2 = tf.get_variable(shape=[self.layer_size, self.layer_size], name='fc_W_2',
                 trainable=trainable, initializer=my_initializer)
-            fc_b_2 = tf.Variable(tf.zeros([64], dtype=tf.float32), name='fc_b_2',
+            fc_b_2 = tf.Variable(tf.zeros([self.layer_size], dtype=tf.float32), name='fc_b_2',
                 trainable=trainable)
 
             tf.summary.histogram("fc_W_2", fc_W_2)
@@ -286,9 +294,9 @@ class Agent():
             output2 = tf.nn.relu(tf.matmul(output1, fc_W_2) + fc_b_2)
 
 
-            fc_W_3 = tf.get_variable(shape=[64, 64], name='fc_W_3',
+            fc_W_3 = tf.get_variable(shape=[self.layer_size, self.layer_size], name='fc_W_3',
                 trainable=trainable, initializer=my_initializer)
-            fc_b_3 = tf.Variable(tf.zeros([64], dtype=tf.float32), name='fc_b_3',
+            fc_b_3 = tf.Variable(tf.zeros([self.layer_size], dtype=tf.float32), name='fc_b_3',
                 trainable=trainable)
 
             tf.summary.histogram("fc_W_3", fc_W_3)
@@ -297,7 +305,7 @@ class Agent():
             output3 = tf.nn.relu(tf.matmul(output2, fc_W_3) + fc_b_3)
 
             # actor network
-            fc1_W_a = tf.get_variable(shape=[64, self.a_space], name='fc1_W_a',
+            fc1_W_a = tf.get_variable(shape=[self.layer_size, self.a_space], name='fc1_W_a',
                 trainable=trainable, initializer=my_initializer)
             fc1_b_a = tf.Variable(tf.zeros([self.a_space], dtype=tf.float32), name='fc1_b_a',
                 trainable=trainable)
@@ -335,7 +343,7 @@ class Agent():
             tf.summary.histogram("policy_head", a_prob)
 
             # value network
-            fc1_W_v = tf.get_variable(shape=[64, 1], name='fc1_W_v',
+            fc1_W_v = tf.get_variable(shape=[self.layer_size, 1], name='fc1_W_v',
                 trainable=trainable, initializer=my_initializer)
             fc1_b_v = tf.Variable(tf.zeros([1], dtype=tf.float32), name='fc1_b_v',
                 trainable=trainable)
@@ -344,7 +352,7 @@ class Agent():
             tf.summary.histogram("fc1_b_v", fc1_b_v)
 
             value = tf.matmul(output3, fc1_W_v) + fc1_b_v
-            value = tf.reshape(value, [-1, ])
+            value = tf.reshape(value, [-1, ], name = "value_output")
             tf.summary.histogram("value_head", value)
             merged_summary = tf.summary.merge_all()
             return a_prob, a_logits, value, merged_summary
@@ -405,8 +413,9 @@ class Agent():
                     self.cumulative_r: tdlamret[temp_indices],
                 })
                 g_step += 1
-                train_writer.add_summary(summary_new_val, g_step)
-                train_writer.add_summary(summary_old_val, g_step)
+                if g_out_tb:
+                    train_writer.add_summary(summary_new_val, g_step)
+                    train_writer.add_summary(summary_old_val, g_step)
 
                 Entropy_list.append(entropy)
                 KL_distance_list.append(kl_distance)
@@ -440,6 +449,10 @@ def learn(num_steps=NUM_STEPS):
         max_rew = max(max_rew, np.max(agent.unclipped_rewbuffer))
         if timestep % _save_frequency == 0:
             saver.save(session,'ckpt/mnist.ckpt', global_step=g_step)
+            tf.saved_model.simple_save(session,
+                        "./model/model_{}".format(g_step),
+                        inputs={"input_state":agent.s},
+                        outputs={"output_policy": agent.a_policy_new, "output_value":agent.value})            
 
         print('Timestep:', timestep,
             "\tEpLenMean:", '%.3f'%np.mean(agent.lenbuffer),
@@ -463,7 +476,7 @@ def play_game():
     ob = env.reset()
 
     while True:
-        time.sleep(0.1)
+        time.sleep(0.05)
         _, tac, _ = agent.predict(ob[np.newaxis, ...])
         print('Predict :{}'.format(tac))
 
@@ -474,7 +487,37 @@ def play_game():
 
     pass
 
+def play_game_with_saved_model():
+    with tf.Session(graph=tf.Graph()) as sess:
+        tf.saved_model.loader.load(sess, ["serve"], "./model/model_{}".format(338944))
+        input_tensor = sess.graph.get_tensor_by_name('input/s:0')
+        policy_tensor = sess.graph.get_tensor_by_name('policy_net_new/soft_logits:0')
+        value_tensor = sess.graph.get_tensor_by_name('policy_net_new/value_output:0')
+
+        env = Environment()        
+        ob = env.reset()
+
+        while True:
+            time.sleep(0.05)
+
+            chosen_policy, _ = sess.run([policy_tensor, value_tensor], feed_dict={input_tensor: ob[np.newaxis, ...]})
+            tac = np.argmax(chosen_policy[0]) 
+
+            print('Predict :{}, input:{}, output:{}'.format(tac, ob, chosen_policy))
+
+            ob, reward, new, _ = env.step(tac)
+            if new:
+                print('Game is finishd, reward is:{}'.format(reward))
+                ob = env.reset()
+
+
+    pass
+
+
 if __name__=='__main__':
+     
+    global g_out_tb
+    g_out_tb = False
     is_train = True
     try:
         # Write control file
@@ -493,4 +536,4 @@ if __name__=='__main__':
     if is_train:
         learn()
     else:
-        play_game()
+        play_game_with_saved_model()

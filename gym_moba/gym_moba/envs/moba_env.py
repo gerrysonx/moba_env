@@ -7,7 +7,6 @@ import numpy as np
 from gym import error, spaces, utils
 from gym.utils import seeding
 
-
 class MobaEnv(gym.Env):
 	metadata = {'render.modes':['human']}
 	def restart_proc(self):
@@ -44,11 +43,12 @@ class MobaEnv(gym.Env):
 		manual_str = '-manual_enemy=false'
 		if not is_train:
 			manual_str = '-manual_enemy=true'
-
+		my_env = os.environ.copy()
+		my_env['TF_CPP_MIN_LOG_LEVEL'] = '3'
 		self.proc = subprocess.Popen(['/home/gerrysun/work/ml-prjs/go-lang/moba/moba_env/gamecore/gamecore', '-render=true', manual_str],
 								stdin=subprocess.PIPE,
 								stdout=subprocess.PIPE,
-								stderr=subprocess.PIPE)
+								stderr=subprocess.PIPE, env=my_env)
 
 
 
@@ -104,7 +104,7 @@ class MobaEnv(gym.Env):
 				print('Parsing json failed, terminate this game.')
 				self.done = True
 				self.reward = 0
-				return self.state, self.reward, self.done, self.info	
+				return self.state, self.reward, self.done, self.step_idx	
 
 		norm_base = 1000.0	
 		self.state[0] = jobj['SelfHeroPosX'] / norm_base - 0.5
@@ -119,7 +119,7 @@ class MobaEnv(gym.Env):
 				#print('We get val bigger than 1, idx:{}, self.full_self_health:{}'.format(idx, self.full_self_health))
 				self.state[idx] = 1
 
-		return self.state, self.reward, self.done, self.info
+		return self.state, self.reward, self.done, self.step_idx
 
 
 	def reset(self):
@@ -133,7 +133,6 @@ class MobaEnv(gym.Env):
 			json_str = self.proc.stdout.readline()
 			if json_str == None or len(json_str) == 0:
 				print('When resetting env, json_str == None or len(json_str) == 0')
-
 				return self.state
 
 			try:
@@ -148,11 +147,11 @@ class MobaEnv(gym.Env):
 				self.self_health = self.full_self_health
 				self.full_oppo_health = jobj['OppoHeroHealth']
 				self.oppo_health = self.full_oppo_health
-				if self.full_self_health != 100:
-					print('env reset has problem, self health is:{}'.format(self.full_self_health))
 				break
+
 			except:
 				print('When resetting env, parsing json failed.')
+				continue
 	
 		return self.state
 
