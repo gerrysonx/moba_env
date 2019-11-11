@@ -45,7 +45,8 @@ class MobaEnv(gym.Env):
 			manual_str = '-manual_enemy=true'
 		my_env = os.environ.copy()
 		my_env['TF_CPP_MIN_LOG_LEVEL'] = '3'
-		self.proc = subprocess.Popen(['/home/gerrysun/work/ml-prjs/go-lang/moba/moba_env/gamecore/gamecore', '-render=true', manual_str],
+		self.proc = subprocess.Popen(['/home/gerrysun/work/ml-prjs/go-lang/moba/moba_env/gamecore/gamecore', 
+								'-render=true', '-gym_mode=true', manual_str],
 								stdin=subprocess.PIPE,
 								stdout=subprocess.PIPE,
 								stderr=subprocess.PIPE, env=my_env)
@@ -58,8 +59,20 @@ class MobaEnv(gym.Env):
 
 	def step(self, action):
 		#time.sleep(1)
+		# action is 4-dimension vector
 		self.step_idx += 1
-		encoded_action_val = (self.step_idx << 4) + action
+		action_encode = 0
+		action_encode = (action[0] << 12)
+
+		move_dir_encode = 0
+		if action[1] != -1:
+			move_dir_encode = (action[1] << 8)	
+
+		skill_dir_encode = 0
+		if action[1] != -1:
+			skill_dir_encode = (action[2] << 4)	
+
+		encoded_action_val = (self.step_idx << 16) + action_encode + move_dir_encode + skill_dir_encode
 		self.proc.stdin.write('{}\n'.format(encoded_action_val).encode())
 		self.proc.stdin.flush()
 
@@ -127,7 +140,7 @@ class MobaEnv(gym.Env):
 		# To avoid deadlocks: careful to: add \n to output, flush output, use
 		# readline() rather than read()
 		#self.proc.stdout.readline()
-		self.proc.stdin.write(b'9\n')
+		self.proc.stdin.write(b'36864\n')
 		self.proc.stdin.flush()
 		while True:
 			json_str = self.proc.stdout.readline()

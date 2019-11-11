@@ -1,7 +1,6 @@
 package core
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/ungerik/go3d/vec3"
@@ -68,11 +67,12 @@ func (hero *Vi) Escape(pos_enemy vec3.T, gap_time float64) {
 func (hero *Vi) Tick(gap_time float64) {
 	//	fmt.Printf("Ezreal is ticking, %v gap_time is:%v\n", now, gap_time)
 	game := &GameInst
-	// fmt.Printf("Hero is ticking, %v gap_time is:%v\n", now, gap_time)
-	// Hero's logic is very simple
-	// If there is any enemy within view-sight
-	// Start attack
-	// Else move towards target direction
+
+	if game.ManualCtrlEnemy {
+		hero.ManualCtrl(gap_time)
+		return
+	}
+
 	pos := hero.Position()
 	// Check milestone distance
 	targetPos := hero.TargetPos()
@@ -139,46 +139,74 @@ func (hero *Vi) Init(a ...interface{}) BaseFunc {
 }
 
 func (hero *Vi) UseSkill(skill_idx uint8, a ...interface{}) {
-
+	game := &GameInst
 	switch skill_idx {
 	case 0:
-		// Rocket Grab
-		fmt.Println("Skill Rocket Grab is used.")
+		// Check CD
+		now_seconds := game.LogicTime
+		skill_0_use_freq := float64(10)
+		if (hero.LastSkillUseTime(0) + skill_0_use_freq) > now_seconds {
+			// Cannot use yet
+			//		fmt.Printf("Cannot use skill, cos CD end time not yet come.time:%v \n", now_seconds)
+			return
+		}
+		//	fmt.Printf("Skill released.time:%v \n", now_seconds)
+		hero.SetLastSkillUseTime(0, now_seconds)
+
 		// Clear skilltarget pos
-		hero.SetSkillTargetPos(0, 0)
+		// Check if has more parameters
+		callback := func(hero HeroFunc, dir vec3.T) {
+			unit := hero.(BaseFunc)
+			ChainDamage(dir, unit.Position(), unit.Camp(), 150, 500.0)
+		}
 
-		go func(hero *Vi) {
-			//	old_callback_fn := GameInst.window.SetMouseButtonCallback(GameInst.func_call_back)
-			for {
-				time.Sleep(time.Duration(0.5 * float64(time.Second)))
-				// Wait for left button click to select position
-				skill_target_pos := hero.SkillTargetPos()
-				if skill_target_pos[0] != 0 || skill_target_pos[1] != 0 {
-					// Use skill
-					var target_v vec3.T
-					target_v[0] = skill_target_pos[0]
-					target_v[1] = skill_target_pos[1]
-					AoEDamage(target_v, 30.0, hero.Camp(), 200.0)
-					break
+		has_more_params := len(a) > 0
+		if has_more_params {
+			pos_x := a[0].(float32)
+			pos_y := a[1].(float32)
+
+			skill_target := SkillTarget{}
+			skill_target.callback = callback
+			skill_target.trigger_time = game.LogicTime
+			skill_target.hero = hero
+			skill_target.dir[0] = pos_x
+			skill_target.dir[1] = pos_y
+			skill_target.dir.Normalize()
+			game.AddTarget(skill_target)
+		} else {
+			// UI mode, we're waiting for mouse to be pressed.
+			hero.SetSkillTargetPos(0, 0)
+			go func(hero *Vi) {
+				for {
+					time.Sleep(time.Duration(0.5 * float64(time.Second)))
+					// Wait for left button click to select position
+					skill_target_pos := hero.SkillTargetPos()
+					if skill_target_pos[0] != 0 || skill_target_pos[1] != 0 {
+						// Use skill
+						var dir vec3.T
+						dir[0] = skill_target_pos[0] - hero.Position()[0]
+						dir[1] = skill_target_pos[1] - hero.Position()[1]
+						dir.Normalize()
+						callback(hero, dir)
+						break
+					}
 				}
-			}
-			//	GameInst.window.SetMouseButtonCallback(old_callback_fn)
+			}(hero)
 
-		}(hero)
+		}
+
 	case 1:
 		// Overdrive
 		arr := []BaseFunc{hero}
 		AddSpeedBuff(arr, 0)
-		fmt.Println("Skill Overdrive is used.")
 	case 2:
 		// Power Fist
 		arr := []BaseFunc{hero}
 		AddSpeedBuff(arr, 1)
-		fmt.Println("Skill Power Fist is used.")
 	case 3:
 		// Static Field
-		fmt.Println("Skill Static Field is used.")
-
+		arr := []BaseFunc{hero}
+		AddSpeedBuff(arr, 1)
 	}
 
 }

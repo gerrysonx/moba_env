@@ -17,6 +17,11 @@ var jinx_template Jinx
 
 func (hero *Jinx) Tick(gap_time float64) {
 	game := &GameInst
+	if game.ManualCtrlEnemy {
+		hero.ManualCtrl(gap_time)
+		return
+	}
+
 	now_seconds := game.LogicTime
 	pos := hero.Position()
 

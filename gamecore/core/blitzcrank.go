@@ -208,7 +208,6 @@ func (hero *Blitzcrank) UseSkill(skill_idx uint8, a ...interface{}) {
 		hero.SetSkillTargetPos(0, 0)
 
 		go func(hero *Blitzcrank) {
-			//	old_callback_fn := GameInst.window.SetMouseButtonCallback(GameInst.func_call_back)
 			for {
 				time.Sleep(time.Duration(0.5 * float64(time.Second)))
 				// Wait for left button click to select position
@@ -222,8 +221,6 @@ func (hero *Blitzcrank) UseSkill(skill_idx uint8, a ...interface{}) {
 					break
 				}
 			}
-			//	GameInst.window.SetMouseButtonCallback(old_callback_fn)
-
 		}(hero)
 	case 1:
 		// Overdrive

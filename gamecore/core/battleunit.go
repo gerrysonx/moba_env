@@ -91,18 +91,19 @@ func NewBuff(buff_id int32, a ...interface{}) *Buff {
 }
 
 type BaseInfo struct {
-	velocity       vec3.T
-	position       vec3.T
-	direction      vec3.T
-	viewRange      float32 // In meters
-	attackRange    float32 // In meters
-	attackFreq     float64 // Time gap between two attacks, in seconds
-	lastAttackTime float64
-	camp           int32 // 0 for camp-1, 1 for camp-2, 2 for neutral
-	health         float32
-	damage         float32
-	speed          float32 // unit is meter per second
-	buffs          map[int32]*Buff
+	velocity         vec3.T
+	position         vec3.T
+	direction        vec3.T
+	viewRange        float32 // In meters
+	attackRange      float32 // In meters
+	attackFreq       float64 // Time gap between two attacks, in seconds
+	lastAttackTime   float64
+	lastSkillUseTime [4]float64
+	camp             int32 // 0 for camp-1, 1 for camp-2, 2 for neutral
+	health           float32
+	damage           float32
+	speed            float32 // unit is meter per second
+	buffs            map[int32]*Buff
 }
 
 type BaseFunc interface {
@@ -121,6 +122,9 @@ type BaseFunc interface {
 
 	LastAttackTime() float64
 	SetLastAttackTime(float64)
+
+	LastSkillUseTime(skill_idx uint8) float64
+	SetLastSkillUseTime(skill_idx uint8, last_use_time float64)
 
 	Camp() int32 // 0 for camp-1, 1 for camp-2, 2 for neutral
 	SetCamp(int32)
@@ -185,6 +189,14 @@ func (baseinfo *BaseInfo) LastAttackTime() float64 {
 
 func (baseinfo *BaseInfo) SetLastAttackTime(lastAttackTime float64) {
 	baseinfo.lastAttackTime = lastAttackTime
+}
+
+func (baseinfo *BaseInfo) LastSkillUseTime(skill_idx uint8) float64 {
+	return baseinfo.lastSkillUseTime[skill_idx]
+}
+
+func (baseinfo *BaseInfo) SetLastSkillUseTime(skill_idx uint8, lastAttackTime float64) {
+	baseinfo.lastSkillUseTime[skill_idx] = lastAttackTime
 }
 
 func (baseinfo *BaseInfo) Camp() int32 {

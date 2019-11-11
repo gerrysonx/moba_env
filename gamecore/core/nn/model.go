@@ -26,7 +26,7 @@ func (hero *Model) PrepareInput() {
 	}
 
 	root_dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
-	full_path := fmt.Sprintf("%s/../../model_%s", root_dir, "338944")
+	full_path := fmt.Sprintf("%s/../../model/model_%s", root_dir, "338944")
 	if err != nil {
 		log.Fatal(err)
 	}

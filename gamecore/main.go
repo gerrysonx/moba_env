@@ -181,22 +181,6 @@ func key_call_back(w *glfw.Window, char rune) {
 
 }
 
-func skill_rocket_grab_mouse_button_call_back(w *glfw.Window, button glfw.MouseButton, action glfw.Action, mod glfw.ModifierKey) {
-	x, y := w.GetCursorPos()
-	switch {
-	case action == glfw.Release && button == glfw.MouseButtonLeft:
-
-		//	fmt.Println("->skill_rocket_grab_mouse_button_call_back, Left mouse button is released.", button, action, mod, x, y)
-		core.GameInst.DefaultHero.SetSkillTargetPos(float32(x), float32(1000-y))
-
-	case action == glfw.Release && button == glfw.MouseButtonRight:
-
-		//		fmt.Println("->skill_rocket_grab_mouse_button_call_back, Right mouse button is released.", button, action, mod, x, y)
-
-	}
-
-}
-
 func mouse_button_call_back(w *glfw.Window, button glfw.MouseButton, action glfw.Action, mod glfw.ModifierKey) {
 	x, y := w.GetCursorPos()
 	switch {
@@ -211,7 +195,7 @@ func mouse_button_call_back(w *glfw.Window, button glfw.MouseButton, action glfw
 
 	case action == glfw.Release && button == glfw.MouseButtonRight:
 
-		//	fmt.Println("Right mouse button is released.", button, action, mod, x, y)
+		core.GameInst.DefaultHero.SetSkillTargetPos(float32(x), float32(1000-y))
 
 	}
 }
@@ -223,31 +207,13 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	/*
-		full_path := fmt.Sprintf("%s/../../model_%s", root_dir, "338944")
-			nn := nn.NeuralNet{}
-			nn.Load(full_path)
-			input_val := make([]float32, 6)
-			input_val[0] = 0.3
-			input_val[1] = -0.1
-			input_val[2] = 0.6
-			input_val[3] = -0.3
-			input_val[4] = 0.1
-			input_val[5] = 0.9
 
-			input_val2 := [][]float32{input_val, input_val, input_val, input_val}
-			input_val3 := [][][]float32{input_val2}
-			ret := nn.Ref(input_val3)
-			fmt.Println("%v", ret)
-			return
-	*/
-
-	//	core.InitBuffConfig("./cfg/skills.json")
 	_target_frame_gap_time := flag.Float64("frame_gap", 0.03, "")
 	_fix_update := flag.Bool("fix_update", true, "a bool")
 	_run_render := flag.Bool("render", true, "a bool")
 	_input_gap_time := flag.Float64("input_gap", 0.1, "")
 	_manual_enemy := flag.Bool("manual_enemy", false, "a bool")
+	_gym_mode := flag.Bool("gym_mode", true, "a bool")
 	flag.Parse()
 
 	core.GameInst = core.Game{}
@@ -463,65 +429,39 @@ func main() {
 
 	if *_fix_update {
 		_last_input_time := core.GameInst.LogicTime
-		var action_code int // action code
+		var action_code int   // raw action code
+		var action_code_0 int // action code
+		var action_code_1 int // move dir code
+		var action_code_2 int // skill dir code
 		for {
 			// Process input from user
-			if core.GameInst.LogicTime > _last_input_time+*_input_gap_time {
+			if core.GameInst.LogicTime > _last_input_time+*_input_gap_time && *_gym_mode {
+				_last_input_time = core.GameInst.LogicTime
+
 				// Output game state to stdout
 				game_state_str := core.GameInst.DumpGameState()
 				// core.LogBytes(file_handle, game_state_str)
 				fmt.Printf("%d@%s\n", _action_stamp, game_state_str)
-				_last_input_time = core.GameInst.LogicTime
-				// Wait command from stdin
-				// core.GameInst.DefaultHero.SetTargetPos(float32(x), float32(1000-y))
-				//
-
 				fmt.Scanf("%d\n", &action_code)
-				//action_code = 0
-				_action_stamp = action_code >> 4
-				action_code = action_code & 15
-				battle_unit := core.GameInst.DefaultHero.(core.BaseFunc)
-				cur_pos := battle_unit.Position()
+				//action_code = 36864
+				_action_stamp = action_code >> 16
 
-				offset_x := float32(0)
-				offset_y := float32(0)
-				const_val := float32(100)
-				switch action_code {
-				case 0: // do nothing
-				case 1:
-					offset_x = float32(-const_val)
-					offset_y = float32(-const_val)
-				case 2:
-					offset_x = float32(0)
-					offset_y = float32(-const_val)
-				case 3:
-					offset_x = float32(const_val)
-					offset_y = float32(-const_val)
-				case 4:
-					offset_x = float32(-const_val)
-					offset_y = float32(0)
-				case 5:
-					offset_x = float32(const_val)
-					offset_y = float32(0)
-				case 6:
-					offset_x = float32(-const_val)
-					offset_y = float32(const_val)
-				case 7:
-					offset_x = float32(0)
-					offset_y = float32(const_val)
-				case 8:
-					offset_x = float32(const_val)
-					offset_y = float32(const_val)
-				case 9:
-					core.GameInst.Init()
+				action_code_0 = (action_code >> 12) & 0xf
+				action_code_1 = (action_code >> 8) & 0xf
+				action_code_2 = (action_code >> 4) & 0xf
+
+				core.GameInst.HandleMultiAction(action_code_0, action_code_1, action_code_2)
+				if 9 == action_code_0 {
+					// Instantly output
 					_last_input_time = 0
 				}
-				//	fmt.Printf("Set target pos:%f, %f, original:%v\n", float32(cur_pos[0]+offset_x), float32(cur_pos[1]+offset_y), cur_pos)
-				core.GameInst.DefaultHero.SetTargetPos(float32(cur_pos[0]+offset_x), float32(cur_pos[1]+offset_y))
 			}
 
+			if false == *_gym_mode {
+				gap_time_in_nanoseconds := *_target_frame_gap_time * float64(time.Second)
+				time.Sleep(time.Duration(gap_time_in_nanoseconds))
+			}
 			core.GameInst.Tick(*_target_frame_gap_time, *_run_render)
-
 		}
 	} else {
 		for {

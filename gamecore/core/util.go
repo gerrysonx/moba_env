@@ -29,8 +29,26 @@ func CanAttackEnemy(unit BaseFunc, enemy_pos *vec3.T) bool {
 
 }
 
-func CheckEnemyNearby(camp int32, radius float32, position *vec3.T) (bool, BaseFunc) {
+func CheckEnemyOnDir(position *vec3.T, dir *vec3.T) (bool, BaseFunc) {
+	game := GameInst
 
+	for _, v := range game.BattleUnits {
+		if _, ok := v.(*Bullet); ok {
+			continue
+		}
+
+		unit_pos := v.Position()
+		unit_dir := unit_pos.Sub(position)
+		angle := vec3.Angle(unit_dir, dir)
+		if angle < float32(0.3) {
+			return true, v
+		}
+	}
+
+	return false, nil
+}
+
+func CheckEnemyNearby(camp int32, radius float32, position *vec3.T) (bool, BaseFunc) {
 	game := GameInst
 	dist := float32(0)
 	for _, v := range game.BattleUnits {
@@ -68,4 +86,42 @@ func InitHeroWithCamp(hero_unit HeroFunc, camp int32, pos_x float32, pos_y float
 	battle_unit.SetPosition(vec3.T{pos_x, pos_y})
 	hero_unit.SetTargetPos(pos_x, pos_y)
 	battle_unit.SetDirection(vec3.T{0, 0})
+}
+
+func ConvertNum2Dir(action_code int) (dir vec3.T) {
+	offset_x := float32(0)
+	offset_y := float32(0)
+	const_val := float32(100)
+
+	switch action_code {
+	case 0: // do nothing
+	case 1:
+		offset_x = float32(-const_val)
+		offset_y = float32(-const_val)
+	case 2:
+		offset_x = float32(0)
+		offset_y = float32(-const_val)
+	case 3:
+		offset_x = float32(const_val)
+		offset_y = float32(-const_val)
+	case 4:
+		offset_x = float32(-const_val)
+		offset_y = float32(0)
+	case 5:
+		offset_x = float32(const_val)
+		offset_y = float32(0)
+	case 6:
+		offset_x = float32(-const_val)
+		offset_y = float32(const_val)
+	case 7:
+		offset_x = float32(0)
+		offset_y = float32(const_val)
+	case 8:
+		offset_x = float32(const_val)
+		offset_y = float32(const_val)
+	}
+
+	dir[0] = offset_x
+	dir[1] = offset_y
+	return dir
 }

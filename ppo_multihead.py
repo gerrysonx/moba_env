@@ -59,9 +59,7 @@ class Environment(object):
 
   def reset(self):
     self._screen = self.env.reset()
-    ob, _1, _2, _3 = self.step(0) 
-    for _ in range(random.randint(3, self.random_start - 1)):
-      ob, _1, _2, _3 = self.step(0)
+    ob, _1, _2, _3 = self.step([0, 0, 0]) 
 
     return ob
 
@@ -77,8 +75,8 @@ class Data_Generator():
         horizon: int timesteps_per_actor_batch
         '''
         t = 0
-        ac = 0
-        tac = 0
+        ac = [0, 0, 0]
+
         new = True # marks if we're on first timestep of an episode
         ob = self.env.reset()
 
@@ -100,7 +98,7 @@ class Data_Generator():
 
         while True:
             prevac = ac
-            ac, tac, vpred = self.agent.predict(ob[np.newaxis, ...])
+            ac, vpred = self.agent.predict(ob[np.newaxis, ...])
             #print('Action:', ac, 'Value:', vpred)
             # Slight weirdness here because we need value function at time T
             # before returning segment [0, T-1] so we get the correct
@@ -122,7 +120,7 @@ class Data_Generator():
             acs[i] = ac
             prevacs[i] = prevac
 
-            ob, unclipped_rew, new, step_info = self.env.step(tac)
+            ob, unclipped_rew, new, step_info = self.env.step(ac)
             rew = unclipped_rew
             # rew = float(np.sign(unclipped_rew))
             rews[i] = rew
@@ -131,7 +129,7 @@ class Data_Generator():
             cur_ep_ret += rew
             cur_ep_unclipped_ret += unclipped_rew
             cur_ep_len += 1
-            if new or step_info > 400:
+            if new or step_info > 300:
                 if False:#cur_ep_unclipped_ret == 0:
                     pass
                 else:
@@ -171,10 +169,28 @@ class Data_Generator():
 
 class Agent():
 
-    def __init__(self, session, a_space, **options):
+    def __init__(self, session, a_space, a_space_keys, **options):
 
         self.session = session
-        self.a_space = 9
+        # Here we get 4 action output heads
+        # 1 --- Meta action type
+        # 0 : stay where they are
+        # 1 : move
+        # 2 : normal attack
+        # 3 : skill 1
+        # 4 : skill 2
+        # 5 : skill 3
+        # 6 : extra skill
+
+        # Why we need seperate move direction and skill direction to two output heads??
+        # Answer: Help resolving sample independence.
+        # 2 --- Move direction, 8 directions, 0-7
+        # 3 --- Skill direction, 8 directions, 0-7
+        # 4 --- Skill target area, 0-8
+        self.a_space = a_space
+        self.a_space_keys = a_space_keys
+        self.policy_head_num = len(a_space)
+
         self.input_dims = F
         self.learning_rate = LEARNING_RATE
         self.num_total_steps = NUM_STEPS
@@ -200,7 +216,10 @@ class Agent():
     def _init_input(self, *args):
         with tf.variable_scope('input'):
             self.s = tf.placeholder(tf.float32, [None, self.input_dims, C], name='s')
-            self.a = tf.placeholder(tf.int32, [None, ], name='a')
+
+            # Action shall have four elements, 
+            self.a = tf.placeholder(tf.int32, [None, self.policy_head_num], name='a')
+
             self.cumulative_r = tf.placeholder(tf.float32, [None, ], name='cumulative_r')
             self.adv = tf.placeholder(tf.float32, [None, ], name='adv')
 
@@ -229,33 +248,47 @@ class Agent():
             self.c_loss_func = tf.reduce_mean(tf.square(self.value - self.cumulative_r))
 
         with tf.variable_scope('actor_loss_func'):
+            batch_size = tf.shape(self.a)[0]
 
-            a_indices = tf.stack([tf.range(tf.shape(self.a)[0], dtype=tf.int32), self.a], axis=1)
-            new_policy_prob = tf.gather_nd(params=self.a_policy_new, indices=a_indices)   # shape=(None, )
-            old_policy_prob = tf.gather_nd(params=self.a_policy_old, indices=a_indices)   # shape=(None, )
-            #ratio = new_policy_prob/old_policy_prob
-            ratio = tf.exp(tf.log(new_policy_prob) - tf.log(old_policy_prob))
-            surr = ratio * self.adv                       # surrogate loss
+            ratio = tf.ones([batch_size, ], dtype = tf.float32) 
+            for idx in range(self.policy_head_num):
+                a = tf.slice(self.a, [0, idx], [batch_size, 1]) # a = a[:,idx]
+                a = tf.squeeze(a)
+                a_mask_cond = tf.equal(a, -1)
+                a = tf.where(a_mask_cond, tf.zeros([batch_size, ], dtype=tf.int32), a)
+                # We correct -1 value in a, in order to make the condition operation below work
+                a_indices = tf.stack([tf.range(batch_size, dtype=tf.int32), a], axis=1)
+                
+                new_policy_prob = tf.where(a_mask_cond, tf.ones([batch_size, ], dtype=tf.float32), tf.gather_nd(params=self.a_policy_new[idx], indices=a_indices))
+                old_policy_prob = tf.where(a_mask_cond, tf.ones([batch_size, ], dtype=tf.float32), tf.gather_nd(params=self.a_policy_old[idx], indices=a_indices))
+
+                ratio = tf.multiply(ratio, tf.exp(tf.log(new_policy_prob) - tf.log(old_policy_prob)))
+
+            surr = ratio * self.adv                                 # surrogate loss
             self.a_loss_func = -tf.reduce_mean(tf.minimum(        # clipped surrogate objective
                 surr,
                 tf.clip_by_value(ratio, 1. - EPSILON*self.lrmult, 1. + EPSILON*self.lrmult) * self.adv))
 
         with tf.variable_scope('kl_distance'):
-            a0 = self.a_policy_logits_new - tf.reduce_max(self.a_policy_logits_new, axis=-1, keepdims=True)
-            a1 = self.a_policy_logits_old - tf.reduce_max(self.a_policy_logits_old, axis=-1, keepdims=True)
-            ea0 = tf.exp(a0)
-            ea1 = tf.exp(a1)
-            z0 = tf.reduce_sum(ea0, axis=-1, keepdims=True)
-            z1 = tf.reduce_sum(ea1, axis=-1, keepdims=True)
-            p0 = ea0 / z0
-            self.kl_distance = tf.reduce_sum(p0 * (a0 - tf.log(z0) - a1 + tf.log(z1)), axis=-1)
+            self.kl_distance = tf.zeros([1, ], dtype = tf.float32)
+            for idx in range(self.policy_head_num):
+                a0 = self.a_policy_logits_new[idx] - tf.reduce_max(self.a_policy_logits_new[idx], axis=-1, keepdims=True)
+                a1 = self.a_policy_logits_old[idx] - tf.reduce_max(self.a_policy_logits_old[idx], axis=-1, keepdims=True)
+                ea0 = tf.exp(a0)
+                ea1 = tf.exp(a1)
+                z0 = tf.reduce_sum(ea0, axis=-1, keepdims=True)
+                z1 = tf.reduce_sum(ea1, axis=-1, keepdims=True)
+                p0 = ea0 / z0
+                self.kl_distance += tf.reduce_sum(p0 * (a0 - tf.log(z0) - a1 + tf.log(z1)), axis=-1)
 
         with tf.variable_scope('policy_entropy'):
-            a0 = self.a_policy_logits_new - tf.reduce_max(self.a_policy_logits_new , axis=-1, keepdims=True)
-            ea0 = tf.exp(a0)
-            z0 = tf.reduce_sum(ea0, axis=-1, keepdims=True)
-            p0 = ea0 / z0
-            self.policy_entropy = tf.reduce_mean(tf.reduce_sum(p0 * (tf.log(z0) - a0), axis=-1))
+            self.policy_entropy = tf.zeros([1, ], dtype = tf.float32)
+            for idx in range(self.policy_head_num):
+                a0 = self.a_policy_logits_new[idx] - tf.reduce_max(self.a_policy_logits_new[idx] , axis=-1, keepdims=True)
+                ea0 = tf.exp(a0)
+                z0 = tf.reduce_sum(ea0, axis=-1, keepdims=True)
+                p0 = ea0 / z0
+                self.policy_entropy += tf.reduce_mean(tf.reduce_sum(p0 * (tf.log(z0) - a0), axis=-1))
 
 
         with tf.variable_scope('optimizer'):
@@ -303,44 +336,32 @@ class Agent():
             tf.summary.histogram("fc_b_3", fc_b_3)
 
             output3 = tf.nn.relu(tf.matmul(output2, fc_W_3) + fc_b_3)
+            a_logits_arr = []
+            a_prob_arr = []
+            #self.a_space_keys
+            for k in self.a_space_keys:
+                output_num = self.a_space[k]
+                # actor network
+                weight_layer_name = 'fc_W_{}'.format(k)
+                bias_layer_name = 'fc_b_{}'.format(k)
+                logit_layer_name = '{}_logits'.format(k)
+                head_layer_name = '{}_head'.format(k)
 
-            # actor network
-            fc1_W_a = tf.get_variable(shape=[self.layer_size, self.a_space], name='fc1_W_a',
-                trainable=trainable, initializer=my_initializer)
-            fc1_b_a = tf.Variable(tf.zeros([self.a_space], dtype=tf.float32), name='fc1_b_a',
-                trainable=trainable)
+                fc_W_a = tf.get_variable(shape=[self.layer_size, output_num], name=weight_layer_name,
+                    trainable=trainable, initializer=my_initializer)
+                fc_b_a = tf.Variable(tf.zeros([output_num], dtype=tf.float32), name=bias_layer_name,
+                    trainable=trainable)
 
-            tf.summary.histogram("fc1_W_a", fc1_W_a)
-            tf.summary.histogram("fc1_b_a", fc1_b_a)            
+                tf.summary.histogram(weight_layer_name, fc_W_a)
+                tf.summary.histogram(bias_layer_name, fc_b_a)            
 
-            temp_val = tf.matmul(output3, fc1_W_a) + fc1_b_a
-            
-            # Add mask here
-            masked_val = -20.0
+                a_logits = tf.matmul(output3, fc_W_a) + fc_b_a
+                a_logits_arr.append(a_logits)                
+                tf.summary.histogram(logit_layer_name, a_logits)
 
-            cond_x_less = tf.less(self.s[:,0,0], tf.constant(self.restrict_x_min))
-            mask_x_less = tf.Variable([0, masked_val, 0, 0, masked_val, 0, masked_val, 0, 0], tf.float32)
-            temp_val = tf.where(cond_x_less, tf.add(temp_val, mask_x_less), temp_val)
-            
-            
-            cond_y_less = tf.less(self.s[:,0,1], tf.constant(self.restrict_y_min))
-            mask_y_less = tf.Variable([masked_val, masked_val, masked_val, 0, 0, 0, 0, 0, 0], tf.float32)
-            temp_val = tf.where(cond_y_less, tf.add(temp_val, mask_y_less), temp_val)
-
-            cond_x_greater = tf.greater(self.s[:,0,0], tf.constant(self.restrict_x_max))
-            mask_x_greater = tf.Variable([0, 0, 0, masked_val, 0, masked_val, 0, 0, masked_val], tf.float32)
-            temp_val = tf.where(cond_x_greater, tf.add(temp_val, mask_x_greater), temp_val)
-
-            cond_y_greater = tf.greater(self.s[:,0,1], tf.constant(self.restrict_y_max))
-            mask_y_greater = tf.Variable([0, 0, 0, 0, 0, 0, masked_val, masked_val, masked_val], tf.float32)            
-            temp_val = tf.where(cond_y_greater, tf.add(temp_val, mask_y_greater), temp_val)
-            '''
-            '''
-
-            a_logits = temp_val
-            tf.summary.histogram("a_logits", a_logits)
-            a_prob = stable_softmax(a_logits, 'soft_logits') #tf.nn.softmax(a_logits)
-            tf.summary.histogram("policy_head", a_prob)
+                a_prob = stable_softmax(a_logits, head_layer_name) #tf.nn.softmax(a_logits)
+                a_prob_arr.append(a_prob)
+                tf.summary.histogram(head_layer_name, a_prob)
 
             # value network
             fc1_W_v = tf.get_variable(shape=[self.layer_size, 1], name='fc1_W_v',
@@ -355,7 +376,7 @@ class Agent():
             value = tf.reshape(value, [-1, ], name = "value_output")
             tf.summary.histogram("value_head", value)
             merged_summary = tf.summary.merge_all()
-            return a_prob, a_logits, value, merged_summary
+            return a_prob_arr, a_logits_arr, value, merged_summary
 
     def mask_invalid_action(self, s, distrib):
         new_distrib = distrib
@@ -381,16 +402,44 @@ class Agent():
 
     def predict(self, s):
         # Calculate a eval prob.
-        chosen_policy, value = self.session.run([self.a_policy_new, self.value], feed_dict={self.s: s})
-        ac = np.random.choice(range(chosen_policy.shape[1]), p=chosen_policy[0])
+        tuple_val = self.session.run([self.value, self.a_policy_new[0], self.a_policy_new[1], self.a_policy_new[2]], feed_dict={self.s: s})
+        value = tuple_val[0]
+        chosen_policy = tuple_val[1:] 
+        #chosen_policy = self.session.run(self.a_policy_new, feed_dict={self.s: s})
+        actions = []
+        for idx in range(self.policy_head_num):            
+            ac = np.random.choice(range(chosen_policy[idx].shape[1]), p=chosen_policy[idx][0])
+            actions.append(ac)
+        if actions[0] == 0:
+            # Stay still
+            actions[1] = -1
+            actions[2] = -1
+        elif actions[0] == 1:
+            # Move
+            actions[2] = -1
+        elif actions[0] == 2:
+            # Normal attack
+            actions[1] = -1
+            actions[2] = -1
+        elif actions[0] == 3:
+            # skill 1 attack
+            actions[1] = -1
+        elif actions[0] == 4:
+            # skill 2 attack
+            actions[1] = -1
+            actions[2] = -1 
+        elif actions[0] == 5:
+            # skill 3 attack
+            actions[1] = -1
+            actions[2] = -1
+        elif actions[0] == 6:
+            # skill 4 attack
+            actions[1] = -1
+            actions[2] = -1 
+        else:
+            print('Action predict wrong:{}'.format(actions[0]))
 
-        new_distrib = self.mask_invalid_action(s[0,:,0], chosen_policy[0])
-           
-        # Calculate action prob ratio between eval and target.
-        tac = ac
-        if new_distrib[ac] == 0:
-            tac = 0
-        return ac, tac, value
+        return actions, value
 
     def learn_one_traj(self, timestep, ob, ac, atarg, tdlamret, seg, train_writer):
         global g_step
@@ -400,6 +449,7 @@ class Agent():
 
         Entropy_list = []
         KL_distance_list = []
+
         for _ in range(EPOCH_NUM):
             indices = np.random.permutation(len(ob))
             for i in range(len(ob)//BATCH_SIZE):
@@ -432,7 +482,10 @@ def learn(num_steps=NUM_STEPS):
     g_step = 0
     session = tf.Session()
 
-    agent = Agent(session, 9)
+    action_space_map = {'action':7, 'move':8, 'skill':8}
+    a_space_keys = ['action', 'move', 'skill']
+    agent = Agent(session, action_space_map, a_space_keys)
+
     data_generator = Data_Generator(agent)
     train_writer = tf.summary.FileWriter('summary_log_gerry', graph=tf.get_default_graph()) 
 
@@ -452,7 +505,7 @@ def learn(num_steps=NUM_STEPS):
             tf.saved_model.simple_save(session,
                         "./model/model_{}".format(g_step),
                         inputs={"input_state":agent.s},
-                        outputs={"output_policy": agent.a_policy_new, "output_value":agent.value})            
+                        outputs={"output_policy_0": agent.a_policy_new[0], "output_policy_1": agent.a_policy_new[1], "output_policy_2": agent.a_policy_new[2], "output_value":agent.value})            
 
         print('Timestep:', timestep,
             "\tEpLenMean:", '%.3f'%np.mean(agent.lenbuffer),
@@ -477,7 +530,7 @@ def play_game():
 
     while True:
         time.sleep(0.05)
-        _, tac, _ = agent.predict(ob[np.newaxis, ...])
+        ac, _ = agent.predict(ob[np.newaxis, ...])
         print('Predict :{}'.format(tac))
 
         ob, reward, new, _ = env.step(tac)
@@ -518,7 +571,7 @@ if __name__=='__main__':
      
     global g_out_tb
     g_out_tb = False
-    is_train = False
+    is_train = True
     try:
         # Write control file
         root_folder = os.path.split(os.path.abspath(__file__))[0]

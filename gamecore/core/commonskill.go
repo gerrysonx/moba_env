@@ -6,6 +6,14 @@ import (
 	"github.com/ungerik/go3d/vec3"
 )
 
+type SkillTargetCallback func(hero HeroFunc, dir vec3.T)
+type SkillTarget struct {
+	trigger_time float64
+	hero         HeroFunc
+	dir          vec3.T
+	callback     SkillTargetCallback
+}
+
 func ChainDamage(dir vec3.T, src_pos vec3.T, camp int32, distance float32, damage float32) {
 	// We shall calculate cos(Theta)
 	game := GameInst
@@ -16,6 +24,7 @@ func ChainDamage(dir vec3.T, src_pos vec3.T, camp int32, distance float32, damag
 		if (dist < distance) && (v.Camp() != camp) && (v.Health() > 0) {
 			target_dir := unit_pos.Sub(&src_pos)
 			// Check if cos(Theta)
+			target_dir.Normalize()
 			if vec3.Dot(target_dir, &dir) > 0.9 {
 				// Means the direction is almost the same
 				v.DealDamage(damage)

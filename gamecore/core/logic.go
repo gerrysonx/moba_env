@@ -49,7 +49,8 @@ type Game struct {
 	vbo_hero  uint32
 	vert_hero []float32
 
-	train_state GameTrainState
+	train_state   GameTrainState
+	skill_targets []SkillTarget
 }
 
 func update_pos(vertice []float32, x_new float32, y_new float32, unit_width float32) {
@@ -156,6 +157,31 @@ func (game *Game) Testcase3() {
 	game.OppoHero = herobase
 }
 
+func (game *Game) Testcase4(center_area_width int) {
+	var hero_pos [2][2]float32
+	for {
+		now := time.Now()
+		rand.Seed(now.UnixNano())
+		born_area_side_width := center_area_width
+		//min_player_gap := 14.0
+		start_pos := (1000 - born_area_side_width) / 2
+		rand_num_1 := rand.Intn(born_area_side_width)
+		rand_num_2 := rand.Intn(born_area_side_width)
+		rand_num_3 := rand.Intn(born_area_side_width)
+		rand_num_4 := rand.Intn(born_area_side_width)
+		hero_pos[0][0], hero_pos[0][1], hero_pos[1][0], hero_pos[1][1] = float32(start_pos+rand_num_1), float32(start_pos+rand_num_2), float32(start_pos+rand_num_3), float32(start_pos+rand_num_4)
+		break
+	}
+	herobase2 := new(Vi)
+	hero1 := herobase2.Init(int32(1), hero_pos[0][0], hero_pos[0][1])
+	game.BattleUnits = append(game.BattleUnits, hero1)
+	game.DefaultHero = herobase2
+
+	herobase := new(Jinx)
+	hero0 := herobase.Init(int32(0), hero_pos[1][0], hero_pos[1][1])
+	game.BattleUnits = append(game.BattleUnits, hero0)
+	game.OppoHero = herobase
+}
 func (game *Game) Init() {
 	game.LogicTime = 0
 	game.BattleField = &BattleField{}
@@ -163,8 +189,12 @@ func (game *Game) Init() {
 
 	game.BattleUnits = []BaseFunc{}
 
-	game.Testcase3()
+	game.Testcase4(100)
 
+}
+
+func (game *Game) AddTarget(target SkillTarget) {
+	game.skill_targets = append(game.skill_targets, target)
 }
 
 func (game *Game) HandleInput() {
@@ -249,6 +279,18 @@ func (game *Game) Tick(gap_time float64, render bool) {
 	}
 	game.AddUnits = game.AddUnits[:0]
 	game.BattleUnits = temp_arr
+
+	// Handle skill targets callbacks
+	var temp_arr2 []SkillTarget
+	for _, v := range game.skill_targets {
+		if v.trigger_time > game.LogicTime {
+			v.callback(v.hero, v.dir)
+		} else {
+			temp_arr2 = append(temp_arr2, v)
+		}
+	}
+	game.skill_targets = temp_arr2
+
 	// Draw logic units on output image
 	if render {
 		game.Render()
@@ -470,6 +512,93 @@ func (game *Game) Render() {
 		png.Encode(file_handle_1, target_img)
 	*/
 
+}
+
+func (game *Game) HandleMultiAction(action_code_0 int, action_code_1 int, action_code_2 int) {
+	battle_unit := game.DefaultHero.(BaseFunc)
+	cur_pos := battle_unit.Position()
+
+	offset_x := float32(0)
+	offset_y := float32(0)
+
+	switch action_code_0 {
+	case 0: // do nothing
+		return
+	case 1:
+		// move
+		dir := ConvertNum2Dir(action_code_1)
+		offset_x = dir[0]
+		offset_y = dir[1]
+		game.DefaultHero.SetTargetPos(float32(cur_pos[0]+offset_x), float32(cur_pos[1]+offset_y))
+	case 2:
+		// normal attack
+		offset_x = float32(0)
+		offset_y = float32(0)
+	case 3:
+		// skill 1
+		dir := ConvertNum2Dir(action_code_2)
+		offset_x = dir[0]
+		offset_y = dir[1]
+		game.DefaultHero.UseSkill(0, offset_x, offset_y)
+		// Set skill target
+	case 4:
+		// skill 2
+		offset_x = float32(0)
+		offset_y = float32(0)
+	case 5:
+		// skill 3
+		offset_x = float32(0)
+		offset_y = float32(0)
+	case 6:
+		// extra skill
+		offset_x = float32(0)
+		offset_y = float32(0)
+
+	case 9:
+		game.Init()
+	}
+
+}
+
+func (game *Game) HandleAction(action_code int) {
+	battle_unit := game.DefaultHero.(BaseFunc)
+	cur_pos := battle_unit.Position()
+
+	offset_x := float32(0)
+	offset_y := float32(0)
+	const_val := float32(100)
+
+	switch action_code {
+	case 0: // do nothing
+	case 1:
+		offset_x = float32(-const_val)
+		offset_y = float32(-const_val)
+	case 2:
+		offset_x = float32(0)
+		offset_y = float32(-const_val)
+	case 3:
+		offset_x = float32(const_val)
+		offset_y = float32(-const_val)
+	case 4:
+		offset_x = float32(-const_val)
+		offset_y = float32(0)
+	case 5:
+		offset_x = float32(const_val)
+		offset_y = float32(0)
+	case 6:
+		offset_x = float32(-const_val)
+		offset_y = float32(const_val)
+	case 7:
+		offset_x = float32(0)
+		offset_y = float32(const_val)
+	case 8:
+		offset_x = float32(const_val)
+		offset_y = float32(const_val)
+	case 9:
+		game.Init()
+	}
+
+	game.DefaultHero.SetTargetPos(float32(cur_pos[0]+offset_x), float32(cur_pos[1]+offset_y))
 }
 
 // Global game object

@@ -4,5 +4,5 @@
 	"viewRange" : 2000,
 	"health" : 350,
 	"damage" : 50,
-	"speed" : 25
+	"speed" : 10
 }
