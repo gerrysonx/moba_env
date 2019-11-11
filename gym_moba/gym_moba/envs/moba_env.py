@@ -46,7 +46,7 @@ class MobaEnv(gym.Env):
 		my_env = os.environ.copy()
 		my_env['TF_CPP_MIN_LOG_LEVEL'] = '3'
 		self.proc = subprocess.Popen(['/home/gerrysun/work/ml-prjs/go-lang/moba/moba_env/gamecore/gamecore', 
-								'-render=true', '-gym_mode=true', '-debug_log=true', manual_str],
+								'-render=true', '-gym_mode=true', '-debug_log=false', manual_str],
 								stdin=subprocess.PIPE,
 								stdout=subprocess.PIPE,
 								stderr=subprocess.PIPE, env=my_env)

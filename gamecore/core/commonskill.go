@@ -25,7 +25,7 @@ func ChainDamage(dir vec3.T, src_pos vec3.T, camp int32, distance float32, damag
 			target_dir := unit_pos.Sub(&src_pos)
 			// Check if cos(Theta)
 			target_dir.Normalize()
-			if vec3.Dot(target_dir, &dir) > 0.9 {
+			if vec3.Angle(target_dir, &dir) < 0.35 {
 				// Means the direction is almost the same
 				v.DealDamage(damage)
 			}
