@@ -214,7 +214,21 @@ func main() {
 	_input_gap_time := flag.Float64("input_gap", 0.1, "")
 	_manual_enemy := flag.Bool("manual_enemy", false, "a bool")
 	_gym_mode := flag.Bool("gym_mode", true, "a bool")
+	_debug_log := flag.Bool("debug_log", true, "a bool")
 	flag.Parse()
+
+	if *_debug_log {
+		file_handle, _err := os.Create("mobacore.log")
+		if _err != nil {
+			fmt.Println("Create log file failed.")
+			return
+		}
+
+		defer file_handle.Close()
+		core.LogHandle = file_handle
+	} else {
+		core.LogHandle = nil
+	}
 
 	core.GameInst = core.Game{}
 	core.GameInst.Init()
@@ -418,14 +432,6 @@ func main() {
 		window.SetMouseButtonCallback(mouse_button_call_back)
 		window.SetCharCallback(key_call_back)
 	}
-
-	file_handle, _err := os.Create("mobacore.log")
-	if _err != nil {
-		fmt.Println("Create log file failed.")
-		return
-	}
-
-	defer file_handle.Close()
 
 	if *_fix_update {
 		_last_input_time := core.GameInst.LogicTime

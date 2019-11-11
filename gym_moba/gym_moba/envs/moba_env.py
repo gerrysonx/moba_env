@@ -46,7 +46,7 @@ class MobaEnv(gym.Env):
 		my_env = os.environ.copy()
 		my_env['TF_CPP_MIN_LOG_LEVEL'] = '3'
 		self.proc = subprocess.Popen(['/home/gerrysun/work/ml-prjs/go-lang/moba/moba_env/gamecore/gamecore', 
-								'-render=true', '-gym_mode=true', manual_str],
+								'-render=true', '-gym_mode=true', '-debug_log=true', manual_str],
 								stdin=subprocess.PIPE,
 								stdout=subprocess.PIPE,
 								stderr=subprocess.PIPE, env=my_env)
@@ -69,7 +69,7 @@ class MobaEnv(gym.Env):
 			move_dir_encode = (action[1] << 8)	
 
 		skill_dir_encode = 0
-		if action[1] != -1:
+		if action[2] != -1:
 			skill_dir_encode = (action[2] << 4)	
 
 		encoded_action_val = (self.step_idx << 16) + action_encode + move_dir_encode + skill_dir_encode

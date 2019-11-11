@@ -1,6 +1,7 @@
 package core
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/ungerik/go3d/vec3"
@@ -144,7 +145,7 @@ func (hero *Vi) UseSkill(skill_idx uint8, a ...interface{}) {
 	case 0:
 		// Check CD
 		now_seconds := game.LogicTime
-		skill_0_use_freq := float64(10)
+		skill_0_use_freq := float64(2)
 		if (hero.LastSkillUseTime(0) + skill_0_use_freq) > now_seconds {
 			// Cannot use yet
 			//		fmt.Printf("Cannot use skill, cos CD end time not yet come.time:%v \n", now_seconds)
@@ -158,21 +159,26 @@ func (hero *Vi) UseSkill(skill_idx uint8, a ...interface{}) {
 		callback := func(hero HeroFunc, dir vec3.T) {
 			unit := hero.(BaseFunc)
 			ChainDamage(dir, unit.Position(), unit.Camp(), 150, 500.0)
+			LogStr(fmt.Sprintf("Dir skill callback is called, dir is:%v, %v", dir[0], dir[1]))
 		}
 
 		has_more_params := len(a) > 0
+
+		LogStr(fmt.Sprintf("UseSkill is called, has_more_params:%v, now_seconds:%v", has_more_params, now_seconds))
+
 		if has_more_params {
 			pos_x := a[0].(float32)
 			pos_y := a[1].(float32)
 
 			skill_target := SkillTarget{}
 			skill_target.callback = callback
-			skill_target.trigger_time = game.LogicTime
+			skill_target.trigger_time = 0
 			skill_target.hero = hero
 			skill_target.dir[0] = pos_x
 			skill_target.dir[1] = pos_y
 			skill_target.dir.Normalize()
 			game.AddTarget(skill_target)
+			LogStr(fmt.Sprintf("AddTarget dir skill, dir is:%v, %v", pos_x, pos_y))
 		} else {
 			// UI mode, we're waiting for mouse to be pressed.
 			hero.SetSkillTargetPos(0, 0)

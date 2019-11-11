@@ -6,11 +6,24 @@ import (
 	"github.com/ungerik/go3d/vec3"
 )
 
-func LogBytes(file_handle *os.File, log []byte) {
-	file_handle.Write(log)
-	file_handle.WriteString("\n")
-	file_handle.Sync()
+var LogHandle *os.File
 
+func LogStr(log string) {
+	if LogHandle == nil {
+		return
+	}
+	LogHandle.WriteString(log)
+	LogHandle.WriteString("\n")
+	LogHandle.Sync()
+}
+
+func LogBytes(log []byte) {
+	if LogHandle == nil {
+		return
+	}
+	LogHandle.Write(log)
+	LogHandle.WriteString("\n")
+	LogHandle.Sync()
 }
 
 func remove(s []Buff, i int) []Buff {
@@ -95,6 +108,8 @@ func ConvertNum2Dir(action_code int) (dir vec3.T) {
 
 	switch action_code {
 	case 0: // do nothing
+		offset_x = float32(const_val)
+		offset_y = float32(const_val)
 	case 1:
 		offset_x = float32(-const_val)
 		offset_y = float32(-const_val)
@@ -115,9 +130,6 @@ func ConvertNum2Dir(action_code int) (dir vec3.T) {
 		offset_y = float32(const_val)
 	case 7:
 		offset_x = float32(0)
-		offset_y = float32(const_val)
-	case 8:
-		offset_x = float32(const_val)
 		offset_y = float32(const_val)
 	}
 

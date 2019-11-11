@@ -2,6 +2,7 @@ package core
 
 import (
 	"encoding/json"
+	"fmt"
 	"math/rand"
 	"time"
 
@@ -283,7 +284,7 @@ func (game *Game) Tick(gap_time float64, render bool) {
 	// Handle skill targets callbacks
 	var temp_arr2 []SkillTarget
 	for _, v := range game.skill_targets {
-		if v.trigger_time > game.LogicTime {
+		if v.trigger_time < game.LogicTime {
 			v.callback(v.hero, v.dir)
 		} else {
 			temp_arr2 = append(temp_arr2, v)
@@ -530,6 +531,7 @@ func (game *Game) HandleMultiAction(action_code_0 int, action_code_1 int, action
 		offset_x = dir[0]
 		offset_y = dir[1]
 		game.DefaultHero.SetTargetPos(float32(cur_pos[0]+offset_x), float32(cur_pos[1]+offset_y))
+		LogStr(fmt.Sprintf("Move command is issued, dir is:%v, %v", dir[0], dir[1]))
 	case 2:
 		// normal attack
 		offset_x = float32(0)
@@ -540,6 +542,7 @@ func (game *Game) HandleMultiAction(action_code_0 int, action_code_1 int, action
 		offset_x = dir[0]
 		offset_y = dir[1]
 		game.DefaultHero.UseSkill(0, offset_x, offset_y)
+		LogStr(fmt.Sprintf("Skill 1 is used, dir is:%v, %v", dir[0], dir[1]))
 		// Set skill target
 	case 4:
 		// skill 2
