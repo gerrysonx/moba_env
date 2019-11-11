@@ -2,12 +2,8 @@ package core
 
 import (
 	"encoding/json"
-	"fmt"
 	"math/rand"
 	"time"
-
-	"github.com/go-gl/gl/v4.1-core/gl"
-	"github.com/go-gl/glfw/v3.2/glfw"
 )
 
 type GameTrainState struct {
@@ -29,45 +25,9 @@ type Game struct {
 	DefaultHero     HeroFunc
 	OppoHero        HeroFunc
 	ManualCtrlEnemy bool
-	// Render related
-	window  *glfw.Window
-	program uint32
-	vao     uint32
-	texture uint32
-
-	tex_footman  uint32
-	vao_footman  uint32
-	vbo_footman  uint32
-	vert_footman []float32
-
-	tex_bullet  uint32
-	vao_bullet  uint32
-	vbo_bullet  uint32
-	vert_bullet []float32
-
-	tex_hero  uint32
-	vao_hero  uint32
-	vbo_hero  uint32
-	vert_hero []float32
 
 	train_state   GameTrainState
 	skill_targets []SkillTarget
-}
-
-func update_pos(vertice []float32, x_new float32, y_new float32, unit_width float32) {
-	vertice[0] = x_new - unit_width
-	vertice[1] = y_new + unit_width
-	vertice[5] = x_new + unit_width
-	vertice[6] = y_new + unit_width
-	vertice[10] = x_new + unit_width
-	vertice[11] = y_new - unit_width
-
-	vertice[15] = x_new - unit_width
-	vertice[16] = y_new + unit_width
-	vertice[20] = x_new + unit_width
-	vertice[21] = y_new - unit_width
-	vertice[25] = x_new - unit_width
-	vertice[26] = y_new - unit_width
 }
 
 func (game *Game) Testcase1() {
@@ -183,6 +143,7 @@ func (game *Game) Testcase4(center_area_width int) {
 	game.BattleUnits = append(game.BattleUnits, hero0)
 	game.OppoHero = herobase
 }
+
 func (game *Game) Init() {
 	game.LogicTime = 0
 	game.BattleField = &BattleField{}
@@ -191,7 +152,7 @@ func (game *Game) Init() {
 	game.BattleUnits = []BaseFunc{}
 
 	game.Testcase4(100)
-
+	// game.Testcase1()
 }
 
 func (game *Game) AddTarget(target SkillTarget) {
@@ -259,7 +220,7 @@ func (game *Game) DumpGameState() []byte {
 	return e
 }
 
-func (game *Game) Tick(gap_time float64, render bool) {
+func (game *Game) Tick(gap_time float64) {
 	//fmt.Printf("->gameTick, len(game.BattleUnits) is:%d, logictime:%f\n", len(game.BattleUnits), game.LogicTime)
 	game.LogicTime += gap_time
 	now := time.Now()
@@ -292,227 +253,6 @@ func (game *Game) Tick(gap_time float64, render bool) {
 	}
 	game.skill_targets = temp_arr2
 
-	// Draw logic units on output image
-	if render {
-		game.Render()
-	}
-
-}
-
-func (game *Game) SetRenderParam(window *glfw.Window, program uint32, vao uint32, texture uint32,
-	tex_footman uint32, vao_footman uint32, vbo_footman uint32, vert_footman []float32,
-	tex_bullet uint32, vao_bullet uint32, vbo_bullet uint32, vert_bullet []float32,
-	tex_hero uint32, vao_hero uint32, vbo_hero uint32, vert_hero []float32) {
-	game.window = window
-	game.program = program
-	game.vao = vao
-	game.texture = texture
-	game.tex_footman = tex_footman
-	game.vao_footman = vao_footman
-	game.vbo_footman = vbo_footman
-	game.vert_footman = vert_footman
-
-	game.tex_bullet = tex_bullet
-	game.vao_bullet = vao_bullet
-	game.vbo_bullet = vbo_bullet
-	game.vert_bullet = vert_bullet
-
-	game.tex_hero = tex_hero
-	game.vao_hero = vao_hero
-	game.vbo_hero = vbo_hero
-	game.vert_hero = vert_hero
-}
-
-func (game *Game) render(window *glfw.Window, program uint32, vao uint32, texture uint32,
-	tex_footman uint32, vao_footman uint32, vert_footman []float32,
-	tex_bullet uint32, vao_bullet uint32, vert_bullet []float32,
-	tex_hero uint32, vao_hero uint32, vert_hero []float32) {
-	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-
-	// Update
-	// time := glfw.GetTime()
-	//elapsed := time - previousTime
-	//previousTime = time
-
-	//angle += elapsed
-	// model = mgl32.HomogRotate3D(float32(angle), mgl32.Vec3{0, 1, 0})
-
-	// Render
-	gl.UseProgram(program)
-	// gl.UniformMatrix4fv(modelUniform, 1, false, &model[0])
-
-	// 1. Background
-	colorUniform := gl.GetUniformLocation(program, gl.Str("camp_color\x00"))
-	gl.Uniform3f(colorUniform, 1, 1, 1)
-	gl.BindVertexArray(vao)
-
-	gl.ActiveTexture(gl.TEXTURE0)
-	gl.BindTexture(gl.TEXTURE_2D, texture)
-
-	gl.DrawArrays(gl.TRIANGLES, 0, 1*2*3)
-	gl.BindVertexArray(0)
-	gl.BindTexture(gl.TEXTURE_2D, 0)
-	for _, v := range game.BattleUnits {
-		if v.Health() > 0 {
-			if f, ok := v.(*Footman); ok {
-				// 2. Footman
-				// 向缓冲中写入数据
-				colorUniform := gl.GetUniformLocation(program, gl.Str("camp_color\x00"))
-				if f.Camp() == 0 {
-					gl.Uniform3f(colorUniform, 0, 0.8, 0)
-				} else {
-					gl.Uniform3f(colorUniform, 0.8, 0, 0)
-				}
-
-				update_pos(vert_footman, f.position[0], f.position[1], 10)
-				// 完成够别忘了告诉OpenGL我们不再需要它了
-				gl.BindBuffer(gl.ARRAY_BUFFER, game.vbo_footman)
-				gl.BufferData(gl.ARRAY_BUFFER, len(game.vert_footman)*4, gl.Ptr(game.vert_footman), gl.STATIC_DRAW)
-
-				gl.BindVertexArray(vao_footman)
-
-				gl.ActiveTexture(gl.TEXTURE0)
-				gl.BindTexture(gl.TEXTURE_2D, tex_footman)
-
-				gl.DrawArrays(gl.TRIANGLES, 0, 1*2*3)
-				continue
-			}
-
-			if f, ok := v.(*Bullet); ok {
-				// 3. Bullet
-				// 向缓冲中写入数据
-				colorUniform := gl.GetUniformLocation(program, gl.Str("camp_color\x00"))
-				if f.Camp() == 0 {
-					gl.Uniform3f(colorUniform, 0, 0.8, 0)
-				} else {
-					gl.Uniform3f(colorUniform, 0.8, 0, 0)
-				}
-
-				update_pos(vert_footman, f.position[0], f.position[1], 2.5)
-				// 完成够别忘了告诉OpenGL我们不再需要它了
-				gl.BindBuffer(gl.ARRAY_BUFFER, game.vbo_footman)
-				gl.BufferData(gl.ARRAY_BUFFER, len(game.vert_footman)*4, gl.Ptr(game.vert_footman), gl.STATIC_DRAW)
-
-				gl.BindVertexArray(vao_footman)
-
-				gl.ActiveTexture(gl.TEXTURE0)
-				gl.BindTexture(gl.TEXTURE_2D, tex_footman)
-
-				gl.DrawArrays(gl.TRIANGLES, 0, 1*2*3)
-				continue
-			}
-
-			if _, ok := v.(HeroFunc); ok {
-				// 4. Hero
-				// 向缓冲中写入数据
-				f0, _ := v.(BaseFunc)
-				colorUniform := gl.GetUniformLocation(program, gl.Str("camp_color\x00"))
-				if f0.Camp() == 0 {
-					gl.Uniform3f(colorUniform, 0, 0.8, 0)
-				} else {
-					gl.Uniform3f(colorUniform, 0.8, 0, 0)
-				}
-
-				update_pos(vert_bullet, f0.Position()[0], f0.Position()[1], 20)
-				// 完成够别忘了告诉OpenGL我们不再需要它了
-				gl.BindBuffer(gl.ARRAY_BUFFER, game.vbo_bullet)
-				gl.BufferData(gl.ARRAY_BUFFER, len(game.vert_bullet)*4, gl.Ptr(game.vert_bullet), gl.STATIC_DRAW)
-
-				gl.BindVertexArray(vao_bullet)
-
-				gl.ActiveTexture(gl.TEXTURE0)
-				gl.BindTexture(gl.TEXTURE_2D, tex_bullet)
-
-				gl.DrawArrays(gl.TRIANGLES, 0, 1*2*3)
-				continue
-			}
-
-			if f, ok := v.(*Tower); ok {
-				// 5. Tower
-				// 向缓冲中写入数据
-				colorUniform := gl.GetUniformLocation(program, gl.Str("camp_color\x00"))
-				if f.Camp() == 0 {
-					gl.Uniform3f(colorUniform, 0, 0.8, 0)
-				} else {
-					gl.Uniform3f(colorUniform, 0.8, 0, 0)
-				}
-
-				update_pos(vert_hero, f.position[0], f.position[1], 20)
-				// 完成够别忘了告诉OpenGL我们不再需要它了
-				gl.BindBuffer(gl.ARRAY_BUFFER, game.vbo_hero)
-				gl.BufferData(gl.ARRAY_BUFFER, len(game.vert_hero)*4, gl.Ptr(game.vert_hero), gl.STATIC_DRAW)
-
-				gl.BindVertexArray(vao_hero)
-
-				gl.ActiveTexture(gl.TEXTURE0)
-				gl.BindTexture(gl.TEXTURE_2D, tex_hero)
-
-				gl.DrawArrays(gl.TRIANGLES, 0, 1*2*3)
-				continue
-			}
-		}
-	}
-
-	// Maintenance
-	window.SwapBuffers()
-	glfw.PollEvents()
-}
-
-func (game *Game) Render() {
-
-	game.render(game.window, game.program, game.vao, game.texture,
-		game.tex_footman, game.vao_footman, game.vert_footman,
-		game.tex_bullet, game.vao_bullet, game.vert_bullet,
-		game.tex_hero, game.vao_hero, game.vert_hero)
-	/*
-		fmt.Println("->Game::Render")
-		game_render_file_name := "./output/game_view.png"
-		game_render_src_name := "./map/3_corridors.png"
-		game_render_footman_name := "./map/footman.png"
-
-		file_handle_1, err := os.Create(game_render_file_name)
-		if err != nil {
-			fmt.Println("Open file failed.", game_render_file_name)
-			return
-		}
-
-		defer file_handle_1.Close()
-
-		file_handle_2, err := os.Open(game_render_src_name)
-		if err != nil {
-			fmt.Println("Open file failed.", game_render_src_name)
-			return
-		}
-
-		defer file_handle_2.Close()
-
-		src_img, _ := png.Decode(file_handle_2)
-
-		file_handle_3, err := os.Open(game_render_footman_name)
-		if err != nil {
-			fmt.Println("Open file failed.", game_render_footman_name)
-			return
-		}
-
-		defer file_handle_3.Close()
-
-		footman_img, _ := png.Decode(file_handle_3)
-
-		target_img := image.NewRGBA(image.Rect(0, 0, 1000, 1000))
-		draw.Draw(target_img, target_img.Bounds(), src_img, src_img.Bounds().Min, draw.Src)
-
-		// Draw footman on target
-		for _, v := range game.BattleUnits {
-			if v.Health() > 0 {
-				if f, ok := v.(*Footman); ok {
-					draw.Draw(target_img, footman_img.Bounds().Add(image.Pt(int(f.position[0]), int(f.position[1]))), footman_img, footman_img.Bounds().Min, draw.Src)
-				}
-			}
-		}
-
-		png.Encode(file_handle_1, target_img)
-	*/
-
 }
 
 func (game *Game) HandleMultiAction(action_code_0 int, action_code_1 int, action_code_2 int) {
@@ -531,7 +271,6 @@ func (game *Game) HandleMultiAction(action_code_0 int, action_code_1 int, action
 		offset_x = dir[0]
 		offset_y = dir[1]
 		game.DefaultHero.SetTargetPos(float32(cur_pos[0]+offset_x), float32(cur_pos[1]+offset_y))
-		LogStr(fmt.Sprintf("Move command is issued, dir is:%v, %v", dir[0], dir[1]))
 	case 2:
 		// normal attack
 		offset_x = float32(0)
@@ -542,7 +281,6 @@ func (game *Game) HandleMultiAction(action_code_0 int, action_code_1 int, action
 		offset_x = dir[0]
 		offset_y = dir[1]
 		game.DefaultHero.UseSkill(0, offset_x, offset_y)
-		LogStr(fmt.Sprintf("Skill 1 is used, dir is:%v, %v", dir[0], dir[1]))
 		// Set skill target
 	case 4:
 		// skill 2
