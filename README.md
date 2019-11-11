@@ -19,3 +19,5 @@ Usage:
 2. Under moba_env folder, run:pip install -e gym_moba --user
 
 3. Enter gym_moba/gym_moba/envs, edit moba_env.py, change subprocess.Popen gamecore path to your local compiled gamecore folder.
+
+4. Under moba_env folder, run python3 ../ppo.py, if you want to play the game, just change the is_train = False in main function.
