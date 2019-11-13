@@ -13,11 +13,11 @@
 1. tensorflow 1.14.0
 1. opencv2, you can install by pip:pip install opencv-python --user
 1. golang opengl support, need to run the following commands: 
-5.1 sudo apt-get install libgl1-mesa-dev libxinerama-dev libxcursor-dev libxi-dev xorg-dev
-5.2 `go get github.com/go-gl/gl/v4.1-core/gl`
-5.3 `go get github.com/go-gl/glfw/v3.2/glfw`
-5.4 `go get github.com/go-gl/mathgl/mgl32`
-5.5 `go get github.com/ungerik/go3d/vec3`
+5.1 `sudo apt-get install libgl1-mesa-dev libxinerama-dev libxcursor-dev libxi-dev xorg-dev`  
+5.2 `go get github.com/go-gl/gl/v4.1-core/gl`  
+5.3 `go get github.com/go-gl/glfw/v3.2/glfw`  
+5.4 `go get github.com/go-gl/mathgl/mgl32`  
+5.5 `go get github.com/ungerik/go3d/vec3`  
 6. golang tensorflow support, follow the following steps:
 6.1 download TensorFlow C library, and extract to local lib and include path, e.g. sudo tar -C /usr/local -xzf (downloaded file)
 reference:https://www.tensorflow.org/install/lang_c
