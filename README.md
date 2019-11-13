@@ -1,8 +1,13 @@
-# moba_env
+## Introduction
+moba_env is a mini moba game, which can be integrated into gym env.
+You can use this env to train AI for moba game.
+All moba logic is implemented in go lang, which is easy to maintain.
+
+## Structure
 gamecore is the folder containing all the moba game logic, 
 gym_moba is the folder containing the interface needed to integrate the gamecore logic into gym env.
 
-Depends:
+## Depends:
 1. go
 2. gym env
 3. tensorflow 1.14.0
@@ -18,7 +23,7 @@ Depends:
 reference:https://www.tensorflow.org/install/lang_c
 6.2 execute command in terminal:go get github.com/tensorflow/tensorflow/tensorflow/go
 
-Usage:
+## Usage:
 1. Enter gamecore folder, run:go build ./ 
 2. Under moba_env folder, run:pip install -e gym_moba --user
 
