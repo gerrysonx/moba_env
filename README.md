@@ -1,11 +1,11 @@
 ## Introduction
-moba_env is a mini moba game, which can be integrated into gym env.
-You can use this env to train AI for moba game.
-All moba logic is implemented in go lang, which is easy to maintain.
+1. moba_env is a mini moba game, which can be integrated into gym env.
+1. You can use this env to train AI for moba game.
+1. All moba logic is implemented in go lang, which is easy to maintain.
 
 ## Structure
-gamecore is the folder containing all the moba game logic, 
-gym_moba is the folder containing the interface needed to integrate the gamecore logic into gym env.
+1. gamecore is the folder containing all the moba game logic, 
+1. gym_moba is the folder containing the interface needed to integrate the gamecore logic into gym env.
 
 ## Depends:
 1. go
