@@ -9,10 +9,10 @@ gym_moba is the folder containing the interface needed to integrate the gamecore
 
 ## Depends:
 1. go
-2. gym env
-3. tensorflow 1.14.0
-4. opencv2, you can install by pip:pip install opencv-python --user
-5. golang opengl support, need to run the following commands: 
+1. gym env
+1. tensorflow 1.14.0
+1. opencv2, you can install by pip:pip install opencv-python --user
+1. golang opengl support, need to run the following commands: 
 5.1 sudo apt-get install libgl1-mesa-dev libxinerama-dev libxcursor-dev libxi-dev xorg-dev
 5.2 go get github.com/go-gl/gl/v4.1-core/gl 
 5.3 go get github.com/go-gl/glfw/v3.2/glfw
