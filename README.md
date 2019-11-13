@@ -11,7 +11,8 @@
 1. go
 1. gym env
 1. tensorflow 1.14.0
-1. opencv2, you can install by pip:pip install opencv-python --user
+1. opencv2, you can install by pip:  
+`pip install opencv-python --user`  
 1. golang opengl support, need to run the following commands:   
 `sudo apt-get install libgl1-mesa-dev libxinerama-dev libxcursor-dev libxi-dev xorg-dev`  
 `go get github.com/go-gl/gl/v4.1-core/gl`  
@@ -24,9 +25,7 @@ reference:https://www.tensorflow.org/install/lang_c
 execute command in terminal:`go get github.com/tensorflow/tensorflow/tensorflow/go`  
 
 ## Usage:
-1. Enter gamecore folder, run:go build ./ 
-1. Under moba_env folder, run:pip install -e gym_moba --user
-
-1. Enter gym_moba/gym_moba/envs, edit moba_env.py, change subprocess.Popen gamecore path to your local compiled gamecore folder.
-
-1. Under moba_env folder, run python3 ../ppo.py, if you want to play the game, just change the is_train = False in main function.
+1. Enter gamecore folder, run:`go build ./`  
+1. Under moba_env folder, run:`pip install -e gym_moba --user`  
+1. Enter gym_moba/gym_moba/envs, edit moba_env.py, change subprocess.Popen gamecore path to your local compiled gamecore folder.  
+1. Under moba_env folder, run python3 ../ppo.py, if you want to play the game, just change the is_train = False in main function.  
