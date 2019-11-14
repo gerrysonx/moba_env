@@ -14,6 +14,7 @@ import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/glfw/v3.2/glfw"
 	"github.com/go-gl/mathgl/mgl32"
+	"github.com/ungerik/go3d/vec3"
 )
 
 type Renderer struct {
@@ -38,7 +39,15 @@ type Renderer struct {
 	vao_hero  uint32
 	vbo_hero  uint32
 	vert_hero []float32
-	game      *core.Game
+
+	vao_hero_dir  uint32
+	vbo_hero_dir  uint32
+	vert_hero_dir []float32
+
+	vao_hero_health  uint32
+	vbo_hero_health  uint32
+	vert_hero_health []float32
+	game             *core.Game
 }
 
 const windowWidth = 1000
@@ -221,6 +230,7 @@ func mouse_button_call_back(w *glfw.Window, button glfw.MouseButton, action glfw
 
 	}
 }
+
 func (renderer *Renderer) Release() {
 	glfw.Terminate()
 }
@@ -419,6 +429,32 @@ func (renderer *Renderer) InitRenderEnv(game *core.Game) {
 	gl.EnableVertexAttribArray(texCoordAttrib)
 	gl.VertexAttribPointer(texCoordAttrib, 2, gl.FLOAT, false, 5*4, gl.PtrOffset(3*4))
 
+	renderer.vert_hero_dir = []float32{
+		//  X, Y, Z, U, V
+		// Bottom
+		0, 0, 0, 0.0, 1.0,
+		0, 0, 0, 1.0, 1.0,
+		0, 0, 0, 1.0, 0.0}
+
+	var vao_hero_dir uint32
+	gl.GenVertexArrays(1, &vao_hero_dir)
+	gl.BindVertexArray(vao_hero_dir)
+	renderer.vao_hero_dir = vao_hero_dir
+
+	var vbo_hero_dir uint32
+	gl.GenBuffers(1, &vbo_hero_dir)
+	gl.BindBuffer(gl.ARRAY_BUFFER, vbo_hero_dir)
+	gl.BufferData(gl.ARRAY_BUFFER, len(renderer.vert_hero_dir)*4, gl.Ptr(renderer.vert_hero_dir), gl.STATIC_DRAW)
+	renderer.vbo_hero_dir = vbo_hero_dir
+
+	vertAttrib = uint32(gl.GetAttribLocation(program, gl.Str("vert\x00")))
+	gl.EnableVertexAttribArray(vertAttrib)
+	gl.VertexAttribPointer(vertAttrib, 3, gl.FLOAT, false, 5*4, gl.PtrOffset(0))
+
+	texCoordAttrib = uint32(gl.GetAttribLocation(program, gl.Str("vertTexCoord\x00")))
+	gl.EnableVertexAttribArray(texCoordAttrib)
+	gl.VertexAttribPointer(texCoordAttrib, 2, gl.FLOAT, false, 5*4, gl.PtrOffset(3*4))
+
 	// Configure global settings
 	//gl.Enable(gl.DEPTH_TEST)
 	//gl.DepthFunc(gl.LESS)
@@ -450,6 +486,36 @@ func update_pos(vertice []float32, x_new float32, y_new float32, unit_width floa
 	vertice[26] = y_new - unit_width
 }
 
+func update_health_bar_pos(vertice []float32, x_new float32, y_new float32, unit_width float32) {
+	y_scale := float32(3)
+	vertice[0] = x_new - unit_width
+	vertice[1] = y_new + y_scale
+	vertice[5] = x_new + unit_width
+	vertice[6] = y_new + y_scale
+	vertice[10] = x_new + unit_width
+	vertice[11] = y_new - y_scale
+
+	vertice[15] = x_new - unit_width
+	vertice[16] = y_new + y_scale
+	vertice[20] = x_new + unit_width
+	vertice[21] = y_new - y_scale
+	vertice[25] = x_new - unit_width
+	vertice[26] = y_new - y_scale
+}
+
+func update_dir_vert(vertice []float32, x_dir float32, y_dir float32, x_src float32, y_src float32) {
+	var scale_val float32
+	scale_val = 30.0
+	vertice[0] = x_src + x_dir*scale_val
+	vertice[1] = y_src + y_dir*scale_val
+
+	vertice[5] = x_src + y_dir*scale_val
+	vertice[6] = y_src - x_dir*scale_val
+
+	vertice[10] = x_src - y_dir*scale_val
+	vertice[11] = y_src + x_dir*scale_val
+}
+
 func (renderer *Renderer) Render() {
 
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
@@ -459,26 +525,30 @@ func (renderer *Renderer) Render() {
 	// gl.UniformMatrix4fv(modelUniform, 1, false, &model[0])
 
 	// 1. Background
-	colorUniform := gl.GetUniformLocation(renderer.program, gl.Str("camp_color\x00"))
-	gl.Uniform3f(colorUniform, 1, 1, 1)
-	gl.BindVertexArray(renderer.vao)
+	/*
+		colorUniform := gl.GetUniformLocation(renderer.program, gl.Str("camp_color\x00"))
+		gl.Uniform3f(colorUniform, 1, 1, 1)
+		gl.BindVertexArray(renderer.vao)
 
-	gl.ActiveTexture(gl.TEXTURE0)
-	gl.BindTexture(gl.TEXTURE_2D, renderer.texture)
+		gl.ActiveTexture(gl.TEXTURE0)
+		gl.BindTexture(gl.TEXTURE_2D, renderer.texture)
 
-	gl.DrawArrays(gl.TRIANGLES, 0, 1*2*3)
-	gl.BindVertexArray(0)
-	gl.BindTexture(gl.TEXTURE_2D, 0)
+		gl.DrawArrays(gl.TRIANGLES, 0, 1*2*3)
+		gl.BindVertexArray(0)
+		gl.BindTexture(gl.TEXTURE_2D, 0)
+	*/
+
 	for _, v := range renderer.game.BattleUnits {
 		if v.Health() > 0 {
 			if f, ok := v.(*core.Footman); ok {
 				// 2. Footman
 				// 向缓冲中写入数据
 				colorUniform := gl.GetUniformLocation(renderer.program, gl.Str("camp_color\x00"))
+				change_color := float32(0.0)
 				if f.Camp() == 0 {
-					gl.Uniform3f(colorUniform, 0, 0.8, 0)
+					gl.Uniform3f(colorUniform, change_color, 0.8, change_color)
 				} else {
-					gl.Uniform3f(colorUniform, 0.8, 0, 0)
+					gl.Uniform3f(colorUniform, 0.8, change_color, change_color)
 				}
 
 				update_pos(renderer.vert_footman, f.Position()[0], f.Position()[1], 10)
@@ -523,14 +593,35 @@ func (renderer *Renderer) Render() {
 				// 4. Hero
 				// 向缓冲中写入数据
 				f0, _ := v.(core.BaseFunc)
+
 				colorUniform := gl.GetUniformLocation(renderer.program, gl.Str("camp_color\x00"))
+
 				if f0.Camp() == 0 {
 					gl.Uniform3f(colorUniform, 0, 0.8, 0)
 				} else {
 					gl.Uniform3f(colorUniform, 0.8, 0, 0)
 				}
 
-				update_pos(renderer.vert_bullet, f0.Position()[0], f0.Position()[1], 20)
+				// Draw hero direction
+				var dir vec3.T
+				hero_func := f0.(core.HeroFunc)
+				dir[0] = hero_func.TargetPos()[0] - f0.Position()[0]
+				dir[1] = hero_func.TargetPos()[1] - f0.Position()[1]
+				dir.Normalize()
+				update_dir_vert(renderer.vert_hero_dir, dir[0], dir[1], f0.Position()[0], f0.Position()[1])
+				// 完成够别忘了告诉OpenGL我们不再需要它了
+				gl.BindBuffer(gl.ARRAY_BUFFER, renderer.vbo_hero_dir)
+				gl.BufferData(gl.ARRAY_BUFFER, len(renderer.vert_hero_dir)*4, gl.Ptr(renderer.vert_hero_dir), gl.STATIC_DRAW)
+
+				gl.BindVertexArray(renderer.vao_hero_dir)
+
+				gl.ActiveTexture(gl.TEXTURE0)
+				gl.BindTexture(gl.TEXTURE_2D, renderer.tex_footman)
+
+				gl.DrawArrays(gl.TRIANGLES, 0, 3)
+
+				// Draw hero
+				update_pos(renderer.vert_bullet, f0.Position()[0], f0.Position()[1], 15)
 				// 完成够别忘了告诉OpenGL我们不再需要它了
 				gl.BindBuffer(gl.ARRAY_BUFFER, renderer.vbo_bullet)
 				gl.BufferData(gl.ARRAY_BUFFER, len(renderer.vert_bullet)*4, gl.Ptr(renderer.vert_bullet), gl.STATIC_DRAW)
@@ -541,6 +632,38 @@ func (renderer *Renderer) Render() {
 				gl.BindTexture(gl.TEXTURE_2D, renderer.tex_bullet)
 
 				gl.DrawArrays(gl.TRIANGLES, 0, 1*2*3)
+
+				gl.Uniform3f(colorUniform, 0, 0, 1)
+				// Draw hero full health
+				update_health_bar_pos(renderer.vert_bullet, f0.Position()[0], f0.Position()[1], 25)
+				// 完成够别忘了告诉OpenGL我们不再需要它了
+				gl.BindBuffer(gl.ARRAY_BUFFER, renderer.vbo_bullet)
+				gl.BufferData(gl.ARRAY_BUFFER, len(renderer.vert_bullet)*4, gl.Ptr(renderer.vert_bullet), gl.STATIC_DRAW)
+
+				gl.BindVertexArray(renderer.vao_bullet)
+
+				gl.ActiveTexture(gl.TEXTURE0)
+				gl.BindTexture(gl.TEXTURE_2D, renderer.tex_footman)
+
+				gl.DrawArrays(gl.TRIANGLES, 0, 1*2*3)
+
+				// Draw hero health
+				gl.Uniform3f(colorUniform, 1, 0, 1)
+				// Draw hero full health
+				health_ratio := f0.Health() / 350
+				half_bar_width := float32(25)
+				update_health_bar_pos(renderer.vert_bullet, f0.Position()[0]-(1-health_ratio)*half_bar_width, f0.Position()[1], half_bar_width*health_ratio)
+				// 完成够别忘了告诉OpenGL我们不再需要它了
+				gl.BindBuffer(gl.ARRAY_BUFFER, renderer.vbo_bullet)
+				gl.BufferData(gl.ARRAY_BUFFER, len(renderer.vert_bullet)*4, gl.Ptr(renderer.vert_bullet), gl.STATIC_DRAW)
+
+				gl.BindVertexArray(renderer.vao_bullet)
+
+				gl.ActiveTexture(gl.TEXTURE0)
+				gl.BindTexture(gl.TEXTURE_2D, renderer.tex_footman)
+
+				gl.DrawArrays(gl.TRIANGLES, 0, 1*2*3)
+
 				continue
 			}
 

@@ -158,7 +158,7 @@ func (hero *Vi) UseSkill(skill_idx uint8, a ...interface{}) {
 		// Check if has more parameters
 		callback := func(hero HeroFunc, dir vec3.T) {
 			unit := hero.(BaseFunc)
-			ChainDamage(dir, unit.Position(), unit.Camp(), 150, 500.0)
+			ChainDamage(dir, unit.Position(), unit.Camp(), 50, 500.0)
 			LogStr(fmt.Sprintf("Dir skill callback is called, dir is:%v, %v", dir[0], dir[1]))
 		}
 
@@ -198,13 +198,67 @@ func (hero *Vi) UseSkill(skill_idx uint8, a ...interface{}) {
 					}
 				}
 			}(hero)
-
 		}
 
 	case 1:
+		return
 		// Overdrive
-		arr := []BaseFunc{hero}
-		AddSpeedBuff(arr, 0)
+		// Slow direction
+		now_seconds := game.LogicTime
+		skill_1_use_freq := float64(2)
+		if (hero.LastSkillUseTime(1) + skill_1_use_freq) > now_seconds {
+			// Cannot use yet
+			//		fmt.Printf("Cannot use skill, cos CD end time not yet come.time:%v \n", now_seconds)
+			return
+		}
+		//	fmt.Printf("Skill released.time:%v \n", now_seconds)
+		hero.SetLastSkillUseTime(1, now_seconds)
+
+		// Clear skilltarget pos
+		// Check if has more parameters
+		callback := func(hero HeroFunc, dir vec3.T) {
+			unit := hero.(BaseFunc)
+			SlowDirection(dir, unit.Position(), unit.Camp(), 100)
+		}
+
+		has_more_params := len(a) > 0
+
+		LogStr(fmt.Sprintf("UseSkill 1 is called, has_more_params:%v, now_seconds:%v", has_more_params, now_seconds))
+
+		if has_more_params {
+			pos_x := a[0].(float32)
+			pos_y := a[1].(float32)
+
+			skill_target := SkillTarget{}
+			skill_target.callback = callback
+			skill_target.trigger_time = 0
+			skill_target.hero = hero
+			skill_target.dir[0] = pos_x
+			skill_target.dir[1] = pos_y
+			skill_target.dir.Normalize()
+			game.AddTarget(skill_target)
+			LogStr(fmt.Sprintf("UseSkill 1, AddTarget dir skill, dir is:%v, %v", pos_x, pos_y))
+		} else {
+			// UI mode, we're waiting for mouse to be pressed.
+			hero.SetSkillTargetPos(0, 0)
+			go func(hero *Vi) {
+				for {
+					time.Sleep(time.Duration(0.5 * float64(time.Second)))
+					// Wait for left button click to select position
+					skill_target_pos := hero.SkillTargetPos()
+					if skill_target_pos[0] != 0 || skill_target_pos[1] != 0 {
+						// Use skill
+						var dir vec3.T
+						dir[0] = skill_target_pos[0] - hero.Position()[0]
+						dir[1] = skill_target_pos[1] - hero.Position()[1]
+						dir.Normalize()
+						callback(hero, dir)
+						break
+					}
+				}
+			}(hero)
+		}
+
 	case 2:
 		// Power Fist
 		arr := []BaseFunc{hero}

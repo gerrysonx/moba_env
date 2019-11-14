@@ -1,6 +1,7 @@
 package core
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/ungerik/go3d/vec3"
@@ -12,6 +13,26 @@ type SkillTarget struct {
 	hero         HeroFunc
 	dir          vec3.T
 	callback     SkillTargetCallback
+}
+
+func SlowDirection(dir vec3.T, src_pos vec3.T, camp int32, distance float32) {
+	// We shall calculate cos(Theta)
+	game := GameInst
+	dist := float32(0)
+	for _, v := range game.BattleUnits {
+		unit_pos := v.Position()
+		dist = vec3.Distance(&src_pos, &unit_pos)
+		if (dist < distance) && (v.Camp() != camp) && (v.Health() > 0) {
+			target_dir := unit_pos.Sub(&src_pos)
+			// Check if cos(Theta)
+			target_dir.Normalize()
+			if vec3.Angle(target_dir, &dir) < 0.35 {
+				// Means the direction is almost the same
+				AddSpeedBuff([]BaseFunc{v}, 0)
+				LogStr(fmt.Sprintf("SlowDirection is called, target_dir:%v", target_dir))
+			}
+		}
+	}
 }
 
 func ChainDamage(dir vec3.T, src_pos vec3.T, camp int32, distance float32, damage float32) {

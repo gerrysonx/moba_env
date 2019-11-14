@@ -18,7 +18,7 @@ func main() {
 	_input_gap_time := flag.Float64("input_gap", 0.1, "")
 	_manual_enemy := flag.Bool("manual_enemy", false, "a bool")
 	_gym_mode := flag.Bool("gym_mode", true, "a bool")
-	_debug_log := flag.Bool("debug_log", true, "a bool")
+	_debug_log := flag.Bool("debug_log", false, "a bool")
 	file_handle, _err := os.Create("mobacore.log")
 	if _err != nil {
 		fmt.Println("Create log file failed.")
@@ -32,6 +32,7 @@ func main() {
 		core.LogHandle = nil
 	}
 	flag.Parse()
+	core.LogStr(fmt.Sprintf("main is called"))
 
 	core.GameInst = core.Game{}
 	core.GameInst.Init()

@@ -14,6 +14,8 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 import tensorflow as tf
 import random, cv2
 import time
+import math
+
 
 EPSILON = 0.2
 
@@ -32,7 +34,19 @@ ENV_NAME = 'gym_moba:moba-v0'
 RANDOM_START_STEPS = 4
 
 global g_step
-global g_out_tb
+
+# Control if output to tensorboard
+g_out_tb = True
+
+# Control if train or play
+g_is_train = True
+
+# Control if use priority sampling
+g_enable_per = True 
+g_per_alpha = 1
+g_is_beta_start = 0.4
+g_is_beta_end = 1
+
 def stable_softmax(logits, name): 
     a = logits - tf.reduce_max(logits, axis=-1, keepdims=True) 
     ea = tf.exp(a) 
@@ -169,8 +183,8 @@ class Data_Generator():
 
 class Agent():
 
-    def __init__(self, session, a_space, a_space_keys, **options):
-
+    def __init__(self, session, a_space, a_space_keys, **options):       
+        self.importance_sample_arr = np.ones([TIMESTEPS_PER_ACTOR_BATCH], dtype=np.float)
         self.session = session
         # Here we get 4 action output heads
         # 1 --- Meta action type
@@ -212,6 +226,8 @@ class Agent():
 
         self.session.run(tf.global_variables_initializer())
 
+        
+        
 
     def _init_input(self, *args):
         with tf.variable_scope('input'):
@@ -222,11 +238,13 @@ class Agent():
 
             self.cumulative_r = tf.placeholder(tf.float32, [None, ], name='cumulative_r')
             self.adv = tf.placeholder(tf.float32, [None, ], name='adv')
+            self.importance_sample_arr_pl = tf.placeholder(tf.float32, [None, ], name='importance_sample')
 
             tf.summary.histogram("input_state", self.s)
             tf.summary.histogram("input_action", self.a)
             tf.summary.histogram("input_cumulative_r", self.cumulative_r)
             tf.summary.histogram("input_adv", self.adv)
+
 
     def _init_nn(self, *args):
         self.a_policy_new, self.a_policy_logits_new, self.value, self.summary_new = self._init_actor_net('policy_net_new', trainable=True)
@@ -245,7 +263,8 @@ class Agent():
         with tf.variable_scope('critic_loss_func'):
             # loss func.
             #self.c_loss_func = tf.losses.mean_squared_error(labels=self.cumulative_r, predictions=self.value)
-            self.c_loss_func = tf.reduce_mean(tf.square(self.value - self.cumulative_r))
+            self.c_loss_func_arr = tf.square(self.value - self.cumulative_r)
+            self.c_loss_func = tf.reduce_mean(self.c_loss_func_arr)
 
         with tf.variable_scope('actor_loss_func'):
             batch_size = tf.shape(self.a)[0]
@@ -265,9 +284,10 @@ class Agent():
                 ratio = tf.multiply(ratio, tf.exp(tf.log(new_policy_prob) - tf.log(old_policy_prob)))
 
             surr = ratio * self.adv                                 # surrogate loss
-            self.a_loss_func = -tf.reduce_mean(tf.minimum(        # clipped surrogate objective
+            self.a_loss_func_arr = tf.minimum(        # clipped surrogate objective
                 surr,
-                tf.clip_by_value(ratio, 1. - EPSILON*self.lrmult, 1. + EPSILON*self.lrmult) * self.adv))
+                tf.clip_by_value(ratio, 1. - EPSILON*self.lrmult, 1. + EPSILON*self.lrmult) * self.adv)            
+            self.a_loss_func = -tf.reduce_mean(self.a_loss_func_arr)
 
         with tf.variable_scope('kl_distance'):
             self.kl_distance = tf.zeros([1, ], dtype = tf.float32)
@@ -281,18 +301,30 @@ class Agent():
                 p0 = ea0 / z0
                 self.kl_distance += tf.reduce_sum(p0 * (a0 - tf.log(z0) - a1 + tf.log(z1)), axis=-1)
 
-        with tf.variable_scope('policy_entropy'):
-            self.policy_entropy = tf.zeros([1, ], dtype = tf.float32)
+        with tf.variable_scope('policy_entropy'):            
+            self.policy_entropy_arr = tf.zeros([BATCH_SIZE, ], dtype = tf.float32)
             for idx in range(self.policy_head_num):
                 a0 = self.a_policy_logits_new[idx] - tf.reduce_max(self.a_policy_logits_new[idx] , axis=-1, keepdims=True)
                 ea0 = tf.exp(a0)
                 z0 = tf.reduce_sum(ea0, axis=-1, keepdims=True)
                 p0 = ea0 / z0
-                self.policy_entropy += tf.reduce_mean(tf.reduce_sum(p0 * (tf.log(z0) - a0), axis=-1))
-
+                self.policy_entropy_arr += tf.reduce_sum(p0 * (tf.log(z0) - a0), axis=-1)
+                
+            self.policy_entropy = tf.reduce_mean(self.policy_entropy_arr)
 
         with tf.variable_scope('optimizer'):
-            self.total_loss = self.a_loss_func + self.c_loss_func - 0.01*self.policy_entropy
+            
+            
+            if g_enable_per:          
+                self.total_loss_arr = -self.a_loss_func_arr + self.c_loss_func_arr - 0.01*self.policy_entropy_arr
+                self.total_loss_arr = tf.multiply(self.total_loss_arr, self.importance_sample_arr_pl)
+                self.total_loss = tf.reduce_mean(self.total_loss_arr)
+            else:
+                self.total_loss = self.a_loss_func + self.c_loss_func - 0.01*self.policy_entropy 
+            '''
+            self.total_loss_arr = self.a_loss_func_arr + self.c_loss_func_arr - 0.01*self.policy_entropy_arr
+            self.total_loss = self.a_loss_func + self.c_loss_func - 0.01*self.policy_entropy 
+            '''
             learning_rate = self.learning_rate * self.lrmult
             # Passing global_step to minimize() will increment it at each step.
             self.optimizer = tf.train.AdamOptimizer(learning_rate).minimize(self.total_loss)
@@ -424,10 +456,11 @@ class Agent():
         elif actions[0] == 3:
             # skill 1 attack
             actions[1] = -1
+            #actions[2] = -1
         elif actions[0] == 4:
             # skill 2 attack
             actions[1] = -1
-            actions[2] = -1 
+            actions[2] = -1        
         elif actions[0] == 5:
             # skill 3 attack
             actions[1] = -1
@@ -440,6 +473,65 @@ class Agent():
             print('Action predict wrong:{}'.format(actions[0]))
 
         return actions, value
+    
+    def do_per_sample(self, atarg, draw_count, alpha):        
+        total_sample_num = len(atarg)
+
+        distribution = np.power(np.absolute(atarg), alpha)
+        dist_sum = np.sum(distribution)
+        normalized_dist = distribution / dist_sum
+        indices = np.random.choice(range(total_sample_num), draw_count, p=normalized_dist, replace=False)
+
+        return indices, normalized_dist
+    #    pass
+
+    def learn_one_traj_per(self, timestep, ob, ac, atarg, tdlamret, seg, train_writer, beta):
+        global g_step
+        self.session.run(self.update_policy_net_op)
+
+        loss_sum_arr = np.ones([len(ob)], dtype=np.float) * 10.0      
+
+        lrmult = max(1.0 - float(timestep) / self.num_total_steps, .0)
+
+        Entropy_list = []
+        KL_distance_list = []
+        bigN = len(ob)
+        draw_count = bigN//BATCH_SIZE
+        loop_count = EPOCH_NUM * draw_count
+        for _idx in range(loop_count):            
+            indices, distribution = self.do_per_sample(loss_sum_arr, BATCH_SIZE, g_per_alpha)
+            #indices, distribution = self.do_per_sample(atarg, BATCH_SIZE, 1)
+            # Update importance sample coefficiency
+            _is_beta = beta
+            self.importance_sample_arr = np.power(distribution * bigN, -_is_beta)
+
+            temp_indices = indices
+            batch_is_val = self.importance_sample_arr[temp_indices]
+            batch_is_val /= np.max(batch_is_val)
+            # Minimize loss.
+            loss_val, _, entropy, kl_distance, summary_new_val, summary_old_val = self.session.run([self.total_loss_arr, self.optimizer, self.policy_entropy, self.kl_distance, self.summary_new, self.summary_old], {
+                self.lrmult : lrmult,
+                self.adv: atarg[temp_indices],
+                self.s: ob[temp_indices],
+                self.a: ac[temp_indices],
+                self.cumulative_r: tdlamret[temp_indices],
+                self.importance_sample_arr_pl: batch_is_val,
+            })
+
+            loss_sum_arr[temp_indices] = np.absolute(loss_val) + 1e-5
+            
+            if g_out_tb and _idx == loop_count - 1:
+                g_step += 1
+                train_writer.add_summary(summary_new_val, g_step)
+                train_writer.add_summary(summary_old_val, g_step)
+
+            Entropy_list.append(entropy)
+            KL_distance_list.append(kl_distance)
+
+        self.lenbuffer.extend(seg["ep_lens"])
+        self.rewbuffer.extend(seg["ep_rets"])
+        self.unclipped_rewbuffer.extend(seg["ep_unclipped_rets"])
+        return np.mean(Entropy_list), np.mean(KL_distance_list)
 
     def learn_one_traj(self, timestep, ob, ac, atarg, tdlamret, seg, train_writer):
         global g_step
@@ -477,7 +569,7 @@ class Agent():
 
 
 
-def learn(num_steps=NUM_STEPS):
+def learn(start_anew, num_steps=NUM_STEPS):
     global g_step
     g_step = 0
     session = tf.Session()
@@ -490,17 +582,22 @@ def learn(num_steps=NUM_STEPS):
     train_writer = tf.summary.FileWriter('summary_log_gerry', graph=tf.get_default_graph()) 
 
     saver = tf.train.Saver(max_to_keep=1)
-    model_file=tf.train.latest_checkpoint('ckpt/')
-    if model_file != None:
-        saver.restore(session,model_file)
+    if False == start_anew:
+        model_file=tf.train.latest_checkpoint('ckpt/')
+        if model_file != None:
+            saver.restore(session,model_file)
 
-    _save_frequency = 10
+    _save_frequency = 50
     max_rew = -1000000
     for timestep in range(num_steps):
         ob, ac, atarg, tdlamret, seg = data_generator.get_one_step_data()
-        entropy, kl_distance = agent.learn_one_traj(timestep, ob, ac, atarg, tdlamret, seg, train_writer)
+        if g_enable_per:
+            is_beta = 0.4 + (timestep / num_steps) * 0.6
+            entropy, kl_distance = agent.learn_one_traj_per(timestep, ob, ac, atarg, tdlamret, seg, train_writer, is_beta)
+        else:
+            entropy, kl_distance = agent.learn_one_traj(timestep, ob, ac, atarg, tdlamret, seg, train_writer)
         max_rew = max(max_rew, np.max(agent.unclipped_rewbuffer))
-        if timestep % _save_frequency == 0:
+        if (timestep+1) % _save_frequency == 0:
             saver.save(session,'ckpt/mnist.ckpt', global_step=g_step)
             tf.saved_model.simple_save(session,
                         "./model/model_{}".format(g_step),
@@ -568,16 +665,19 @@ def play_game_with_saved_model():
 
 
 if __name__=='__main__':
-     
-    global g_out_tb
-    g_out_tb = False
-    is_train = True
+    bb = {1:'a', 2:'b', 3:'c'}
+    #print(list(bb))
+    a = list(map(lambda x: math.pow(x, -2), range(1, 10)))
+    for val in a:
+        print(val)
+    print(a)
+
     try:
         # Write control file
         root_folder = os.path.split(os.path.abspath(__file__))[0]
         ctrl_file_path = '{}/ctrl.txt'.format(root_folder)
         file_handle = open(ctrl_file_path, 'w')
-        if is_train:
+        if g_is_train:
             file_handle.write('1')
         else:
             file_handle.write('0')
@@ -586,7 +686,8 @@ if __name__=='__main__':
     except:
         pass	  
 
-    if is_train:
-        learn()
+    if g_is_train:
+        # True means start a new train task without loading previous model.
+        learn(True)
     else:
         play_game_with_saved_model()

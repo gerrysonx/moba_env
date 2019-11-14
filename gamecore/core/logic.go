@@ -151,7 +151,7 @@ func (game *Game) Init() {
 
 	game.BattleUnits = []BaseFunc{}
 
-	game.Testcase4(100)
+	game.Testcase4(60)
 	// game.Testcase1()
 }
 
@@ -284,8 +284,10 @@ func (game *Game) HandleMultiAction(action_code_0 int, action_code_1 int, action
 		// Set skill target
 	case 4:
 		// skill 2
-		offset_x = float32(0)
-		offset_y = float32(0)
+		dir := ConvertNum2Dir(action_code_2)
+		offset_x = dir[0]
+		offset_y = dir[1]
+		game.DefaultHero.UseSkill(1, offset_x, offset_y)
 	case 5:
 		// skill 3
 		offset_x = float32(0)
