@@ -531,6 +531,15 @@ class Agent():
         self.lenbuffer.extend(seg["ep_lens"])
         self.rewbuffer.extend(seg["ep_rets"])
         self.unclipped_rewbuffer.extend(seg["ep_unclipped_rets"])
+
+        summary0 = tf.Summary()
+        summary0.value.add(tag='EpLenMean', simple_value=np.mean(self.lenbuffer))
+        train_writer.add_summary(summary0, g_step)
+
+        summary1 = tf.Summary()
+        summary1.value.add(tag='UnClippedEpRewMean', simple_value=np.mean(self.unclipped_rewbuffer))
+        train_writer.add_summary(summary1, g_step)
+
         return np.mean(Entropy_list), np.mean(KL_distance_list)
 
     def learn_one_traj(self, timestep, ob, ac, atarg, tdlamret, seg, train_writer):
@@ -592,7 +601,7 @@ def learn(start_anew, num_steps=NUM_STEPS):
     for timestep in range(num_steps):
         ob, ac, atarg, tdlamret, seg = data_generator.get_one_step_data()
         if g_enable_per:
-            is_beta = 0.4 + (timestep / num_steps) * 0.6
+            is_beta = g_is_beta_start + (timestep / num_steps) * (g_is_beta_end - g_is_beta_start)
             entropy, kl_distance = agent.learn_one_traj_per(timestep, ob, ac, atarg, tdlamret, seg, train_writer, is_beta)
         else:
             entropy, kl_distance = agent.learn_one_traj(timestep, ob, ac, atarg, tdlamret, seg, train_writer)
