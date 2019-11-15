@@ -35,14 +35,19 @@ RANDOM_START_STEPS = 4
 
 global g_step
 
+# Save model in pb format
+g_save_pb_model = False
+
 # Control if output to tensorboard
 g_out_tb = True
 
 # Control if train or play
 g_is_train = True
+# True means start a new train task without loading previous model.
+g_start_anew = True
 
 # Control if use priority sampling
-g_enable_per = True 
+g_enable_per = False 
 g_per_alpha = 1
 g_is_beta_start = 0.4
 g_is_beta_end = 1
@@ -224,9 +229,7 @@ class Agent():
         self._init_nn()
         self._init_op()
 
-        self.session.run(tf.global_variables_initializer())
-
-        
+        self.session.run(tf.global_variables_initializer())        
         
 
     def _init_input(self, *args):
@@ -532,14 +535,6 @@ class Agent():
         self.rewbuffer.extend(seg["ep_rets"])
         self.unclipped_rewbuffer.extend(seg["ep_unclipped_rets"])
 
-        summary0 = tf.Summary()
-        summary0.value.add(tag='EpLenMean', simple_value=np.mean(self.lenbuffer))
-        train_writer.add_summary(summary0, g_step)
-
-        summary1 = tf.Summary()
-        summary1.value.add(tag='UnClippedEpRewMean', simple_value=np.mean(self.unclipped_rewbuffer))
-        train_writer.add_summary(summary1, g_step)
-
         return np.mean(Entropy_list), np.mean(KL_distance_list)
 
     def learn_one_traj(self, timestep, ob, ac, atarg, tdlamret, seg, train_writer):
@@ -564,7 +559,7 @@ class Agent():
                     self.cumulative_r: tdlamret[temp_indices],
                 })
                 g_step += 1
-                if g_out_tb:
+                if g_out_tb and i == 0:
                     train_writer.add_summary(summary_new_val, g_step)
                     train_writer.add_summary(summary_old_val, g_step)
 
@@ -578,7 +573,7 @@ class Agent():
 
 
 
-def learn(start_anew, num_steps=NUM_STEPS):
+def learn(num_steps=NUM_STEPS):
     global g_step
     g_step = 0
     session = tf.Session()
@@ -591,7 +586,7 @@ def learn(start_anew, num_steps=NUM_STEPS):
     train_writer = tf.summary.FileWriter('summary_log_gerry', graph=tf.get_default_graph()) 
 
     saver = tf.train.Saver(max_to_keep=1)
-    if False == start_anew:
+    if False == g_start_anew:
         model_file=tf.train.latest_checkpoint('ckpt/')
         if model_file != None:
             saver.restore(session,model_file)
@@ -605,13 +600,23 @@ def learn(start_anew, num_steps=NUM_STEPS):
             entropy, kl_distance = agent.learn_one_traj_per(timestep, ob, ac, atarg, tdlamret, seg, train_writer, is_beta)
         else:
             entropy, kl_distance = agent.learn_one_traj(timestep, ob, ac, atarg, tdlamret, seg, train_writer)
+
         max_rew = max(max_rew, np.max(agent.unclipped_rewbuffer))
         if (timestep+1) % _save_frequency == 0:
             saver.save(session,'ckpt/mnist.ckpt', global_step=g_step)
-            tf.saved_model.simple_save(session,
+            if g_save_pb_model:
+                tf.saved_model.simple_save(session,
                         "./model/model_{}".format(g_step),
                         inputs={"input_state":agent.s},
                         outputs={"output_policy_0": agent.a_policy_new[0], "output_policy_1": agent.a_policy_new[1], "output_policy_2": agent.a_policy_new[2], "output_value":agent.value})            
+        
+        summary0 = tf.Summary()
+        summary0.value.add(tag='EpLenMean', simple_value=np.mean(agent.lenbuffer))
+        train_writer.add_summary(summary0, g_step)
+
+        summary1 = tf.Summary()
+        summary1.value.add(tag='UnClippedEpRewMean', simple_value=np.mean(agent.unclipped_rewbuffer))
+        train_writer.add_summary(summary1, g_step)
 
         print('Timestep:', timestep,
             "\tEpLenMean:", '%.3f'%np.mean(agent.lenbuffer),
@@ -696,7 +701,6 @@ if __name__=='__main__':
         pass	  
 
     if g_is_train:
-        # True means start a new train task without loading previous model.
-        learn(True)
+        learn(num_steps=1000)
     else:
         play_game_with_saved_model()
