@@ -47,9 +47,9 @@ g_is_train = True
 g_start_anew = True
 
 # Control if use priority sampling
-g_enable_per = False 
-g_per_alpha = 1
-g_is_beta_start = 0.4
+g_enable_per = True 
+g_per_alpha = 0
+g_is_beta_start = 1
 g_is_beta_end = 1
 
 def stable_softmax(logits, name): 
@@ -546,9 +546,10 @@ class Agent():
         Entropy_list = []
         KL_distance_list = []
 
-        for _ in range(EPOCH_NUM):
+        for _idx in range(EPOCH_NUM):
             indices = np.random.permutation(len(ob))
-            for i in range(len(ob)//BATCH_SIZE):
+            inner_loop_count = (len(ob)//BATCH_SIZE)
+            for i in range(inner_loop_count):
                 temp_indices = indices[i*BATCH_SIZE : (i+1)*BATCH_SIZE]
                 # Minimize loss.
                 _, entropy, kl_distance, summary_new_val, summary_old_val = self.session.run([self.optimizer, self.policy_entropy, self.kl_distance, self.summary_new, self.summary_old], {
@@ -558,8 +559,9 @@ class Agent():
                     self.a: ac[temp_indices],
                     self.cumulative_r: tdlamret[temp_indices],
                 })
-                g_step += 1
-                if g_out_tb and i == 0:
+                
+                if g_out_tb and i == (inner_loop_count - 1) and _idx == (EPOCH_NUM -1):
+                    g_step += 1
                     train_writer.add_summary(summary_new_val, g_step)
                     train_writer.add_summary(summary_old_val, g_step)
 
@@ -701,6 +703,6 @@ if __name__=='__main__':
         pass	  
 
     if g_is_train:
-        learn(num_steps=1000)
+        learn(num_steps=500)
     else:
         play_game_with_saved_model()

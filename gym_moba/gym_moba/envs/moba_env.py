@@ -25,9 +25,9 @@ class MobaEnv(gym.Env):
 	def __init__(self):
 		# Create process, and communicate with std
 		is_train = True
+		root_folder = os.path.split(os.path.abspath(__file__))[0]
 		try:
-			# Read control file
-			root_folder = os.path.split(os.path.abspath(__file__))[0]
+			# Read control file			
 			ctrl_file_path = '{}/../../../ctrl.txt'.format(root_folder)
 			file_handle = open(ctrl_file_path, 'r')
 			ctrl_str = file_handle.read()
@@ -45,7 +45,8 @@ class MobaEnv(gym.Env):
 			manual_str = '-manual_enemy=true'
 		my_env = os.environ.copy()
 		my_env['TF_CPP_MIN_LOG_LEVEL'] = '3'
-		self.proc = subprocess.Popen(['/home/gerrysun/work/ml-prjs/go-lang/moba/moba_env/gamecore/gamecore', 
+		gamecore_file_path = '{}/../../../gamecore/gamecore'.format(root_folder)
+		self.proc = subprocess.Popen([gamecore_file_path, 
 								'-render=false', '-gym_mode=true', '-debug_log=false', manual_str],
 								stdin=subprocess.PIPE,
 								stdout=subprocess.PIPE,

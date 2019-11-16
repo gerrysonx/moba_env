@@ -37,10 +37,11 @@ func main() {
 	core.GameInst = core.Game{}
 	core.GameInst.Init()
 	core.GameInst.ManualCtrlEnemy = *_manual_enemy
-
-	render.RendererInst = render.Renderer{}
-	render.RendererInst.InitRenderEnv(&core.GameInst)
-	defer render.RendererInst.Release()
+	if *_run_render {
+		render.RendererInst = render.Renderer{}
+		render.RendererInst.InitRenderEnv(&core.GameInst)
+		defer render.RendererInst.Release()
+	}
 
 	now := time.Now()
 	_before_tick_time := float64(now.UnixNano()) / 1e9
