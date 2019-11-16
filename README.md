@@ -27,5 +27,5 @@ execute command in terminal:`go get github.com/tensorflow/tensorflow/tensorflow/
 ## Usage:
 1. Enter gamecore folder, run:`go build ./`  
 1. Under moba_env folder, run:`pip install -e gym_moba --user`  
-1. Enter gym_moba/gym_moba/envs, edit moba_env.py, change subprocess.Popen gamecore path to your local compiled gamecore folder.  
+1. export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib.  
 1. Under moba_env folder, run python3 ../ppo.py, if you want to play the game, just change the is_train = False in main function.  
