@@ -47,7 +47,7 @@ g_is_train = True
 g_start_anew = True
 
 # Control if use priority sampling
-g_enable_per = True 
+g_enable_per = False 
 g_per_alpha = 0
 g_is_beta_start = 1
 g_is_beta_end = 1
@@ -459,11 +459,11 @@ class Agent():
         elif actions[0] == 3:
             # skill 1 attack
             actions[1] = -1
-            #actions[2] = -1
+            actions[2] = -1
         elif actions[0] == 4:
             # skill 2 attack
             actions[1] = -1
-            actions[2] = -1        
+            #actions[2] = -1        
         elif actions[0] == 5:
             # skill 3 attack
             actions[1] = -1

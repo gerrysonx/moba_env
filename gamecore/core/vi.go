@@ -79,7 +79,7 @@ func (hero *Vi) Tick(gap_time float64) {
 	targetPos := hero.TargetPos()
 	dist := vec3.Distance(&pos, &targetPos)
 	pos_ready := false
-	if dist < 20 {
+	if dist < 4 {
 		// Already the last milestone
 		pos_ready = true
 	}
@@ -143,6 +143,7 @@ func (hero *Vi) UseSkill(skill_idx uint8, a ...interface{}) {
 	game := &GameInst
 	switch skill_idx {
 	case 0:
+		return
 		// Check CD
 		now_seconds := game.LogicTime
 		skill_0_use_freq := float64(2)
@@ -201,7 +202,6 @@ func (hero *Vi) UseSkill(skill_idx uint8, a ...interface{}) {
 		}
 
 	case 1:
-		return
 		// Overdrive
 		// Slow direction
 		now_seconds := game.LogicTime

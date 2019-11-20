@@ -11,12 +11,27 @@ import (
 )
 
 type BattleField struct {
-	CurrentTime float64
-	Map         image.Image
-	Bounds      image.Rectangle
-	Width       int32
-	Height      int32
-	Lanes       [2][3][]vec3.T
+	CurrentTime  float64
+	Map          image.Image
+	Bounds       image.Rectangle
+	Width        int32
+	Height       int32
+	Lanes        [2][3][]vec3.T
+	Restricted_x float32
+	Restricted_y float32
+	Restricted_w float32
+	Restricted_h float32
+}
+
+func (battle_field *BattleField) Within(pos_x float32, pos_y float32) bool {
+	if pos_x > battle_field.Restricted_x &&
+		pos_x < battle_field.Restricted_x+battle_field.Restricted_w &&
+		pos_y > battle_field.Restricted_y &&
+		pos_y < battle_field.Restricted_y+battle_field.Restricted_h {
+		return true
+	}
+
+	return false
 }
 
 func (battle_field *BattleField) LoadMap(filename string) []BaseFunc {

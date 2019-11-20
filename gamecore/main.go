@@ -17,7 +17,7 @@ func main() {
 	_run_render := flag.Bool("render", true, "a bool")
 	_input_gap_time := flag.Float64("input_gap", 0.1, "")
 	_manual_enemy := flag.Bool("manual_enemy", false, "a bool")
-	_gym_mode := flag.Bool("gym_mode", true, "a bool")
+	_gym_mode := flag.Bool("gym_mode", false, "a bool")
 	_debug_log := flag.Bool("debug_log", false, "a bool")
 	file_handle, _err := os.Create("mobacore.log")
 	if _err != nil {
@@ -68,7 +68,7 @@ func main() {
 				// core.LogBytes(file_handle, game_state_str)
 				fmt.Printf("%d@%s\n", _action_stamp, game_state_str)
 				fmt.Scanf("%d\n", &action_code)
-				//action_code = 36864
+				//action_code = 4352
 				_action_stamp = action_code >> 16
 
 				action_code_0 = (action_code >> 12) & 0xf

@@ -104,7 +104,7 @@ func InitHeroWithCamp(hero_unit HeroFunc, camp int32, pos_x float32, pos_y float
 func ConvertNum2Dir(action_code int) (dir vec3.T) {
 	offset_x := float32(0)
 	offset_y := float32(0)
-	const_val := float32(100)
+	const_val := float32(5)
 
 	switch action_code {
 	case 0: // do nothing

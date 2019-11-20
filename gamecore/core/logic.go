@@ -146,12 +146,12 @@ func (game *Game) Testcase4(center_area_width int) {
 
 func (game *Game) Init() {
 	game.LogicTime = 0
-	game.BattleField = &BattleField{}
+	game.BattleField = &BattleField{Restricted_x: 100, Restricted_y: 100, Restricted_w: 800, Restricted_h: 800}
 	// map_units := game.BattleField.LoadMap("./map/3_corridors.png")
 
 	game.BattleUnits = []BaseFunc{}
 
-	game.Testcase4(60)
+	game.Testcase4(200)
 	// game.Testcase1()
 }
 
@@ -270,7 +270,15 @@ func (game *Game) HandleMultiAction(action_code_0 int, action_code_1 int, action
 		dir := ConvertNum2Dir(action_code_1)
 		offset_x = dir[0]
 		offset_y = dir[1]
-		game.DefaultHero.SetTargetPos(float32(cur_pos[0]+offset_x), float32(cur_pos[1]+offset_y))
+		target_pos_x := float32(cur_pos[0] + offset_x)
+		target_pos_y := float32(cur_pos[1] + offset_y)
+		// Check self position
+		// game.DefaultHero.SetTargetPos(target_pos_x, target_pos_y)
+		is_target_within := game.BattleField.Within(target_pos_x, target_pos_y)
+		if is_target_within {
+			game.DefaultHero.SetTargetPos(target_pos_x, target_pos_y)
+		}
+
 	case 2:
 		// normal attack
 		offset_x = float32(0)

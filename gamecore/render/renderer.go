@@ -505,7 +505,7 @@ func update_health_bar_pos(vertice []float32, x_new float32, y_new float32, unit
 
 func update_dir_vert(vertice []float32, x_dir float32, y_dir float32, x_src float32, y_src float32) {
 	var scale_val float32
-	scale_val = 30.0
+	scale_val = -30.0
 	vertice[0] = x_src + x_dir*scale_val
 	vertice[1] = y_src + y_dir*scale_val
 
