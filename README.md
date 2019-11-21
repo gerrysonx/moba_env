@@ -29,3 +29,7 @@ execute command in terminal:`go get github.com/tensorflow/tensorflow/tensorflow/
 1. Under moba_env folder, run:`pip install -e gym_moba --user`  
 1. export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib.  
 1. Under moba_env folder, run python3 ../ppo.py, if you want to play the game, just change the is_train = False in main function.  
+1. To modify test skill, please make modification as follows:   
+in vi.go file, 'UseSkill' function, enable your tuning skill, disable other skills by short return   
+in ppo_multihead.py file, 'predict' function, disable the direction mask of your tuning skill by commenting the 'actions[2] = -1' line, while maintaining masks of other skills.   
+
