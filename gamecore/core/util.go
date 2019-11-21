@@ -42,7 +42,7 @@ func CanAttackEnemy(unit BaseFunc, enemy_pos *vec3.T) bool {
 
 }
 
-func CheckEnemyOnDir(position *vec3.T, dir *vec3.T) (bool, BaseFunc) {
+func CheckUnitOnDir(position *vec3.T, dir *vec3.T) (bool, BaseFunc) {
 	game := GameInst
 
 	for _, v := range game.BattleUnits {
@@ -54,6 +54,25 @@ func CheckEnemyOnDir(position *vec3.T, dir *vec3.T) (bool, BaseFunc) {
 		unit_dir := unit_pos.Sub(position)
 		angle := vec3.Angle(unit_dir, dir)
 		if angle < float32(0.3) {
+			return true, v
+		}
+	}
+
+	return false, nil
+}
+
+func CheckEnemyOnDir(my_camp int32, position *vec3.T, dir *vec3.T) (bool, BaseFunc) {
+	game := GameInst
+
+	for _, v := range game.BattleUnits {
+		if _, ok := v.(*Bullet); ok {
+			continue
+		}
+
+		unit_pos := v.Position()
+		unit_dir := unit_pos.Sub(position)
+		angle := vec3.Angle(unit_dir, dir)
+		if angle < float32(0.3) && v.Camp() != my_camp {
 			return true, v
 		}
 	}
@@ -104,7 +123,7 @@ func InitHeroWithCamp(hero_unit HeroFunc, camp int32, pos_x float32, pos_y float
 func ConvertNum2Dir(action_code int) (dir vec3.T) {
 	offset_x := float32(0)
 	offset_y := float32(0)
-	const_val := float32(5)
+	const_val := float32(20)
 
 	switch action_code {
 	case 0: // do nothing

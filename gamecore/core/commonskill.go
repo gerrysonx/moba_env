@@ -7,10 +7,10 @@ import (
 	"github.com/ungerik/go3d/vec3"
 )
 
-type SkillTargetCallback func(hero HeroFunc, dir vec3.T)
+type SkillTargetCallback func(unit BaseFunc, dir vec3.T)
 type SkillTarget struct {
 	trigger_time float64
-	hero         HeroFunc
+	hero         BaseFunc
 	dir          vec3.T
 	callback     SkillTargetCallback
 }
@@ -55,10 +55,16 @@ func ChainDamage(dir vec3.T, src_pos vec3.T, camp int32, distance float32, damag
 }
 
 func AlterUnitPosition(dir vec3.T, move_unit BaseFunc, distance float32) {
+	game := GameInst
+
 	offset := dir.Scale(distance)
 	old_pos := move_unit.Position()
 	new_pos := old_pos.Add(offset)
-	move_unit.SetPosition(*new_pos)
+	// Check if new_pos is within restriction area, if not shall fail
+	is_target_within := game.BattleField.Within(new_pos[0], new_pos[1])
+	if is_target_within {
+		move_unit.SetPosition(*new_pos)
+	}
 }
 
 func AoEDamage(src_pos vec3.T, radius float32, camp int32, damage float32) {

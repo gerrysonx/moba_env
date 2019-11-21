@@ -48,8 +48,8 @@ g_start_anew = True
 
 # Control if use priority sampling
 g_enable_per = False 
-g_per_alpha = 0
-g_is_beta_start = 1
+g_per_alpha = 0.6
+g_is_beta_start = 0.4
 g_is_beta_end = 1
 
 def stable_softmax(logits, name): 
@@ -148,7 +148,7 @@ class Data_Generator():
             cur_ep_ret += rew
             cur_ep_unclipped_ret += unclipped_rew
             cur_ep_len += 1
-            if new or step_info > 300:
+            if new or step_info > 600:
                 if False:#cur_ep_unclipped_ret == 0:
                     pass
                 else:
@@ -463,11 +463,11 @@ class Agent():
         elif actions[0] == 4:
             # skill 2 attack
             actions[1] = -1
-            #actions[2] = -1        
+            actions[2] = -1        
         elif actions[0] == 5:
             # skill 3 attack
             actions[1] = -1
-            actions[2] = -1
+            #actions[2] = -1
         elif actions[0] == 6:
             # skill 4 attack
             actions[1] = -1
@@ -703,6 +703,6 @@ if __name__=='__main__':
         pass	  
 
     if g_is_train:
-        learn(num_steps=500)
+        learn(num_steps=2000)
     else:
         play_game_with_saved_model()

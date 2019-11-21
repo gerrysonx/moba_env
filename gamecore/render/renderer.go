@@ -505,9 +505,9 @@ func update_health_bar_pos(vertice []float32, x_new float32, y_new float32, unit
 
 func update_dir_vert(vertice []float32, x_dir float32, y_dir float32, x_src float32, y_src float32) {
 	var scale_val float32
-	scale_val = -30.0
-	vertice[0] = x_src + x_dir*scale_val
-	vertice[1] = y_src + y_dir*scale_val
+	scale_val = 20.0
+	vertice[0] = x_src + x_dir*(scale_val+10)
+	vertice[1] = y_src + y_dir*(scale_val+10)
 
 	vertice[5] = x_src + y_dir*scale_val
 	vertice[6] = y_src - x_dir*scale_val
@@ -604,9 +604,9 @@ func (renderer *Renderer) Render() {
 
 				// Draw hero direction
 				var dir vec3.T
-				hero_func := f0.(core.HeroFunc)
-				dir[0] = hero_func.TargetPos()[0] - f0.Position()[0]
-				dir[1] = hero_func.TargetPos()[1] - f0.Position()[1]
+
+				dir[0] = f0.Direction()[0]
+				dir[1] = f0.Direction()[1]
 				dir.Normalize()
 				update_dir_vert(renderer.vert_hero_dir, dir[0], dir[1], f0.Position()[0], f0.Position()[1])
 				// 完成够别忘了告诉OpenGL我们不再需要它了

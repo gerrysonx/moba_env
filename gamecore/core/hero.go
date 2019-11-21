@@ -17,8 +17,9 @@ type HeroFunc interface {
 
 type Hero struct {
 	BaseInfo
-	targetpos      vec3.T
-	skilltargetpos vec3.T
+	targetpos         vec3.T
+	skilltargetpos    vec3.T
+	skillusefrequency [4]float64
 }
 
 func (baseinfo *Hero) SetTargetPos(x float32, y float32) {

@@ -146,12 +146,12 @@ func (game *Game) Testcase4(center_area_width int) {
 
 func (game *Game) Init() {
 	game.LogicTime = 0
-	game.BattleField = &BattleField{Restricted_x: 100, Restricted_y: 100, Restricted_w: 800, Restricted_h: 800}
+	game.BattleField = &BattleField{Restricted_x: 200, Restricted_y: 200, Restricted_w: 600, Restricted_h: 600}
 	// map_units := game.BattleField.LoadMap("./map/3_corridors.png")
 
 	game.BattleUnits = []BaseFunc{}
 
-	game.Testcase4(200)
+	game.Testcase4(60)
 	// game.Testcase1()
 }
 
@@ -298,12 +298,16 @@ func (game *Game) HandleMultiAction(action_code_0 int, action_code_1 int, action
 		game.DefaultHero.UseSkill(1, offset_x, offset_y)
 	case 5:
 		// skill 3
-		offset_x = float32(0)
-		offset_y = float32(0)
+		dir := ConvertNum2Dir(action_code_2)
+		offset_x = dir[0]
+		offset_y = dir[1]
+		game.DefaultHero.UseSkill(2, offset_x, offset_y)
 	case 6:
 		// extra skill
-		offset_x = float32(0)
-		offset_y = float32(0)
+		dir := ConvertNum2Dir(action_code_2)
+		offset_x = dir[0]
+		offset_y = dir[1]
+		game.DefaultHero.UseSkill(3, offset_x, offset_y)
 
 	case 9:
 		game.Init()

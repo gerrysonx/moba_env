@@ -136,29 +136,30 @@ func (hero *Vi) Init(a ...interface{}) BaseFunc {
 	pos_x := a[1].(float32)
 	pos_y := a[2].(float32)
 	InitHeroWithCamp(hero, wanted_camp, pos_x, pos_y)
+	hero.skillusefrequency[0] = 2
+	hero.skillusefrequency[1] = 2
+	hero.skillusefrequency[2] = 2
+	hero.skillusefrequency[3] = 2
 	return hero
 }
 
 func (hero *Vi) UseSkill(skill_idx uint8, a ...interface{}) {
 	game := &GameInst
+	// Check CD
+	now_seconds := game.LogicTime
+	if (hero.LastSkillUseTime(skill_idx) + hero.skillusefrequency[skill_idx]) > now_seconds {
+		return
+	}
+
+	hero.SetLastSkillUseTime(skill_idx, now_seconds)
+
 	switch skill_idx {
 	case 0:
 		return
-		// Check CD
-		now_seconds := game.LogicTime
-		skill_0_use_freq := float64(2)
-		if (hero.LastSkillUseTime(0) + skill_0_use_freq) > now_seconds {
-			// Cannot use yet
-			//		fmt.Printf("Cannot use skill, cos CD end time not yet come.time:%v \n", now_seconds)
-			return
-		}
-		//	fmt.Printf("Skill released.time:%v \n", now_seconds)
-		hero.SetLastSkillUseTime(0, now_seconds)
 
 		// Clear skilltarget pos
 		// Check if has more parameters
-		callback := func(hero HeroFunc, dir vec3.T) {
-			unit := hero.(BaseFunc)
+		callback := func(unit BaseFunc, dir vec3.T) {
 			ChainDamage(dir, unit.Position(), unit.Camp(), 50, 500.0)
 			LogStr(fmt.Sprintf("Dir skill callback is called, dir is:%v, %v", dir[0], dir[1]))
 		}
@@ -202,22 +203,12 @@ func (hero *Vi) UseSkill(skill_idx uint8, a ...interface{}) {
 		}
 
 	case 1:
+		return
 		// Overdrive
 		// Slow direction
-		now_seconds := game.LogicTime
-		skill_1_use_freq := float64(2)
-		if (hero.LastSkillUseTime(1) + skill_1_use_freq) > now_seconds {
-			// Cannot use yet
-			//		fmt.Printf("Cannot use skill, cos CD end time not yet come.time:%v \n", now_seconds)
-			return
-		}
-		//	fmt.Printf("Skill released.time:%v \n", now_seconds)
-		hero.SetLastSkillUseTime(1, now_seconds)
-
 		// Clear skilltarget pos
 		// Check if has more parameters
-		callback := func(hero HeroFunc, dir vec3.T) {
-			unit := hero.(BaseFunc)
+		callback := func(unit BaseFunc, dir vec3.T) {
 			SlowDirection(dir, unit.Position(), unit.Camp(), 100)
 		}
 
@@ -261,12 +252,107 @@ func (hero *Vi) UseSkill(skill_idx uint8, a ...interface{}) {
 
 	case 2:
 		// Power Fist
-		arr := []BaseFunc{hero}
-		AddSpeedBuff(arr, 1)
+		// Self Offset directione
+
+		// Clear skilltarget pos
+		// Check if has more parameters
+		callback := func(unit BaseFunc, dir vec3.T) {
+			AlterUnitPosition(dir, unit, 60)
+		}
+
+		has_more_params := len(a) > 0
+
+		LogStr(fmt.Sprintf("UseSkill 2 is called, has_more_params:%v, now_seconds:%v", has_more_params, now_seconds))
+
+		if has_more_params {
+			pos_x := a[0].(float32)
+			pos_y := a[1].(float32)
+
+			skill_target := SkillTarget{}
+			skill_target.callback = callback
+			skill_target.trigger_time = 0
+			skill_target.hero = hero
+			skill_target.dir[0] = pos_x
+			skill_target.dir[1] = pos_y
+			skill_target.dir.Normalize()
+			game.AddTarget(skill_target)
+			LogStr(fmt.Sprintf("UseSkill 2, AddTarget dir skill, dir is:%v, %v", pos_x, pos_y))
+		} else {
+			// UI mode, we're waiting for mouse to be pressed.
+			hero.SetSkillTargetPos(0, 0)
+			go func(hero *Vi) {
+				for {
+					time.Sleep(time.Duration(0.5 * float64(time.Second)))
+					// Wait for left button click to select position
+					skill_target_pos := hero.SkillTargetPos()
+					if skill_target_pos[0] != 0 || skill_target_pos[1] != 0 {
+						// Use skill
+						var dir vec3.T
+						dir[0] = skill_target_pos[0] - hero.Position()[0]
+						dir[1] = skill_target_pos[1] - hero.Position()[1]
+						dir.Normalize()
+						callback(hero, dir)
+						break
+					}
+				}
+			}(hero)
+		}
 	case 3:
+		return
 		// Static Field
-		arr := []BaseFunc{hero}
-		AddSpeedBuff(arr, 1)
+		// Target offset
+
+		// Clear skilltarget pos
+		// Check if has more parameters
+		callback := func(unit BaseFunc, dir vec3.T) {
+			AlterUnitPosition(dir, unit, 100)
+		}
+
+		has_more_params := len(a) > 0
+
+		LogStr(fmt.Sprintf("UseSkill 2 is called, has_more_params:%v, now_seconds:%v", has_more_params, now_seconds))
+
+		if has_more_params {
+			pos_x := a[0].(float32)
+			pos_y := a[1].(float32)
+
+			skill_target := SkillTarget{}
+			skill_target.callback = callback
+			skill_target.trigger_time = 0
+			skill_target.dir[0] = pos_x
+			skill_target.dir[1] = pos_y
+			// Find the target hero along the direction
+			my_pos := hero.Position()
+			_find, _enemy := CheckEnemyOnDir(hero.Camp(), &my_pos, &skill_target.dir)
+
+			if _find {
+				skill_target.hero = _enemy
+
+				skill_target.dir.Normalize()
+				game.AddTarget(skill_target)
+				LogStr(fmt.Sprintf("UseSkill 2, AddTarget dir skill, dir is:%v, %v", pos_x, pos_y))
+			}
+
+		} else {
+			// UI mode, we're waiting for mouse to be pressed.
+			hero.SetSkillTargetPos(0, 0)
+			go func(hero *Vi) {
+				for {
+					time.Sleep(time.Duration(0.5 * float64(time.Second)))
+					// Wait for left button click to select position
+					skill_target_pos := hero.SkillTargetPos()
+					if skill_target_pos[0] != 0 || skill_target_pos[1] != 0 {
+						// Use skill
+						var dir vec3.T
+						dir[0] = skill_target_pos[0] - hero.Position()[0]
+						dir[1] = skill_target_pos[1] - hero.Position()[1]
+						dir.Normalize()
+						callback(hero, dir)
+						break
+					}
+				}
+			}(hero)
+		}
 	}
 
 }

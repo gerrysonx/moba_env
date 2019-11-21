@@ -89,9 +89,7 @@ func (hero *Jinx) Tick(gap_time float64) {
 			dir := unscaled_dir.Scaled(float32(gap_time))
 			dir = dir.Scaled(float32(hero.speed))
 			newPos := vec3.Add(&pos, &dir)
-			targetPos := vec3.Add(&pos, &unscaled_dir)
 			hero.SetPosition(newPos)
-			hero.SetTargetPos(targetPos[0], targetPos[1])
 		}
 
 	} else {
