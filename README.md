@@ -32,4 +32,7 @@ execute command in terminal:`go get github.com/tensorflow/tensorflow/tensorflow/
 1. To modify test skill, please make modification as follows:   
 in vi.go file, 'UseSkill' function, enable your tuning skill, disable other skills by short return   
 in ppo_multihead.py file, 'predict' function, disable the direction mask of your tuning skill by commenting the 'actions[2] = -1' line, while maintaining masks of other skills.   
+1. To manually control agent to defeat enemy, please edit main.go file, modify this line as follows(set _gym_mode to false):   
+_gym_mode := flag.Bool("gym_mode", false, "a bool")   
+Control tips:Left mouse button = set move target, Right mouse button = set skill target, when using skill, you need to press key 1 or 2 or 3 or 4 first(correspond to skill 1, 2, 3, 4), then press right mouse button to set skill target direction
 
