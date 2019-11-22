@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"time"
 
 	"github.com/ungerik/go3d/vec3"
 )
@@ -145,6 +144,7 @@ type BaseFunc interface {
 
 	AddBuff(idx int32, buff *Buff)
 	DelBuff(idx int32)
+	GetBuff(idx int32) *Buff
 
 	Tick(gap_time float64)
 	Init(a ...interface{}) BaseFunc
@@ -254,14 +254,17 @@ func (baseinfo *BaseInfo) DealSpeed(percentage float32) bool {
 }
 
 func (baseinfo *BaseInfo) AddBuff(idx int32, buff *Buff) {
+	game := &GameInst
 	baseinfo.buffs[idx] = buff
-	now := time.Now()
-	buff.addTime = float64(now.UnixNano()) / 1e9
-
+	buff.addTime = game.LogicTime
 }
 
 func (baseinfo *BaseInfo) DelBuff(idx int32) {
 	baseinfo.buffs[idx] = nil
+}
+
+func (baseinfo *BaseInfo) GetBuff(idx int32) *Buff {
+	return baseinfo.buffs[idx]
 }
 
 type JsonInfo struct {

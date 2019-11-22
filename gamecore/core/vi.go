@@ -159,7 +159,11 @@ func (hero *Vi) UseSkill(skill_idx uint8, a ...interface{}) {
 
 		// Clear skilltarget pos
 		// Check if has more parameters
-		callback := func(unit BaseFunc, dir vec3.T) {
+		callback := func(skill_target *SkillTarget) {
+			var unit BaseFunc
+			var dir vec3.T
+			unit = skill_target.hero
+			dir = skill_target.dir
 			ChainDamage(dir, unit.Position(), unit.Camp(), 50, 500.0)
 			LogStr(fmt.Sprintf("Dir skill callback is called, dir is:%v, %v", dir[0], dir[1]))
 		}
@@ -168,13 +172,14 @@ func (hero *Vi) UseSkill(skill_idx uint8, a ...interface{}) {
 
 		LogStr(fmt.Sprintf("UseSkill is called, has_more_params:%v, now_seconds:%v", has_more_params, now_seconds))
 
+		skill_target := SkillTarget{}
+		skill_target.callback = callback
+		skill_target.trigger_time = 0
+
 		if has_more_params {
 			pos_x := a[0].(float32)
 			pos_y := a[1].(float32)
 
-			skill_target := SkillTarget{}
-			skill_target.callback = callback
-			skill_target.trigger_time = 0
 			skill_target.hero = hero
 			skill_target.dir[0] = pos_x
 			skill_target.dir[1] = pos_y
@@ -191,11 +196,11 @@ func (hero *Vi) UseSkill(skill_idx uint8, a ...interface{}) {
 					skill_target_pos := hero.SkillTargetPos()
 					if skill_target_pos[0] != 0 || skill_target_pos[1] != 0 {
 						// Use skill
-						var dir vec3.T
-						dir[0] = skill_target_pos[0] - hero.Position()[0]
-						dir[1] = skill_target_pos[1] - hero.Position()[1]
-						dir.Normalize()
-						callback(hero, dir)
+						skill_target.dir[0] = skill_target_pos[0] - hero.Position()[0]
+						skill_target.dir[1] = skill_target_pos[1] - hero.Position()[1]
+						skill_target.dir.Normalize()
+						skill_target.hero = hero
+						callback(&skill_target)
 						break
 					}
 				}
@@ -208,7 +213,11 @@ func (hero *Vi) UseSkill(skill_idx uint8, a ...interface{}) {
 		// Slow direction
 		// Clear skilltarget pos
 		// Check if has more parameters
-		callback := func(unit BaseFunc, dir vec3.T) {
+		callback := func(skill_target *SkillTarget) {
+			var unit BaseFunc
+			var dir vec3.T
+			unit = skill_target.hero
+			dir = skill_target.dir
 			SlowDirection(dir, unit.Position(), unit.Camp(), 100)
 		}
 
@@ -216,13 +225,14 @@ func (hero *Vi) UseSkill(skill_idx uint8, a ...interface{}) {
 
 		LogStr(fmt.Sprintf("UseSkill 1 is called, has_more_params:%v, now_seconds:%v", has_more_params, now_seconds))
 
+		skill_target := SkillTarget{}
+		skill_target.callback = callback
+		skill_target.trigger_time = 0
+
 		if has_more_params {
 			pos_x := a[0].(float32)
 			pos_y := a[1].(float32)
 
-			skill_target := SkillTarget{}
-			skill_target.callback = callback
-			skill_target.trigger_time = 0
 			skill_target.hero = hero
 			skill_target.dir[0] = pos_x
 			skill_target.dir[1] = pos_y
@@ -239,11 +249,11 @@ func (hero *Vi) UseSkill(skill_idx uint8, a ...interface{}) {
 					skill_target_pos := hero.SkillTargetPos()
 					if skill_target_pos[0] != 0 || skill_target_pos[1] != 0 {
 						// Use skill
-						var dir vec3.T
-						dir[0] = skill_target_pos[0] - hero.Position()[0]
-						dir[1] = skill_target_pos[1] - hero.Position()[1]
-						dir.Normalize()
-						callback(hero, dir)
+						skill_target.dir[0] = skill_target_pos[0] - hero.Position()[0]
+						skill_target.dir[1] = skill_target_pos[1] - hero.Position()[1]
+						skill_target.dir.Normalize()
+						skill_target.hero = hero
+						callback(&skill_target)
 						break
 					}
 				}
@@ -257,7 +267,11 @@ func (hero *Vi) UseSkill(skill_idx uint8, a ...interface{}) {
 
 		// Clear skilltarget pos
 		// Check if has more parameters
-		callback := func(unit BaseFunc, dir vec3.T) {
+		callback := func(skill_target *SkillTarget) {
+			var unit BaseFunc
+			var dir vec3.T
+			unit = skill_target.hero
+			dir = skill_target.dir
 			AlterUnitPosition(dir, unit, 60)
 		}
 
@@ -265,13 +279,14 @@ func (hero *Vi) UseSkill(skill_idx uint8, a ...interface{}) {
 
 		LogStr(fmt.Sprintf("UseSkill 2 is called, has_more_params:%v, now_seconds:%v", has_more_params, now_seconds))
 
+		skill_target := SkillTarget{}
+		skill_target.callback = callback
+		skill_target.trigger_time = 0
+
 		if has_more_params {
 			pos_x := a[0].(float32)
 			pos_y := a[1].(float32)
 
-			skill_target := SkillTarget{}
-			skill_target.callback = callback
-			skill_target.trigger_time = 0
 			skill_target.hero = hero
 			skill_target.dir[0] = pos_x
 			skill_target.dir[1] = pos_y
@@ -288,11 +303,11 @@ func (hero *Vi) UseSkill(skill_idx uint8, a ...interface{}) {
 					skill_target_pos := hero.SkillTargetPos()
 					if skill_target_pos[0] != 0 || skill_target_pos[1] != 0 {
 						// Use skill
-						var dir vec3.T
-						dir[0] = skill_target_pos[0] - hero.Position()[0]
-						dir[1] = skill_target_pos[1] - hero.Position()[1]
-						dir.Normalize()
-						callback(hero, dir)
+						skill_target.dir[0] = skill_target_pos[0] - hero.Position()[0]
+						skill_target.dir[1] = skill_target_pos[1] - hero.Position()[1]
+						skill_target.dir.Normalize()
+						skill_target.hero = hero
+						callback(&skill_target)
 						break
 					}
 				}
@@ -305,7 +320,11 @@ func (hero *Vi) UseSkill(skill_idx uint8, a ...interface{}) {
 
 		// Clear skilltarget pos
 		// Check if has more parameters
-		callback := func(unit BaseFunc, dir vec3.T) {
+		callback := func(skill_target *SkillTarget) {
+			var unit BaseFunc
+			var dir vec3.T
+			unit = skill_target.hero
+			dir = skill_target.dir
 			AlterUnitPosition(dir, unit, 100)
 		}
 
@@ -313,13 +332,14 @@ func (hero *Vi) UseSkill(skill_idx uint8, a ...interface{}) {
 
 		LogStr(fmt.Sprintf("UseSkill 3 is called, has_more_params:%v, now_seconds:%v", has_more_params, now_seconds))
 
+		skill_target := SkillTarget{}
+		skill_target.callback = callback
+		skill_target.trigger_time = 0
+
 		if has_more_params {
 			pos_x := a[0].(float32)
 			pos_y := a[1].(float32)
 
-			skill_target := SkillTarget{}
-			skill_target.callback = callback
-			skill_target.trigger_time = 0
 			skill_target.dir[0] = pos_x
 			skill_target.dir[1] = pos_y
 			// Find the target hero along the direction
@@ -344,16 +364,17 @@ func (hero *Vi) UseSkill(skill_idx uint8, a ...interface{}) {
 					skill_target_pos := hero.SkillTargetPos()
 					if skill_target_pos[0] != 0 || skill_target_pos[1] != 0 {
 						// Use skill
-						var dir vec3.T
-						dir[0] = skill_target_pos[0] - hero.Position()[0]
-						dir[1] = skill_target_pos[1] - hero.Position()[1]
-						dir.Normalize()
+						skill_target.dir[0] = skill_target_pos[0] - hero.Position()[0]
+						skill_target.dir[1] = skill_target_pos[1] - hero.Position()[1]
+						skill_target.dir.Normalize()
+
 						my_pos := hero.Position()
-						_find, _enemy := CheckEnemyOnDir(hero.Camp(), &my_pos, &dir)
+						_find, _enemy := CheckEnemyOnDir(hero.Camp(), &my_pos, &skill_target.dir)
 
 						if _find {
-							callback(_enemy, dir)
-							LogStr(fmt.Sprintf("UseSkill 3, AddTarget dir skill, dir is:%v, %v", dir[0], dir[1]))
+							skill_target.hero = _enemy
+							callback(&skill_target)
+							LogStr(fmt.Sprintf("UseSkill 3, AddTarget dir skill, dir is:%v, %v", skill_target.dir[0], skill_target.dir[1]))
 						}
 
 						break

@@ -650,7 +650,7 @@ func (renderer *Renderer) Render() {
 				// Draw hero health
 				gl.Uniform3f(colorUniform, 1, 0, 1)
 				// Draw hero full health
-				health_ratio := f0.Health() / 350
+				health_ratio := f0.Health() / f0.MaxHealth()
 				half_bar_width := float32(25)
 				update_health_bar_pos(renderer.vert_bullet, f0.Position()[0]-(1-health_ratio)*half_bar_width, f0.Position()[1], half_bar_width*health_ratio)
 				// 完成够别忘了告诉OpenGL我们不再需要它了

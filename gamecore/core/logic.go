@@ -179,7 +179,7 @@ func (game *Game) GetGameState(reverse bool) []float32 {
 		oppo_unit = game.OppoHero.(BaseFunc)
 	}
 
-	game_state := make([]float32, 6)
+	game_state := make([]float32, 8)
 	game_state[0] = self_unit.Position()[0]/1000.0 - 0.5
 	game_state[1] = self_unit.Position()[1]/1000.0 - 0.5
 	game_state[2] = self_unit.Health()/self_unit.MaxHealth() - 0.5
@@ -188,6 +188,8 @@ func (game *Game) GetGameState(reverse bool) []float32 {
 	game_state[4] = oppo_unit.Position()[1]/1000.0 - 0.5
 	game_state[5] = oppo_unit.Health()/oppo_unit.MaxHealth() - 0.5
 
+	game_state[6] = oppo_unit.Health()/oppo_unit.MaxHealth() - 0.5
+	game_state[7] = oppo_unit.Health()/oppo_unit.MaxHealth() - 0.5
 	return game_state
 }
 
@@ -246,7 +248,7 @@ func (game *Game) Tick(gap_time float64) {
 	var temp_arr2 []SkillTarget
 	for _, v := range game.skill_targets {
 		if v.trigger_time < game.LogicTime {
-			v.callback(v.hero, v.dir)
+			v.callback(&v)
 		} else {
 			temp_arr2 = append(temp_arr2, v)
 		}

@@ -7,17 +7,20 @@ import (
 	"github.com/ungerik/go3d/vec3"
 )
 
-type SkillTargetCallback func(unit BaseFunc, dir vec3.T)
+type SkillTargetCallback func(*SkillTarget)
 type SkillTarget struct {
 	trigger_time float64
 	hero         BaseFunc
 	dir          vec3.T
+	val0         float32
+	val1         int32
+	buff         *Buff
 	callback     SkillTargetCallback
 }
 
 func SlowDirection(dir vec3.T, src_pos vec3.T, camp int32, distance float32) {
 	// We shall calculate cos(Theta)
-	game := GameInst
+	game := &GameInst
 	dist := float32(0)
 	for _, v := range game.BattleUnits {
 		unit_pos := v.Position()
@@ -37,7 +40,7 @@ func SlowDirection(dir vec3.T, src_pos vec3.T, camp int32, distance float32) {
 
 func ChainDamage(dir vec3.T, src_pos vec3.T, camp int32, distance float32, damage float32) {
 	// We shall calculate cos(Theta)
-	game := GameInst
+	game := &GameInst
 	dist := float32(0)
 	for _, v := range game.BattleUnits {
 		unit_pos := v.Position()
@@ -55,7 +58,7 @@ func ChainDamage(dir vec3.T, src_pos vec3.T, camp int32, distance float32, damag
 }
 
 func AlterUnitPosition(dir vec3.T, move_unit BaseFunc, distance float32) {
-	game := GameInst
+	game := &GameInst
 
 	offset := dir.Scale(distance)
 	old_pos := move_unit.Position()
@@ -69,7 +72,7 @@ func AlterUnitPosition(dir vec3.T, move_unit BaseFunc, distance float32) {
 
 func AoEDamage(src_pos vec3.T, radius float32, camp int32, damage float32) {
 	// We shall calculate cos(Theta)
-	game := GameInst
+	game := &GameInst
 	dist := float32(0)
 	for _, v := range game.BattleUnits {
 		unit_pos := v.Position()
@@ -82,23 +85,27 @@ func AoEDamage(src_pos vec3.T, radius float32, camp int32, damage float32) {
 }
 
 func AddSpeedBuff(target_units []BaseFunc, buff_id int32) {
+	game := &GameInst
 	for _, v := range target_units {
 		buff := NewBuff(buff_id, v.Speed())
 		v.AddBuff(buff_id, buff)
 		v.DealSpeed(buff.base.Val1)
-		go func(target BaseFunc) {
-			game := GameInst
-			start_time := game.LogicTime
-			for {
-				if game.LogicTime > start_time+buff.base.Life {
-					target.SetSpeed(buff.oldVal)
-					target.DelBuff(buff_id)
-					break
-				}
-				time.Sleep(time.Duration(10 * float64(time.Millisecond)))
-			}
+		// Add callback
+		callback := func(skill_target *SkillTarget) {
+			var unit BaseFunc
+			var oldVal = skill_target.buff.oldVal
+			var buff_id = skill_target.buff.base.Id
+			unit = skill_target.hero
+			unit.SetSpeed(oldVal)
+			unit.DelBuff(buff_id)
+		}
 
-		}(v)
+		skill_target := SkillTarget{}
+		skill_target.callback = callback
+		skill_target.trigger_time = buff.base.Life + buff.addTime
+		skill_target.buff = buff
+		skill_target.hero = v
+		game.AddTarget(skill_target)
 	}
 }
 
@@ -107,7 +114,7 @@ func AddLockBuff(target_units []BaseFunc, buff_id int32) {
 		buff := NewBuff(buff_id)
 		v.AddBuff(buff_id, buff)
 		go func(target BaseFunc) {
-			game := GameInst
+			game := &GameInst
 			start_time := game.LogicTime
 			for {
 				if game.LogicTime > start_time+buff.base.Life {
@@ -125,7 +132,7 @@ func AddDamageProofBuff(target_units []BaseFunc, buff_id int32) {
 		buff := NewBuff(buff_id)
 		v.AddBuff(buff_id, buff)
 		go func(target BaseFunc) {
-			game := GameInst
+			game := &GameInst
 			start_time := game.LogicTime
 			for {
 				if game.LogicTime > start_time+buff.base.Life {
@@ -144,7 +151,7 @@ func AddAttackFreqBuff(target_units []BaseFunc, buff_id int32) {
 		v.AddBuff(buff_id, buff)
 		v.SetAttackFreq(float64(buff.base.Val1))
 		go func(target BaseFunc) {
-			game := GameInst
+			game := &GameInst
 			start_time := game.LogicTime
 			for {
 				if game.LogicTime > start_time+buff.base.Life {

@@ -43,7 +43,7 @@ func CanAttackEnemy(unit BaseFunc, enemy_pos *vec3.T) bool {
 }
 
 func CheckUnitOnDir(position *vec3.T, dir *vec3.T) (bool, BaseFunc) {
-	game := GameInst
+	game := &GameInst
 
 	for _, v := range game.BattleUnits {
 		if _, ok := v.(*Bullet); ok {
@@ -62,7 +62,7 @@ func CheckUnitOnDir(position *vec3.T, dir *vec3.T) (bool, BaseFunc) {
 }
 
 func CheckEnemyOnDir(my_camp int32, position *vec3.T, dir *vec3.T) (bool, BaseFunc) {
-	game := GameInst
+	game := &GameInst
 
 	for _, v := range game.BattleUnits {
 		if _, ok := v.(*Bullet); ok {
@@ -81,7 +81,7 @@ func CheckEnemyOnDir(my_camp int32, position *vec3.T, dir *vec3.T) (bool, BaseFu
 }
 
 func CheckEnemyNearby(camp int32, radius float32, position *vec3.T) (bool, BaseFunc) {
-	game := GameInst
+	game := &GameInst
 	dist := float32(0)
 	for _, v := range game.BattleUnits {
 		if _, ok := v.(*Bullet); ok {
