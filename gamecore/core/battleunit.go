@@ -91,19 +91,20 @@ func NewBuff(buff_id int32, a ...interface{}) *Buff {
 }
 
 type BaseInfo struct {
-	velocity         vec3.T
-	position         vec3.T
-	direction        vec3.T
-	viewRange        float32 // In meters
-	attackRange      float32 // In meters
-	attackFreq       float64 // Time gap between two attacks, in seconds
-	lastAttackTime   float64
-	lastSkillUseTime [4]float64
-	camp             int32 // 0 for camp-1, 1 for camp-2, 2 for neutral
-	health           float32
-	damage           float32
-	speed            float32 // unit is meter per second
-	buffs            map[int32]*Buff
+	velocity            vec3.T
+	position            vec3.T
+	direction           vec3.T
+	view_range          float32 // In meters
+	attack_range        float32 // In meters
+	attack_freq         float64 // Time gap between two attacks, in seconds
+	last_attack_time    float64
+	last_skill_use_time [4]float64
+	camp                int32 // 0 for camp-1, 1 for camp-2, 2 for neutral
+	health              float32
+	max_health          float32
+	damage              float32
+	speed               float32 // unit is meter per second
+	buffs               map[int32]*Buff
 }
 
 type BaseFunc interface {
@@ -131,6 +132,9 @@ type BaseFunc interface {
 
 	Health() float32
 	SetHealth(float32)
+
+	MaxHealth() float32
+	SetMaxHealth(float32)
 
 	Damage() float32
 	SetDamage(damage float32)
@@ -167,36 +171,36 @@ func (baseinfo *BaseInfo) SetDirection(direction vec3.T) {
 }
 
 func (baseinfo *BaseInfo) AttackRange() float32 {
-	return baseinfo.attackRange
+	return baseinfo.attack_range
 }
 
 func (baseinfo *BaseInfo) ViewRange() float32 {
-	return baseinfo.viewRange
+	return baseinfo.view_range
 }
 
 func (baseinfo *BaseInfo) AttackFreq() float64 {
-	return baseinfo.attackFreq
+	return baseinfo.attack_freq
 }
 
 func (baseinfo *BaseInfo) SetAttackFreq(new_freq float64) bool {
-	baseinfo.attackFreq = new_freq
+	baseinfo.attack_freq = new_freq
 	return true
 }
 
 func (baseinfo *BaseInfo) LastAttackTime() float64 {
-	return baseinfo.lastAttackTime
+	return baseinfo.last_attack_time
 }
 
-func (baseinfo *BaseInfo) SetLastAttackTime(lastAttackTime float64) {
-	baseinfo.lastAttackTime = lastAttackTime
+func (baseinfo *BaseInfo) SetLastAttackTime(last_attack_time float64) {
+	baseinfo.last_attack_time = last_attack_time
 }
 
 func (baseinfo *BaseInfo) LastSkillUseTime(skill_idx uint8) float64 {
-	return baseinfo.lastSkillUseTime[skill_idx]
+	return baseinfo.last_skill_use_time[skill_idx]
 }
 
-func (baseinfo *BaseInfo) SetLastSkillUseTime(skill_idx uint8, lastAttackTime float64) {
-	baseinfo.lastSkillUseTime[skill_idx] = lastAttackTime
+func (baseinfo *BaseInfo) SetLastSkillUseTime(skill_idx uint8, last_attack_time float64) {
+	baseinfo.last_skill_use_time[skill_idx] = last_attack_time
 }
 
 func (baseinfo *BaseInfo) Camp() int32 {
@@ -213,6 +217,14 @@ func (baseinfo *BaseInfo) Health() float32 {
 
 func (baseinfo *BaseInfo) SetHealth(newHealth float32) {
 	baseinfo.health = newHealth
+}
+
+func (baseinfo *BaseInfo) MaxHealth() float32 {
+	return baseinfo.max_health
+}
+
+func (baseinfo *BaseInfo) SetMaxHealth(max_health float32) {
+	baseinfo.max_health = max_health
 }
 
 func (baseinfo *BaseInfo) DealDamage(damage float32) bool {
@@ -286,12 +298,13 @@ func (baseinfo *BaseInfo) InitFromJson(cfg_name string) bool {
 	var jsoninfo JsonInfo
 
 	if err = json.Unmarshal(buffer, &jsoninfo); err == nil {
-		baseinfo.attackRange = jsoninfo.AttackRange
-		baseinfo.attackFreq = jsoninfo.AttackFreq
+		baseinfo.attack_range = jsoninfo.AttackRange
+		baseinfo.attack_freq = jsoninfo.AttackFreq
 		baseinfo.health = jsoninfo.Health
+		baseinfo.max_health = jsoninfo.Health
 		baseinfo.damage = jsoninfo.Damage
 		baseinfo.speed = jsoninfo.Speed
-		baseinfo.viewRange = jsoninfo.ViewRange
+		baseinfo.view_range = jsoninfo.ViewRange
 	} else {
 		file_handle.Close()
 		return false

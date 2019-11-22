@@ -113,7 +113,7 @@ func (hero *Jinx) Init(a ...interface{}) BaseFunc {
 	InitHeroWithCamp(hero, wanted_camp, pos_x, pos_y)
 	hero.action_type = 0
 	hero.inference_gap = 0.1
-	hero.lastAttackTime = 0.0
+	hero.SetLastAttackTime(0.0)
 	hero.PrepareInput()
 	return hero
 }

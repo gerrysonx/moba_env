@@ -146,7 +146,7 @@ func (game *Game) Testcase4(center_area_width int) {
 
 func (game *Game) Init() {
 	game.LogicTime = 0
-	game.BattleField = &BattleField{Restricted_x: 200, Restricted_y: 200, Restricted_w: 600, Restricted_h: 600}
+	game.BattleField = &BattleField{Restricted_x: 400, Restricted_y: 400, Restricted_w: 200, Restricted_h: 200}
 	// map_units := game.BattleField.LoadMap("./map/3_corridors.png")
 
 	game.BattleUnits = []BaseFunc{}
@@ -182,11 +182,11 @@ func (game *Game) GetGameState(reverse bool) []float32 {
 	game_state := make([]float32, 6)
 	game_state[0] = self_unit.Position()[0]/1000.0 - 0.5
 	game_state[1] = self_unit.Position()[1]/1000.0 - 0.5
-	game_state[2] = self_unit.Health()/100.0 - 0.5
+	game_state[2] = self_unit.Health()/self_unit.MaxHealth() - 0.5
 
 	game_state[3] = oppo_unit.Position()[0]/1000.0 - 0.5
 	game_state[4] = oppo_unit.Position()[1]/1000.0 - 0.5
-	game_state[5] = oppo_unit.Health()/350.0 - 0.5
+	game_state[5] = oppo_unit.Health()/oppo_unit.MaxHealth() - 0.5
 
 	return game_state
 }
