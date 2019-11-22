@@ -463,11 +463,11 @@ class Agent():
         elif actions[0] == 4:
             # skill 2 attack
             actions[1] = -1
-            actions[2] = -1        
+           # actions[2] = -1        
         elif actions[0] == 5:
             # skill 3 attack
             actions[1] = -1
-            #actions[2] = -1
+            actions[2] = -1
         elif actions[0] == 6:
             # skill 4 attack
             actions[1] = -1

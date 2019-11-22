@@ -203,7 +203,7 @@ func (hero *Vi) UseSkill(skill_idx uint8, a ...interface{}) {
 		}
 
 	case 1:
-		return
+
 		// Overdrive
 		// Slow direction
 		// Clear skilltarget pos
@@ -251,6 +251,7 @@ func (hero *Vi) UseSkill(skill_idx uint8, a ...interface{}) {
 		}
 
 	case 2:
+		return
 		// Power Fist
 		// Self Offset directione
 
@@ -310,7 +311,7 @@ func (hero *Vi) UseSkill(skill_idx uint8, a ...interface{}) {
 
 		has_more_params := len(a) > 0
 
-		LogStr(fmt.Sprintf("UseSkill 2 is called, has_more_params:%v, now_seconds:%v", has_more_params, now_seconds))
+		LogStr(fmt.Sprintf("UseSkill 3 is called, has_more_params:%v, now_seconds:%v", has_more_params, now_seconds))
 
 		if has_more_params {
 			pos_x := a[0].(float32)
@@ -330,7 +331,7 @@ func (hero *Vi) UseSkill(skill_idx uint8, a ...interface{}) {
 
 				skill_target.dir.Normalize()
 				game.AddTarget(skill_target)
-				LogStr(fmt.Sprintf("UseSkill 2, AddTarget dir skill, dir is:%v, %v", pos_x, pos_y))
+				LogStr(fmt.Sprintf("UseSkill 3, AddTarget dir skill, dir is:%v, %v", pos_x, pos_y))
 			}
 
 		} else {
@@ -347,7 +348,14 @@ func (hero *Vi) UseSkill(skill_idx uint8, a ...interface{}) {
 						dir[0] = skill_target_pos[0] - hero.Position()[0]
 						dir[1] = skill_target_pos[1] - hero.Position()[1]
 						dir.Normalize()
-						callback(hero, dir)
+						my_pos := hero.Position()
+						_find, _enemy := CheckEnemyOnDir(hero.Camp(), &my_pos, &dir)
+
+						if _find {
+							callback(_enemy, dir)
+							LogStr(fmt.Sprintf("UseSkill 3, AddTarget dir skill, dir is:%v, %v", dir[0], dir[1]))
+						}
+
 						break
 					}
 				}
