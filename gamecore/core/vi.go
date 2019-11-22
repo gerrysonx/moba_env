@@ -213,12 +213,12 @@ func (hero *Vi) UseSkill(skill_idx uint8, a ...interface{}) {
 		// Slow direction
 		// Clear skilltarget pos
 		// Check if has more parameters
+		skill_dist := float32(100.0)
 		callback := func(skill_target *SkillTarget) {
 			var unit BaseFunc
-			var dir vec3.T
 			unit = skill_target.hero
-			dir = skill_target.dir
-			SlowDirection(dir, unit.Position(), unit.Camp(), 100)
+			AddSpeedBuff([]BaseFunc{unit}, BuffSpeedSlow)
+			LogStr(fmt.Sprintf("SlowDirection is called, AddSpeedBuff calling finished."))
 		}
 
 		has_more_params := len(a) > 0
@@ -232,13 +232,21 @@ func (hero *Vi) UseSkill(skill_idx uint8, a ...interface{}) {
 		if has_more_params {
 			pos_x := a[0].(float32)
 			pos_y := a[1].(float32)
-
-			skill_target.hero = hero
 			skill_target.dir[0] = pos_x
 			skill_target.dir[1] = pos_y
 			skill_target.dir.Normalize()
-			game.AddTarget(skill_target)
-			LogStr(fmt.Sprintf("UseSkill 1, AddTarget dir skill, dir is:%v, %v", pos_x, pos_y))
+			// Find the target hero along the direction
+			my_pos := hero.Position()
+			_find, _enemy := CheckEnemyOnDirWithinDist(hero.Camp(), &my_pos, &skill_target.dir, skill_dist)
+
+			if _find {
+				slow_buff := _enemy.GetBuff(BuffSpeedSlow)
+				if nil == slow_buff {
+					skill_target.hero = _enemy
+					game.AddTarget(skill_target)
+					LogStr(fmt.Sprintf("UseSkill 1, AddTarget dir skill, dir is:%v, %v", pos_x, pos_y))
+				}
+			}
 		} else {
 			// UI mode, we're waiting for mouse to be pressed.
 			hero.SetSkillTargetPos(0, 0)
@@ -252,8 +260,15 @@ func (hero *Vi) UseSkill(skill_idx uint8, a ...interface{}) {
 						skill_target.dir[0] = skill_target_pos[0] - hero.Position()[0]
 						skill_target.dir[1] = skill_target_pos[1] - hero.Position()[1]
 						skill_target.dir.Normalize()
-						skill_target.hero = hero
-						callback(&skill_target)
+
+						my_pos := hero.Position()
+						_find, _enemy := CheckEnemyOnDirWithinDist(hero.Camp(), &my_pos, &skill_target.dir, skill_dist)
+
+						if _find {
+							skill_target.hero = _enemy
+
+							callback(&skill_target)
+						}
 						break
 					}
 				}

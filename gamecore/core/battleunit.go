@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	BuffSpeed      = 0
+	BuffSpeedSlow  = 0
 	BuffHealth     = 1
 	BuffLockSkill  = 2
 	BuffAttackFreq = 3
@@ -66,13 +66,18 @@ func InitBuffConfig(config_file_name string) {
 func NewBuff(buff_id int32, a ...interface{}) *Buff {
 	new_buff := new(Buff)
 	if 0 == len(buff_config_map) {
+		root_dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		buff_config_map = make(map[int32]BuffConfig)
-		InitBuffConfig("./cfg/skills.json")
+		InitBuffConfig(fmt.Sprintf("%s/cfg/skills.json", root_dir))
 	}
 	new_buff.base = buff_config_map[buff_id]
 	buff_type := buff_config_map[buff_id].Type
 	switch buff_type {
-	case BuffSpeed:
+	case BuffSpeedSlow:
 		// Old speed
 		new_buff.oldVal = a[0].(float32)
 
@@ -264,7 +269,12 @@ func (baseinfo *BaseInfo) DelBuff(idx int32) {
 }
 
 func (baseinfo *BaseInfo) GetBuff(idx int32) *Buff {
-	return baseinfo.buffs[idx]
+	value, ok := baseinfo.buffs[idx]
+	if ok {
+		return value
+	} else {
+		return nil
+	}
 }
 
 type JsonInfo struct {

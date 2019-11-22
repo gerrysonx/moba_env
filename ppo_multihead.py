@@ -19,7 +19,7 @@ import math
 
 EPSILON = 0.2
 
-F = 6
+F = 8
 C = 4
 
 NUM_FRAME_PER_ACTION = 4

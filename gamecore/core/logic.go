@@ -2,6 +2,7 @@ package core
 
 import (
 	"encoding/json"
+	"fmt"
 	"math/rand"
 	"time"
 )
@@ -13,7 +14,11 @@ type GameTrainState struct {
 	OppoHeroPosX   float32
 	OppoHeroPosY   float32
 	OppoHeroHealth float32
-	SelfWin        int32
+
+	SlowBuffState      float32
+	SlowBuffRemainTime float32
+
+	SelfWin int32
 }
 
 type Game struct {
@@ -26,8 +31,9 @@ type Game struct {
 	OppoHero        HeroFunc
 	ManualCtrlEnemy bool
 
-	train_state   GameTrainState
-	skill_targets []SkillTarget
+	train_state       GameTrainState
+	skill_targets     []SkillTarget
+	skill_targets_add []SkillTarget
 }
 
 func (game *Game) Testcase1() {
@@ -156,7 +162,7 @@ func (game *Game) Init() {
 }
 
 func (game *Game) AddTarget(target SkillTarget) {
-	game.skill_targets = append(game.skill_targets, target)
+	game.skill_targets_add = append(game.skill_targets_add, target)
 }
 
 func (game *Game) HandleInput() {
@@ -188,8 +194,15 @@ func (game *Game) GetGameState(reverse bool) []float32 {
 	game_state[4] = oppo_unit.Position()[1]/1000.0 - 0.5
 	game_state[5] = oppo_unit.Health()/oppo_unit.MaxHealth() - 0.5
 
-	game_state[6] = oppo_unit.Health()/oppo_unit.MaxHealth() - 0.5
-	game_state[7] = oppo_unit.Health()/oppo_unit.MaxHealth() - 0.5
+	slow_buff_state := 0.0
+	slow_buff := oppo_unit.GetBuff(BuffSpeedSlow)
+	slow_buff_remain_time_ratio := 0.0
+	if slow_buff != nil {
+		slow_buff_state = 1.0
+		slow_buff_remain_time_ratio = (slow_buff.base.Life + slow_buff.addTime - game.LogicTime) / slow_buff.base.Life
+	}
+	game_state[6] = float32(slow_buff_state - 0.5)
+	game_state[7] = float32(slow_buff_remain_time_ratio - 0.5)
 	return game_state
 }
 
@@ -205,6 +218,21 @@ func (game *Game) DumpGameState() []byte {
 		game.train_state.OppoHeroPosX = oppo_unit.Position()[0]
 		game.train_state.OppoHeroPosY = oppo_unit.Position()[1]
 		game.train_state.OppoHeroHealth = oppo_unit.Health()
+		slow_buff_state := 0.0
+		slow_buff := oppo_unit.GetBuff(BuffSpeedSlow)
+		slow_buff_remain_time_ratio := 0.0
+		if slow_buff != nil {
+			slow_buff_state = 1.0
+			if slow_buff.base.Life == 0 {
+				// slow_buff_remain_time_ratio = 0.777
+				// panic("slow_buff.base.Life shouldn't be 0")
+				LogStr(fmt.Sprintf("slow_buff.base.Life == 0 when dumping game state, buff_id:%v, val1:%v", slow_buff.base.Id, slow_buff.base.Val1))
+			} else {
+				slow_buff_remain_time_ratio = (slow_buff.base.Life + slow_buff.addTime - game.LogicTime) / slow_buff.base.Life
+			}
+		}
+		game.train_state.SlowBuffState = float32(slow_buff_state)
+		game.train_state.SlowBuffRemainTime = float32(slow_buff_remain_time_ratio)
 
 	} else {
 		if self_unit.Health() <= 0 {
@@ -216,6 +244,7 @@ func (game *Game) DumpGameState() []byte {
 
 	e, err := json.Marshal(game.train_state)
 	if err != nil {
+		return []byte(fmt.Sprintf("Marshal train_state failed.%v", game.train_state))
 
 	}
 
@@ -253,6 +282,9 @@ func (game *Game) Tick(gap_time float64) {
 			temp_arr2 = append(temp_arr2, v)
 		}
 	}
+
+	temp_arr2 = append(temp_arr2, game.skill_targets_add...)
+	game.skill_targets_add = []SkillTarget{}
 	game.skill_targets = temp_arr2
 
 }

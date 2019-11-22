@@ -31,7 +31,7 @@ func SlowDirection(dir vec3.T, src_pos vec3.T, camp int32, distance float32) {
 			target_dir.Normalize()
 			if vec3.Angle(target_dir, &dir) < 0.35 {
 				// Means the direction is almost the same
-				AddSpeedBuff([]BaseFunc{v}, 0)
+				AddSpeedBuff([]BaseFunc{v}, BuffSpeedSlow)
 				LogStr(fmt.Sprintf("SlowDirection is called, target_dir:%v", target_dir))
 			}
 		}
@@ -98,11 +98,13 @@ func AddSpeedBuff(target_units []BaseFunc, buff_id int32) {
 			unit = skill_target.hero
 			unit.SetSpeed(oldVal)
 			unit.DelBuff(buff_id)
+			LogStr(fmt.Sprintf("SlowDirection reset is called, buff_id:%v", buff_id))
 		}
 
 		skill_target := SkillTarget{}
 		skill_target.callback = callback
 		skill_target.trigger_time = buff.base.Life + buff.addTime
+		LogStr(fmt.Sprintf("SlowDirection AddSpeedBuff is called, trigger_time:%v, buff.base.Life:%v", skill_target.trigger_time, buff.base.Life))
 		skill_target.buff = buff
 		skill_target.hero = v
 		game.AddTarget(skill_target)

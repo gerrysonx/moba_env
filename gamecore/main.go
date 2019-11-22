@@ -83,6 +83,9 @@ func main() {
 			}
 
 			if false == *_gym_mode {
+				game_state_str := core.GameInst.DumpGameState()
+				// core.LogBytes(file_handle, game_state_str)
+				fmt.Printf("%d@%s\n", _action_stamp, game_state_str)
 				gap_time_in_nanoseconds := *_target_frame_gap_time * float64(time.Second)
 				time.Sleep(time.Duration(gap_time_in_nanoseconds))
 			}

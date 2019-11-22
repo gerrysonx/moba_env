@@ -12,7 +12,7 @@ class MobaEnv(gym.Env):
 	def restart_proc(self):
 	#	print('moba_env restart_proc is called.')
 		self.done = False
-		self.state = np.zeros((6,))
+		self.state = np.zeros((8,))
 		self.reward = 0
 		self.info = None
 		self.self_health = 0
@@ -128,10 +128,9 @@ class MobaEnv(gym.Env):
 		self.state[3] = jobj['OppoHeroPosX'] / norm_base - 0.5
 		self.state[4] = jobj['OppoHeroPosY'] / norm_base - 0.5
 		self.state[5] = jobj['OppoHeroHealth'] / self.full_oppo_health - 0.5
-		for idx in range(6):
-			if self.state[idx] > 1:
-				#print('We get val bigger than 1, idx:{}, self.full_self_health:{}'.format(idx, self.full_self_health))
-				self.state[idx] = 1
+
+		self.state[6] = jobj['SlowBuffState']
+		self.state[7] = jobj['SlowBuffRemainTime']
 
 		return self.state, self.reward, self.done, self.step_idx
 
