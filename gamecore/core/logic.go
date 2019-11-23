@@ -156,8 +156,11 @@ func (game *Game) Init() {
 	// map_units := game.BattleField.LoadMap("./map/3_corridors.png")
 
 	game.BattleUnits = []BaseFunc{}
-
+	game.AddUnits = []BaseFunc{}
+	game.skill_targets = []SkillTarget{}
+	game.skill_targets_add = []SkillTarget{}
 	game.Testcase4(60)
+	LogStr(fmt.Sprintf("Game is inited, oppo hero slow buff state:%v", game.OppoHero.(BaseFunc).GetBuff(BuffSpeedSlow)))
 	// game.Testcase1()
 }
 
@@ -201,8 +204,8 @@ func (game *Game) GetGameState(reverse bool) []float32 {
 		slow_buff_state = 1.0
 		slow_buff_remain_time_ratio = (slow_buff.base.Life + slow_buff.addTime - game.LogicTime) / slow_buff.base.Life
 	}
-	game_state[6] = float32(slow_buff_state - 0.5)
-	game_state[7] = float32(slow_buff_remain_time_ratio - 0.5)
+	game_state[6] = float32(slow_buff_state)
+	game_state[7] = float32(slow_buff_remain_time_ratio)
 	return game_state
 }
 
@@ -270,7 +273,7 @@ func (game *Game) Tick(gap_time float64) {
 	for _, v := range game.AddUnits {
 		temp_arr = append(temp_arr, v)
 	}
-	game.AddUnits = game.AddUnits[:0]
+	game.AddUnits = []BaseFunc{}
 	game.BattleUnits = temp_arr
 
 	// Handle skill targets callbacks

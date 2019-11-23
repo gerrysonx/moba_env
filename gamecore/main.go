@@ -19,6 +19,7 @@ func main() {
 	_manual_enemy := flag.Bool("manual_enemy", false, "a bool")
 	_gym_mode := flag.Bool("gym_mode", false, "a bool")
 	_debug_log := flag.Bool("debug_log", false, "a bool")
+	_slow_tick := flag.Bool("slow_tick", true, "a bool")
 	file_handle, _err := os.Create("mobacore.log")
 	if _err != nil {
 		fmt.Println("Create log file failed.")
@@ -79,6 +80,11 @@ func main() {
 				if 9 == action_code_0 {
 					// Instantly output
 					_last_input_time = 0
+				}
+
+				if *_slow_tick {
+					gap_time_in_nanoseconds := *_target_frame_gap_time * float64(time.Second)
+					time.Sleep(time.Duration(gap_time_in_nanoseconds))
 				}
 			}
 

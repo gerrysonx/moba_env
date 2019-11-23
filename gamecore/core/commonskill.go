@@ -96,15 +96,16 @@ func AddSpeedBuff(target_units []BaseFunc, buff_id int32) {
 			var oldVal = skill_target.buff.oldVal
 			var buff_id = skill_target.buff.base.Id
 			unit = skill_target.hero
+			speed_before_change := v.Speed()
 			unit.SetSpeed(oldVal)
 			unit.DelBuff(buff_id)
-			LogStr(fmt.Sprintf("SlowDirection reset is called, buff_id:%v", buff_id))
+			LogStr(fmt.Sprintf("SlowDirection reset is called, buff_id:%v, speed_before_change:%v, after:%v", buff_id, speed_before_change, oldVal))
 		}
 
 		skill_target := SkillTarget{}
 		skill_target.callback = callback
 		skill_target.trigger_time = buff.base.Life + buff.addTime
-		LogStr(fmt.Sprintf("SlowDirection AddSpeedBuff is called, trigger_time:%v, buff.base.Life:%v", skill_target.trigger_time, buff.base.Life))
+		LogStr(fmt.Sprintf("SlowDirection AddSpeedBuff is called, trigger_time:%v, buff.base.Life:%v, now speed:%v", skill_target.trigger_time, buff.base.Life, v.Speed()))
 		skill_target.buff = buff
 		skill_target.hero = v
 		game.AddTarget(skill_target)

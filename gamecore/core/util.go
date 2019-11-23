@@ -137,6 +137,8 @@ func InitHeroWithCamp(hero_unit HeroFunc, camp int32, pos_x float32, pos_y float
 	battle_unit.SetPosition(vec3.T{pos_x, pos_y})
 	hero_unit.SetTargetPos(pos_x, pos_y)
 	battle_unit.SetDirection(vec3.T{0, 0})
+	battle_unit.ClearAllBuff()
+	battle_unit.ClearLastSkillUseTime()
 }
 
 func ConvertNum2Dir(action_code int) (dir vec3.T) {

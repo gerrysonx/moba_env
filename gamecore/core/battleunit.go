@@ -130,6 +130,7 @@ type BaseFunc interface {
 
 	LastSkillUseTime(skill_idx uint8) float64
 	SetLastSkillUseTime(skill_idx uint8, last_use_time float64)
+	ClearLastSkillUseTime()
 
 	Camp() int32 // 0 for camp-1, 1 for camp-2, 2 for neutral
 	SetCamp(int32)
@@ -150,6 +151,7 @@ type BaseFunc interface {
 	AddBuff(idx int32, buff *Buff)
 	DelBuff(idx int32)
 	GetBuff(idx int32) *Buff
+	ClearAllBuff()
 
 	Tick(gap_time float64)
 	Init(a ...interface{}) BaseFunc
@@ -198,6 +200,13 @@ func (baseinfo *BaseInfo) LastAttackTime() float64 {
 
 func (baseinfo *BaseInfo) SetLastAttackTime(last_attack_time float64) {
 	baseinfo.last_attack_time = last_attack_time
+}
+
+func (baseinfo *BaseInfo) ClearLastSkillUseTime() {
+	baseinfo.last_skill_use_time[0] = 0.0
+	baseinfo.last_skill_use_time[1] = 0.0
+	baseinfo.last_skill_use_time[2] = 0.0
+	baseinfo.last_skill_use_time[3] = 0.0
 }
 
 func (baseinfo *BaseInfo) LastSkillUseTime(skill_idx uint8) float64 {
@@ -275,6 +284,10 @@ func (baseinfo *BaseInfo) GetBuff(idx int32) *Buff {
 	} else {
 		return nil
 	}
+}
+
+func (baseinfo *BaseInfo) ClearAllBuff() {
+	baseinfo.buffs = map[int32]*Buff{}
 }
 
 type JsonInfo struct {

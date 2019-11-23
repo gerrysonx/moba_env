@@ -596,12 +596,16 @@ func (renderer *Renderer) Render() {
 
 				colorUniform := gl.GetUniformLocation(renderer.program, gl.Str("camp_color\x00"))
 
-				if f0.Camp() == 0 {
-					gl.Uniform3f(colorUniform, 0, 0.8, 0)
+				slow_buff := f0.GetBuff(core.BuffSpeedSlow)
+				if nil != slow_buff {
+					gl.Uniform3f(colorUniform, 0, 0, 0)
 				} else {
-					gl.Uniform3f(colorUniform, 0.8, 0, 0)
+					if f0.Camp() == 0 {
+						gl.Uniform3f(colorUniform, 0, 0.8, 0)
+					} else {
+						gl.Uniform3f(colorUniform, 0.8, 0, 0)
+					}
 				}
-
 				// Draw hero direction
 				var dir vec3.T
 
