@@ -19,7 +19,7 @@ func main() {
 	_manual_enemy := flag.Bool("manual_enemy", false, "a bool")
 	_gym_mode := flag.Bool("gym_mode", false, "a bool")
 	_debug_log := flag.Bool("debug_log", false, "a bool")
-	_slow_tick := flag.Bool("slow_tick", true, "a bool")
+	_slow_tick := flag.Bool("slow_tick", false, "a bool")
 	file_handle, _err := os.Create("mobacore.log")
 	if _err != nil {
 		fmt.Println("Create log file failed.")

@@ -44,10 +44,10 @@ g_out_tb = True
 # Control if train or play
 g_is_train = True
 # True means start a new train task without loading previous model.
-g_start_anew = True
+g_start_anew = False
 
 # Control if use priority sampling
-g_enable_per = False 
+g_enable_per = False
 g_per_alpha = 0.6
 g_is_beta_start = 0.4
 g_is_beta_end = 1
@@ -463,7 +463,7 @@ class Agent():
         elif actions[0] == 4:
             # skill 2 attack
             actions[1] = -1
-           # actions[2] = -1        
+        #    actions[2] = -1        
         elif actions[0] == 5:
             # skill 3 attack
             actions[1] = -1

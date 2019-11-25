@@ -198,8 +198,9 @@ func (game *Game) GetGameState(reverse bool) []float32 {
 	game_state[5] = oppo_unit.Health()/oppo_unit.MaxHealth() - 0.5
 
 	slow_buff_state := 0.0
-	slow_buff := oppo_unit.GetBuff(BuffSpeedSlow)
 	slow_buff_remain_time_ratio := 0.0
+
+	slow_buff := oppo_unit.GetBuff(BuffSpeedSlow)
 	if slow_buff != nil {
 		slow_buff_state = 1.0
 		slow_buff_remain_time_ratio = (slow_buff.base.Life + slow_buff.addTime - game.LogicTime) / slow_buff.base.Life

@@ -53,6 +53,19 @@ func (hero *Jinx) Tick(gap_time float64) {
 
 					hero.SetLastAttackTime(now_seconds)
 				}
+			} else {
+				// Move towards enemy.
+				// March towards target direction
+				dir_a := enemy.Position()
+				dir_b := hero.Position()
+				dir := vec3.Sub(&dir_a, &dir_b)
+				dir.Normalize()
+				hero.SetDirection(dir)
+
+				dir = dir.Scaled(float32(gap_time))
+				dir = dir.Scaled(float32(hero.speed))
+				newPos := vec3.Add(&pos, &dir)
+				hero.SetPosition(newPos)
 			}
 		} else {
 			// Set new direction accordingly
