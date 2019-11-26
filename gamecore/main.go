@@ -15,7 +15,7 @@ func main() {
 	_target_frame_gap_time := flag.Float64("frame_gap", 0.03, "")
 	_fix_update := flag.Bool("fix_update", true, "a bool")
 	_run_render := flag.Bool("render", true, "a bool")
-	_input_gap_time := flag.Float64("input_gap", 0.1, "")
+	_input_gap_time := flag.Float64("input_gap", 0.2, "")
 	_manual_enemy := flag.Bool("manual_enemy", false, "a bool")
 	_gym_mode := flag.Bool("gym_mode", false, "a bool")
 	_debug_log := flag.Bool("debug_log", false, "a bool")

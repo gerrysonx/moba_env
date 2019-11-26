@@ -302,7 +302,8 @@ func (game *Game) HandleMultiAction(action_code_0 int, action_code_1 int, action
 
 	switch action_code_0 {
 	case 0: // do nothing
-		return
+		// Remain the same position
+		game.DefaultHero.SetTargetPos(cur_pos[0], cur_pos[1])
 	case 1:
 		// move
 		dir := ConvertNum2Dir(action_code_1)
@@ -319,8 +320,8 @@ func (game *Game) HandleMultiAction(action_code_0 int, action_code_1 int, action
 
 	case 2:
 		// normal attack
-		offset_x = float32(0)
-		offset_y = float32(0)
+		// Remain the same position
+		game.DefaultHero.SetTargetPos(cur_pos[0], cur_pos[1])
 	case 3:
 		// skill 1
 		dir := ConvertNum2Dir(action_code_2)

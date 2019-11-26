@@ -29,6 +29,23 @@ func (hero *Jinx) Tick(gap_time float64) {
 	if isEnemyNearby {
 		pos_enemy := enemy.Position()
 
+		// Check enemy and self distance
+		dist := vec3.Distance(&pos_enemy, &pos)
+		if dist < enemy.AttackRange() {
+			// March to the opposite direction of enemy
+			dir_a := enemy.Position()
+			dir_b := hero.Position()
+			dir := vec3.Sub(&dir_b, &dir_a)
+			dir.Normalize()
+			hero.SetDirection(dir)
+
+			dir = dir.Scaled(float32(gap_time))
+			dir = dir.Scaled(float32(hero.speed))
+			newPos := vec3.Add(&pos, &dir)
+			hero.SetPosition(newPos)
+			return
+		}
+
 		// Update hero action type from nn
 		if (hero.last_inference + hero.inference_gap) < float64(now_seconds) {
 			game_state := game.GetGameState(true)

@@ -147,7 +147,8 @@ func (hero *Vi) UseSkill(skill_idx uint8, a ...interface{}) {
 	game := &GameInst
 	// Check CD
 	now_seconds := game.LogicTime
-	if (hero.LastSkillUseTime(skill_idx) + hero.skillusefrequency[skill_idx]) > now_seconds {
+	old_skill_use_time := hero.LastSkillUseTime(skill_idx)
+	if (old_skill_use_time + hero.skillusefrequency[skill_idx]) > now_seconds {
 		return
 	}
 
@@ -207,7 +208,6 @@ func (hero *Vi) UseSkill(skill_idx uint8, a ...interface{}) {
 		}
 
 	case 1:
-
 		// Overdrive
 		// Slow direction
 		// Clear skilltarget pos
@@ -237,14 +237,19 @@ func (hero *Vi) UseSkill(skill_idx uint8, a ...interface{}) {
 			// Find the target hero along the direction
 			my_pos := hero.Position()
 			_find, _enemy := CheckEnemyOnDirWithinDist(hero.Camp(), &my_pos, &skill_target.dir, skill_dist)
-
+			skill_not_used := true
 			if _find {
 				slow_buff := _enemy.GetBuff(BuffSpeedSlow)
 				if nil == slow_buff {
 					skill_target.hero = _enemy
 					game.AddTarget(skill_target)
+					skill_not_used = false
 					LogStr(fmt.Sprintf("UseSkill 1, AddTarget dir skill, dir is:%v, %v", pos_x, pos_y))
 				}
+			}
+
+			if skill_not_used {
+				hero.SetLastSkillUseTime(skill_idx, old_skill_use_time)
 			}
 		} else {
 			// UI mode, we're waiting for mouse to be pressed.

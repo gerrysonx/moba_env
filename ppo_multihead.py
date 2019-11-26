@@ -20,7 +20,7 @@ import math
 EPSILON = 0.2
 
 F = 8
-C = 4
+C = 1
 
 NUM_FRAME_PER_ACTION = 4
 BATCH_SIZE = 64
@@ -223,7 +223,7 @@ class Agent():
         self.restrict_y_max = 0.5
 
         # Full connection layer node size
-        self.layer_size = 32
+        self.layer_size = 128
 
         self._init_input()
         self._init_nn()
@@ -476,7 +476,49 @@ class Agent():
             print('Action predict wrong:{}'.format(actions[0]))
 
         return actions, value
-    
+
+    def greedy_predict(self, s):
+        # Calculate a eval prob.
+        tuple_val = self.session.run([self.value, self.a_policy_new[0], self.a_policy_new[1], self.a_policy_new[2]], feed_dict={self.s: s})
+        value = tuple_val[0]
+        chosen_policy = tuple_val[1:] 
+        #chosen_policy = self.session.run(self.a_policy_new, feed_dict={self.s: s})
+        actions = []
+        for idx in range(self.policy_head_num):            
+            ac = np.argmax(chosen_policy[idx][0])
+            actions.append(ac)
+        if actions[0] == 0:
+            # Stay still
+            actions[1] = -1
+            actions[2] = -1
+        elif actions[0] == 1:
+            # Move
+            actions[2] = -1
+        elif actions[0] == 2:
+            # Normal attack
+            actions[1] = -1
+            actions[2] = -1
+        elif actions[0] == 3:
+            # skill 1 attack
+            actions[1] = -1
+            actions[2] = -1
+        elif actions[0] == 4:
+            # skill 2 attack
+            actions[1] = -1
+        #    actions[2] = -1        
+        elif actions[0] == 5:
+            # skill 3 attack
+            actions[1] = -1
+            actions[2] = -1
+        elif actions[0] == 6:
+            # skill 4 attack
+            actions[1] = -1
+            actions[2] = -1 
+        else:
+            print('Action predict wrong:{}'.format(actions[0]))
+
+        return actions, value
+
     def do_per_sample(self, atarg, draw_count, alpha):        
         total_sample_num = len(atarg)
 
@@ -630,7 +672,9 @@ def learn(num_steps=NUM_STEPS):
 
 def play_game():
     session = tf.Session()
-    agent = Agent(session, 9)
+    action_space_map = {'action':7, 'move':8, 'skill':8}
+    a_space_keys = ['action', 'move', 'skill']
+    agent = Agent(session, action_space_map, a_space_keys)
 
     saver = tf.train.Saver(max_to_keep=1)
     model_file=tf.train.latest_checkpoint('ckpt/')
@@ -642,13 +686,13 @@ def play_game():
     ob = env.reset()
 
     while True:
-        time.sleep(0.05)
-        ac, _ = agent.predict(ob[np.newaxis, ...])
-        print('Predict :{}'.format(tac))
+        time.sleep(0.2)
+        ac, _ = agent.greedy_predict(ob[np.newaxis, ...])
+        print('Predict :{}'.format(ac))
 
-        ob, reward, new, _ = env.step(tac)
+        ob, unclipped_rew, new, _ = env.step(ac)
         if new:
-            print('Game is finishd, reward is:{}'.format(reward))
+            print('Game is finishd, reward is:{}'.format(unclipped_rew))
             ob = env.reset()
 
     pass
@@ -703,6 +747,6 @@ if __name__=='__main__':
         pass	  
 
     if g_is_train:
-        learn(num_steps=2000)
+        learn(num_steps=5000)
     else:
-        play_game_with_saved_model()
+        play_game()

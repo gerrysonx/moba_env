@@ -102,7 +102,7 @@ class MobaEnv(gym.Env):
 					else:
 						self.reward = 1#jobj['SelfWin']
 				else:
-					harm_reward = 0.2
+					harm_reward = 0.002
 					self.reward = 0
 					if self.self_health  > jobj['SelfHeroHealth']:
 						self.reward -= harm_reward
@@ -129,7 +129,7 @@ class MobaEnv(gym.Env):
 		self.state[4] = jobj['OppoHeroPosY'] / norm_base - 0.5
 		self.state[5] = jobj['OppoHeroHealth'] / self.full_oppo_health - 0.5
 
-		self.state[6] = jobj['SlowBuffState']
+		self.state[6] = 0#jobj['SlowBuffState']
 		self.state[7] = jobj['SlowBuffRemainTime']
 
 		return self.state, self.reward, self.done, self.step_idx
