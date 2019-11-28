@@ -150,6 +150,32 @@ func (game *Game) Testcase4(center_area_width int) {
 	game.OppoHero = herobase
 }
 
+func (game *Game) Testcase5(center_area_width int) {
+	var hero_pos [2][2]float32
+	for {
+		now := time.Now()
+		rand.Seed(now.UnixNano())
+		born_area_side_width := center_area_width
+		//min_player_gap := 14.0
+		start_pos := (1000 - born_area_side_width) / 2
+		rand_num_1 := rand.Intn(born_area_side_width)
+		rand_num_2 := rand.Intn(born_area_side_width)
+		rand_num_3 := rand.Intn(born_area_side_width)
+		rand_num_4 := rand.Intn(born_area_side_width)
+		hero_pos[0][0], hero_pos[0][1], hero_pos[1][0], hero_pos[1][1] = float32(start_pos+rand_num_1), float32(start_pos+rand_num_2), float32(start_pos+rand_num_3), float32(start_pos+rand_num_4)
+		break
+	}
+	herobase2 := new(Vayne)
+	hero1 := herobase2.Init(int32(1), hero_pos[0][0], hero_pos[0][1])
+	game.BattleUnits = append(game.BattleUnits, hero1)
+	game.DefaultHero = herobase2
+
+	herobase := new(Lusian)
+	hero0 := herobase.Init(int32(0), hero_pos[1][0], hero_pos[1][1])
+	game.BattleUnits = append(game.BattleUnits, hero0)
+	game.OppoHero = herobase
+}
+
 func (game *Game) Init() {
 	game.LogicTime = 0
 	game.BattleField = &BattleField{Restricted_x: 400, Restricted_y: 400, Restricted_w: 200, Restricted_h: 200}
@@ -159,7 +185,7 @@ func (game *Game) Init() {
 	game.AddUnits = []BaseFunc{}
 	game.skill_targets = []SkillTarget{}
 	game.skill_targets_add = []SkillTarget{}
-	game.Testcase4(60)
+	game.Testcase5(60)
 	LogStr(fmt.Sprintf("Game is inited, oppo hero slow buff state:%v", game.OppoHero.(BaseFunc).GetBuff(BuffSpeedSlow)))
 	// game.Testcase1()
 }

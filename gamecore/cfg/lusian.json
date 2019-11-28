@@ -1,8 +1,8 @@
 {
 	"attackFreq" : 1,
-	"attackRange" : 20,
+	"attackRange" : 60,
 	"viewRange" : 2000,
-	"health" : 550,
+	"health" : 700,
 	"damage" : 50,
-	"speed" : 15
+	"speed" : 40
 }

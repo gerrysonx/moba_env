@@ -12,6 +12,7 @@ type SkillTarget struct {
 	trigger_time float64
 	hero         BaseFunc
 	dir          vec3.T
+	pos          vec3.T
 	val0         float32
 	val1         int32
 	buff         *Buff
