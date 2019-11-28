@@ -34,5 +34,6 @@ in vi.go file, 'UseSkill' function, enable your tuning skill, disable other skil
 in ppo_multihead.py file, 'predict' function, disable the direction mask of your tuning skill by commenting the 'actions[2] = -1' line, while maintaining masks of other skills.   
 1. To manually control agent to defeat enemy, please edit main.go file, modify this line as follows(set _gym_mode to false):   
 _gym_mode := flag.Bool("gym_mode", false, "a bool")   
-Control tips:Left mouse button = set move target, Right mouse button = set skill target, when using skill, you need to press key 1 or 2 or 3 or 4 first(correspond to skill 1, 2, 3, 4), then press right mouse button to set skill target direction
+Control tips:Left mouse button = set move target, Right mouse button = set skill target, when using skill, you need to press key 1 or 2 or 3 or 4 first(correspond to skill 1, 2, 3, 4), then press right mouse button to set skill target direction   
+1. If you want to slow down the training in order to view the agent learning process clearly, you can modify moba_env.py, change `-slow_tick=false` to `-slow_tick=true`    
 
