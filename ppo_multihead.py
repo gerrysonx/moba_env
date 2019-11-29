@@ -43,6 +43,7 @@ g_out_tb = True
 
 # Control if train or play
 g_is_train = True
+g_manual_ctrl_enemy = False
 # True means start a new train task without loading previous model.
 g_start_anew = True
 
@@ -484,7 +485,7 @@ class Agent():
         chosen_policy = tuple_val[1:] 
         #chosen_policy = self.session.run(self.a_policy_new, feed_dict={self.s: s})
         actions = []
-        for idx in range(self.policy_head_num):            
+        for idx in range(self.policy_head_num):
             ac = np.argmax(chosen_policy[idx][0])
             actions.append(ac)
         if actions[0] == 0:
@@ -505,7 +506,7 @@ class Agent():
         elif actions[0] == 4:
             # skill 2 attack
             actions[1] = -1
-        #    actions[2] = -1        
+            actions[2] = -1        
         elif actions[0] == 5:
             # skill 3 attack
             actions[1] = -1
@@ -513,7 +514,7 @@ class Agent():
         elif actions[0] == 6:
             # skill 4 attack
             actions[1] = -1
-            actions[2] = -1 
+        #    actions[2] = -1 
         else:
             print('Action predict wrong:{}'.format(actions[0]))
 
@@ -685,13 +686,17 @@ def play_game():
     
     ob = env.reset()
 
+    steps = 0
+
     while True:
+        steps += 1
         time.sleep(0.2)
         ac, _ = agent.greedy_predict(ob[np.newaxis, ...])
         print('Predict :{}'.format(ac))
 
         ob, unclipped_rew, new, _ = env.step(ac)
         if new:
+            steps = 0
             print('Game is finishd, reward is:{}'.format(unclipped_rew))
             ob = env.reset()
 
@@ -737,10 +742,10 @@ if __name__=='__main__':
         root_folder = os.path.split(os.path.abspath(__file__))[0]
         ctrl_file_path = '{}/ctrl.txt'.format(root_folder)
         file_handle = open(ctrl_file_path, 'w')
-        if g_is_train:
-            file_handle.write('1')
-        else:
+        if g_manual_ctrl_enemy:
             file_handle.write('0')
+        else:
+            file_handle.write('1')
 
         file_handle.close()
     except:

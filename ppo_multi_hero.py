@@ -42,7 +42,7 @@ g_save_pb_model = False
 g_out_tb = True
 
 # Control if train or play
-g_is_train = True
+g_is_train = False
 # True means start a new train task without loading previous model.
 g_start_anew = False
 
@@ -501,11 +501,11 @@ class Agent():
         elif actions[0] == 3:
             # skill 1 attack
             actions[1] = -1
-            actions[2] = -1
+        #    actions[2] = -1
         elif actions[0] == 4:
             # skill 2 attack
             actions[1] = -1
-        #    actions[2] = -1        
+            actions[2] = -1        
         elif actions[0] == 5:
             # skill 3 attack
             actions[1] = -1
@@ -513,7 +513,7 @@ class Agent():
         elif actions[0] == 6:
             # skill 4 attack
             actions[1] = -1
-            actions[2] = -1 
+        #    actions[2] = -1 
         else:
             print('Action predict wrong:{}'.format(actions[0]))
 

@@ -29,9 +29,9 @@ func (hero *Lusian) Tick(gap_time float64) {
 	if isEnemyNearby {
 		pos_enemy := enemy.Position()
 
-		isEnemyCanAttack := CanAttackEnemy(hero, &pos_enemy)
+		canAttack := CanAttackEnemy(hero, &pos_enemy)
 
-		if isEnemyCanAttack {
+		if canAttack {
 			// Check if time to make hurt
 			if (hero.LastAttackTime() + hero.AttackFreq()) < float64(now_seconds) {
 				// Make damage
@@ -47,11 +47,23 @@ func (hero *Lusian) Tick(gap_time float64) {
 
 		// Check enemy and self distance
 		dist := vec3.Distance(&pos_enemy, &pos)
-		if dist < enemy.AttackRange() {
+		dir_a := enemy.Position()
+		dir_b := hero.Position()
+		var dir vec3.T
+		need_move := true
+		if dist > enemy.AttackRange() {
+			if canAttack == false {
+				// March towards enemy
+				dir = vec3.Sub(&dir_a, &dir_b)
+			} else {
+				need_move = false
+			}
+		} else {
 			// March to the opposite direction of enemy
-			dir_a := enemy.Position()
-			dir_b := hero.Position()
-			dir := vec3.Sub(&dir_b, &dir_a)
+			dir = vec3.Sub(&dir_b, &dir_a)
+		}
+
+		if need_move {
 			dir.Normalize()
 			hero.SetDirection(dir)
 
@@ -59,8 +71,9 @@ func (hero *Lusian) Tick(gap_time float64) {
 			dir = dir.Scaled(float32(hero.speed))
 			newPos := vec3.Add(&pos, &dir)
 			hero.SetPosition(newPos)
-			return
 		}
+
+		return
 
 		// Update hero action type from nn
 		if (hero.last_inference + hero.inference_gap) < float64(now_seconds) {

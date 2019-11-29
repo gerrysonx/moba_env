@@ -200,6 +200,7 @@ func (hero *Vayne) GrabEnemyAtNose(a ...interface{}) {
 
 					if _find {
 						skill_target.hero = _enemy
+						skill_target.pos = my_pos
 						callback(&skill_target)
 						LogStr(fmt.Sprintf("UseSkill 3, AddTarget dir skill, dir is:%v, %v", skill_target.dir[0], skill_target.dir[1]))
 					}
@@ -278,7 +279,12 @@ func (hero *Vayne) PushEnemyAway(a ...interface{}) {
 	}
 }
 
-func (hero *Vayne) DoBigHarm(a ...interface{}) {
+func (hero *Vayne) DoStompHarm() {
+
+	AoEDamage(hero.Position(), 20, hero.Camp(), 500.0)
+}
+
+func (hero *Vayne) DoDirHarm(a ...interface{}) {
 	game := &GameInst
 	// Clear skilltarget pos
 	// Check if has more parameters
@@ -345,7 +351,7 @@ func (hero *Vayne) UseSkill(skill_idx uint8, a ...interface{}) {
 
 	switch skill_idx {
 	case 0:
-		hero.DoBigHarm(a...)
+		hero.DoStompHarm()
 
 	case 1:
 		return
