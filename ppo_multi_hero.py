@@ -21,6 +21,7 @@ EPSILON = 0.2
 
 F = 8
 C = 1
+HERO_COUNT = 2
 
 NUM_FRAME_PER_ACTION = 4
 BATCH_SIZE = 64
@@ -235,6 +236,7 @@ class Agent():
     def _init_input(self, *args):
         with tf.variable_scope('input'):
             self.s = tf.placeholder(tf.float32, [None, self.input_dims, C], name='s')
+            self.multi_s = tf.placeholder(tf.float32, [None, HERO_COUNT, self.input_dims, C], name='multi_s')
 
             # Action shall have four elements, 
             self.a = tf.placeholder(tf.int32, [None, self.policy_head_num], name='a')
@@ -333,7 +335,95 @@ class Agent():
             self.optimizer = tf.train.AdamOptimizer(learning_rate).minimize(self.total_loss)
             #self.optimizer = tf.train.AdamOptimizer(self.learning_rate).minimize(self.total_loss)
 
+    def _init_combine_actor_net(self, scope, actor_count, trainable=True): 
+        output_arr = []
+        with tf.variable_scope(scope):
+            for actor_idx in range(actor_count):
+                input_pl = self.multi_s[:,actor_idx,:,:]
+                single_model = self._init_single_actor_net(scope, input_pl, trainable)
+                output_arr.append(single_model)     
+            return output_arr
+        pass
 
+    def _init_single_actor_net(self, scope, input_pl, trainable=True):        
+        my_initializer = None#tf.contrib.layers.xavier_initializer()
+        with tf.variable_scope(scope):
+            flat_output_size = F*C
+            flat_output = tf.reshape(input_pl, [-1, flat_output_size], name='flat_output')
+
+            # Add hero one-hot vector embedding
+
+            fc_W_1 = tf.get_variable(shape=[flat_output_size, self.layer_size], name='fc_W_1',
+                trainable=trainable, initializer=my_initializer)
+            fc_b_1 = tf.Variable(tf.zeros([self.layer_size], dtype=tf.float32), name='fc_b_1',
+                trainable=trainable)
+
+            tf.summary.histogram("fc_W_1", fc_W_1)
+            tf.summary.histogram("fc_b_1", fc_b_1)
+
+            output1 = tf.nn.relu(tf.matmul(flat_output, fc_W_1) + fc_b_1)
+
+            fc_W_2 = tf.get_variable(shape=[self.layer_size, self.layer_size], name='fc_W_2',
+                trainable=trainable, initializer=my_initializer)
+            fc_b_2 = tf.Variable(tf.zeros([self.layer_size], dtype=tf.float32), name='fc_b_2',
+                trainable=trainable)
+
+            tf.summary.histogram("fc_W_2", fc_W_2)
+            tf.summary.histogram("fc_b_2", fc_b_2)
+
+            output2 = tf.nn.relu(tf.matmul(output1, fc_W_2) + fc_b_2)
+
+
+            fc_W_3 = tf.get_variable(shape=[self.layer_size, self.layer_size], name='fc_W_3',
+                trainable=trainable, initializer=my_initializer)
+            fc_b_3 = tf.Variable(tf.zeros([self.layer_size], dtype=tf.float32), name='fc_b_3',
+                trainable=trainable)
+
+            tf.summary.histogram("fc_W_3", fc_W_3)
+            tf.summary.histogram("fc_b_3", fc_b_3)
+
+            output3 = tf.nn.relu(tf.matmul(output2, fc_W_3) + fc_b_3)
+            a_logits_arr = []
+            a_prob_arr = []
+            #self.a_space_keys
+            for k in self.a_space_keys:
+                output_num = self.a_space[k]
+                # actor network
+                weight_layer_name = 'fc_W_{}'.format(k)
+                bias_layer_name = 'fc_b_{}'.format(k)
+                logit_layer_name = '{}_logits'.format(k)
+                head_layer_name = '{}_head'.format(k)
+
+                fc_W_a = tf.get_variable(shape=[self.layer_size, output_num], name=weight_layer_name,
+                    trainable=trainable, initializer=my_initializer)
+                fc_b_a = tf.Variable(tf.zeros([output_num], dtype=tf.float32), name=bias_layer_name,
+                    trainable=trainable)
+
+                tf.summary.histogram(weight_layer_name, fc_W_a)
+                tf.summary.histogram(bias_layer_name, fc_b_a)            
+
+                a_logits = tf.matmul(output3, fc_W_a) + fc_b_a
+                a_logits_arr.append(a_logits)                
+                tf.summary.histogram(logit_layer_name, a_logits)
+
+                a_prob = stable_softmax(a_logits, head_layer_name) #tf.nn.softmax(a_logits)
+                a_prob_arr.append(a_prob)
+                tf.summary.histogram(head_layer_name, a_prob)
+
+            # value network
+            fc1_W_v = tf.get_variable(shape=[self.layer_size, 1], name='fc1_W_v',
+                trainable=trainable, initializer=my_initializer)
+            fc1_b_v = tf.Variable(tf.zeros([1], dtype=tf.float32), name='fc1_b_v',
+                trainable=trainable)
+
+            tf.summary.histogram("fc1_W_v", fc1_W_v)
+            tf.summary.histogram("fc1_b_v", fc1_b_v)
+
+            value = tf.matmul(output3, fc1_W_v) + fc1_b_v
+            value = tf.reshape(value, [-1, ], name = "value_output")
+            tf.summary.histogram("value_head", value)
+            merged_summary = tf.summary.merge_all()
+            return a_prob_arr, a_logits_arr, value, merged_summary
 
     def _init_actor_net(self, scope, trainable=True):        
         my_initializer = None#tf.contrib.layers.xavier_initializer()

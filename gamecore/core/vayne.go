@@ -2,6 +2,7 @@ package core
 
 import (
 	"fmt"
+	"math/rand"
 	"time"
 
 	"github.com/ungerik/go3d/vec3"
@@ -136,9 +137,9 @@ func (hero *Vayne) Init(a ...interface{}) BaseFunc {
 	pos_x := a[1].(float32)
 	pos_y := a[2].(float32)
 	InitHeroWithCamp(hero, wanted_camp, pos_x, pos_y)
-	hero.skillusefrequency[0] = 2
-	hero.skillusefrequency[1] = 2
-	hero.skillusefrequency[2] = 2
+	hero.skillusefrequency[0] = 0.1
+	hero.skillusefrequency[1] = 2000
+	hero.skillusefrequency[2] = 2000
 	hero.skillusefrequency[3] = 2
 	return hero
 }
@@ -153,6 +154,10 @@ func (hero *Vayne) GrabEnemyAtNose(a ...interface{}) {
 
 		unit = skill_target.hero
 		pos := skill_target.pos
+		now := time.Now()
+		rand.Seed(now.UnixNano())
+		pos[0] += rand.Float32() - 0.5
+		pos[1] += rand.Float32() - 0.5
 		unit.SetPosition(pos)
 		LogStr(fmt.Sprintf("GrabEnemyAtNose harm is called, has_more_params:%v, now_seconds:%v", has_more_params, game.LogicTime))
 	}
@@ -351,10 +356,10 @@ func (hero *Vayne) UseSkill(skill_idx uint8, a ...interface{}) {
 
 	switch skill_idx {
 	case 0:
+		// hero.DoDirHarm(a...)
 		hero.DoStompHarm()
 
 	case 1:
-		return
 		// Overdrive
 		// Slow direction
 		// Clear skilltarget pos
@@ -425,7 +430,6 @@ func (hero *Vayne) UseSkill(skill_idx uint8, a ...interface{}) {
 		}
 
 	case 2:
-		return
 		// Power Fist
 		// Self Offset direction
 
