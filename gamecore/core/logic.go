@@ -29,7 +29,10 @@ type Game struct {
 	BattleField     *BattleField
 	DefaultHero     HeroFunc
 	OppoHero        HeroFunc
+	DefaultHeroes   []HeroFunc
+	OppoHeroes      []HeroFunc
 	ManualCtrlEnemy bool
+	MultiPlayer     bool
 
 	train_state       GameTrainState
 	skill_targets     []SkillTarget
@@ -378,6 +381,66 @@ func (game *Game) HandleMultiAction(action_code_0 int, action_code_1 int, action
 		game.Init()
 	}
 
+}
+
+func (game *Game) HandleMultiPlayerAction(player_idx int, action_code_0 int, action_code_1 int, action_code_2 int) {
+	battle_unit := game.DefaultHeroes[player_idx].(BaseFunc)
+	cur_pos := battle_unit.Position()
+
+	offset_x := float32(0)
+	offset_y := float32(0)
+
+	switch action_code_0 {
+	case 0: // do nothing
+		// Remain the same position
+		game.DefaultHero.SetTargetPos(cur_pos[0], cur_pos[1])
+	case 1:
+		// move
+		dir := ConvertNum2Dir(action_code_1)
+		offset_x = dir[0]
+		offset_y = dir[1]
+		target_pos_x := float32(cur_pos[0] + offset_x)
+		target_pos_y := float32(cur_pos[1] + offset_y)
+		// Check self position
+		// game.DefaultHero.SetTargetPos(target_pos_x, target_pos_y)
+		is_target_within := game.BattleField.Within(target_pos_x, target_pos_y)
+		if is_target_within {
+			game.DefaultHero.SetTargetPos(target_pos_x, target_pos_y)
+		}
+
+	case 2:
+		// normal attack
+		// Remain the same position
+		game.DefaultHero.SetTargetPos(cur_pos[0], cur_pos[1])
+	case 3:
+		// skill 1
+		dir := ConvertNum2Dir(action_code_2)
+		offset_x = dir[0]
+		offset_y = dir[1]
+		game.DefaultHero.UseSkill(0, offset_x, offset_y)
+		// Set skill target
+	case 4:
+		// skill 2
+		dir := ConvertNum2Dir(action_code_2)
+		offset_x = dir[0]
+		offset_y = dir[1]
+		game.DefaultHero.UseSkill(1, offset_x, offset_y)
+	case 5:
+		// skill 3
+		dir := ConvertNum2Dir(action_code_2)
+		offset_x = dir[0]
+		offset_y = dir[1]
+		game.DefaultHero.UseSkill(2, offset_x, offset_y)
+	case 6:
+		// extra skill
+		dir := ConvertNum2Dir(action_code_2)
+		offset_x = dir[0]
+		offset_y = dir[1]
+		game.DefaultHero.UseSkill(3, offset_x, offset_y)
+
+	case 9:
+		game.Init()
+	}
 }
 
 func (game *Game) HandleAction(action_code int) {

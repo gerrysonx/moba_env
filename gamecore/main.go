@@ -20,6 +20,7 @@ func main() {
 	_gym_mode := flag.Bool("gym_mode", false, "a bool")
 	_debug_log := flag.Bool("debug_log", false, "a bool")
 	_slow_tick := flag.Bool("slow_tick", false, "a bool")
+	_multi_player := flag.Bool("multi_player", false, "a bool")
 	file_handle, _err := os.Create("mobacore.log")
 	if _err != nil {
 		fmt.Println("Create log file failed.")
@@ -38,6 +39,7 @@ func main() {
 	core.GameInst = core.Game{}
 	core.GameInst.Init()
 	core.GameInst.ManualCtrlEnemy = *_manual_enemy
+	core.GameInst.MultiPlayer = *_multi_player
 	if *_run_render {
 		render.RendererInst = render.Renderer{}
 		render.RendererInst.InitRenderEnv(&core.GameInst)
@@ -70,16 +72,36 @@ func main() {
 				fmt.Printf("%d@%s\n", _action_stamp, game_state_str)
 				fmt.Scanf("%d\n", &action_code)
 				//action_code = 4352
-				_action_stamp = action_code >> 16
+				if *_multi_player {
+					// First action_code is player count
+					player_count := action_code
+					for _idx := 0; _idx < player_count; _idx += 1 {
+						fmt.Scanf("%d\n", &action_code)
+						_action_stamp = action_code >> 16
 
-				action_code_0 = (action_code >> 12) & 0xf
-				action_code_1 = (action_code >> 8) & 0xf
-				action_code_2 = (action_code >> 4) & 0xf
+						action_code_0 = (action_code >> 12) & 0xf
+						action_code_1 = (action_code >> 8) & 0xf
+						action_code_2 = (action_code >> 4) & 0xf
 
-				core.GameInst.HandleMultiAction(action_code_0, action_code_1, action_code_2)
-				if 9 == action_code_0 {
-					// Instantly output
-					_last_input_time = 0
+						core.GameInst.HandleMultiPlayerAction(_idx, action_code_0, action_code_1, action_code_2)
+						if 9 == action_code_0 {
+							// Instantly output
+							_last_input_time = 0
+						}
+					}
+
+				} else {
+					_action_stamp = action_code >> 16
+
+					action_code_0 = (action_code >> 12) & 0xf
+					action_code_1 = (action_code >> 8) & 0xf
+					action_code_2 = (action_code >> 4) & 0xf
+
+					core.GameInst.HandleMultiAction(action_code_0, action_code_1, action_code_2)
+					if 9 == action_code_0 {
+						// Instantly output
+						_last_input_time = 0
+					}
 				}
 
 				if *_slow_tick {

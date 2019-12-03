@@ -341,7 +341,8 @@ class Agent():
             for actor_idx in range(actor_count):
                 input_pl = self.multi_s[:,actor_idx,:,:]
                 single_model = self._init_single_actor_net(scope, input_pl, trainable)
-                output_arr.append(single_model)     
+                output_arr.append(single_model)
+     
             return output_arr
         pass
 
