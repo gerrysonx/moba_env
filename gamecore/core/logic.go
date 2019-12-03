@@ -21,6 +21,25 @@ type GameTrainState struct {
 	SelfWin int32
 }
 
+type GameMultiPlayerTrainState struct {
+	SelfHero0PosX   float32
+	SelfHero0PosY   float32
+	SelfHero0Health float32
+
+	SelfHero1PosX   float32
+	SelfHero1PosY   float32
+	SelfHero1Health float32
+
+	OppoHeroPosX   float32
+	OppoHeroPosY   float32
+	OppoHeroHealth float32
+
+	SlowBuffState      float32
+	SlowBuffRemainTime float32
+
+	SelfWin int32
+}
+
 type Game struct {
 	CurrentTime     float64
 	LogicTime       float64
@@ -34,9 +53,10 @@ type Game struct {
 	ManualCtrlEnemy bool
 	MultiPlayer     bool
 
-	train_state       GameTrainState
-	skill_targets     []SkillTarget
-	skill_targets_add []SkillTarget
+	train_state              GameTrainState
+	multi_player_train_state GameMultiPlayerTrainState
+	skill_targets            []SkillTarget
+	skill_targets_add        []SkillTarget
 }
 
 func (game *Game) Testcase1() {
@@ -153,6 +173,7 @@ func (game *Game) Testcase4(center_area_width int) {
 	game.OppoHero = herobase
 }
 
+// Multi skills cooperation training
 func (game *Game) Testcase5(center_area_width int) {
 	var hero_pos [2][2]float32
 	for {
@@ -179,6 +200,40 @@ func (game *Game) Testcase5(center_area_width int) {
 	game.OppoHero = herobase
 }
 
+// Multi players cooperation training, 2 vs 1
+func (game *Game) Testcase6(center_area_width int, player_count int) {
+	now := time.Now()
+	rand.Seed(now.UnixNano())
+
+	born_area_side_width := center_area_width
+	//min_player_gap := 14.0
+	start_pos := (1000 - born_area_side_width) / 2
+	rand_num_1 := rand.Intn(born_area_side_width)
+	rand_num_2 := rand.Intn(born_area_side_width)
+
+	herobase := new(Lusian)
+	hero0 := herobase.Init(int32(0), float32(start_pos+rand_num_1), float32(start_pos+rand_num_2))
+	game.BattleUnits = append(game.BattleUnits, hero0)
+	game.OppoHero = herobase
+
+	var self_heroes []HeroFunc
+	hero1 := new(Vayne)
+	self_heroes = append(self_heroes, hero1)
+	hero2 := new(Vi)
+	self_heroes = append(self_heroes, hero2)
+
+	for idx := 0; idx < player_count; idx += 1 {
+		rand_num_3 := rand.Intn(born_area_side_width)
+		rand_num_4 := rand.Intn(born_area_side_width)
+		inited_hero := self_heroes[idx].Init(int32(1), float32(start_pos+rand_num_3), float32(start_pos+rand_num_4))
+		game.BattleUnits = append(game.BattleUnits, inited_hero)
+		game.DefaultHeroes = append(game.DefaultHeroes, inited_hero.(HeroFunc))
+	}
+
+	game.DefaultHero = nil
+
+}
+
 func (game *Game) Init() {
 	game.LogicTime = 0
 	game.BattleField = &BattleField{Restricted_x: 400, Restricted_y: 400, Restricted_w: 200, Restricted_h: 200}
@@ -188,7 +243,7 @@ func (game *Game) Init() {
 	game.AddUnits = []BaseFunc{}
 	game.skill_targets = []SkillTarget{}
 	game.skill_targets_add = []SkillTarget{}
-	game.Testcase5(60)
+	game.Testcase6(60, 2)
 	LogStr(fmt.Sprintf("Game is inited, oppo hero slow buff state:%v", game.OppoHero.(BaseFunc).GetBuff(BuffSpeedSlow)))
 	// game.Testcase1()
 }
@@ -272,6 +327,58 @@ func (game *Game) DumpGameState() []byte {
 			game.train_state.SelfWin = -1
 		} else {
 			game.train_state.SelfWin = 1
+		}
+	}
+
+	e, err := json.Marshal(game.train_state)
+	if err != nil {
+		return []byte(fmt.Sprintf("Marshal train_state failed.%v", game.train_state))
+
+	}
+
+	return e
+}
+
+func (game *Game) DumpMultiPlayerGameState() []byte {
+	//fmt.Printf("->DumpGameState, len(game.BattleUnits) is:%d, logictime:%f\n", len(game.BattleUnits), game.LogicTime)
+	self_hero_0_unit := game.DefaultHeroes[0].(BaseFunc)
+	self_hero_1_unit := game.DefaultHeroes[1].(BaseFunc)
+	oppo_unit := game.OppoHero.(BaseFunc)
+	if (self_hero_0_unit.Health() > 0 || self_hero_1_unit.Health() > 0) && oppo_unit.Health() > 0 {
+		game.multi_player_train_state.SelfWin = 0
+		game.multi_player_train_state.SelfHero0PosX = self_hero_0_unit.Position()[0]
+		game.multi_player_train_state.SelfHero0PosY = self_hero_0_unit.Position()[1]
+		game.multi_player_train_state.SelfHero0Health = self_hero_0_unit.Health()
+
+		game.multi_player_train_state.SelfHero1PosX = self_hero_1_unit.Position()[0]
+		game.multi_player_train_state.SelfHero1PosY = self_hero_1_unit.Position()[1]
+		game.multi_player_train_state.SelfHero1Health = self_hero_1_unit.Health()
+
+		game.multi_player_train_state.OppoHeroPosX = oppo_unit.Position()[0]
+		game.multi_player_train_state.OppoHeroPosY = oppo_unit.Position()[1]
+		game.multi_player_train_state.OppoHeroHealth = oppo_unit.Health()
+
+		slow_buff_state := 0.0
+		slow_buff := oppo_unit.GetBuff(BuffSpeedSlow)
+		slow_buff_remain_time_ratio := 0.0
+		if slow_buff != nil {
+			slow_buff_state = 1.0
+			if slow_buff.base.Life == 0 {
+				// slow_buff_remain_time_ratio = 0.777
+				// panic("slow_buff.base.Life shouldn't be 0")
+				LogStr(fmt.Sprintf("slow_buff.base.Life == 0 when dumping game state, buff_id:%v, val1:%v", slow_buff.base.Id, slow_buff.base.Val1))
+			} else {
+				slow_buff_remain_time_ratio = (slow_buff.base.Life + slow_buff.addTime - game.LogicTime) / slow_buff.base.Life
+			}
+		}
+		game.train_state.SlowBuffState = float32(slow_buff_state)
+		game.train_state.SlowBuffRemainTime = float32(slow_buff_remain_time_ratio)
+
+	} else {
+		if oppo_unit.Health() <= 0 {
+			game.train_state.SelfWin = 1
+		} else {
+			game.train_state.SelfWin = -1
 		}
 	}
 

@@ -67,9 +67,16 @@ func main() {
 				_last_input_time = core.GameInst.LogicTime
 
 				// Output game state to stdout
-				game_state_str := core.GameInst.DumpGameState()
-				// core.LogBytes(file_handle, game_state_str)
-				fmt.Printf("%d@%s\n", _action_stamp, game_state_str)
+				if *_multi_player {
+					game_state_str := core.GameInst.DumpMultiPlayerGameState()
+					// core.LogBytes(file_handle, game_state_str)
+					fmt.Printf("%d@%s\n", _action_stamp, game_state_str)
+				} else {
+					game_state_str := core.GameInst.DumpGameState()
+					// core.LogBytes(file_handle, game_state_str)
+					fmt.Printf("%d@%s\n", _action_stamp, game_state_str)
+				}
+
 				fmt.Scanf("%d\n", &action_code)
 				//action_code = 4352
 				if *_multi_player {

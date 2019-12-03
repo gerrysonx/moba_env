@@ -13,6 +13,7 @@ type HeroFunc interface {
 	SetSkillTargetPos(x float32, y float32)
 	SkillTargetPos() vec3.T
 	UseSkill(skill_idx uint8, a ...interface{})
+	Init(a ...interface{}) BaseFunc
 }
 
 type Hero struct {
