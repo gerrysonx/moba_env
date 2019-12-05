@@ -26,6 +26,8 @@ EMBED_SIZE = 5
 
 C = 1
 HERO_COUNT = 2
+# Hero skill mask, to indicate if a hero skill is a directional one.
+g_dir_skill_mask = [[False, True, True, True], [True, True, True, True]]
 
 NUM_FRAME_PER_ACTION = 4
 BATCH_SIZE = 64
@@ -59,6 +61,8 @@ g_enable_per = False
 g_per_alpha = 0.6
 g_is_beta_start = 0.4
 g_is_beta_end = 1
+
+
 
 def stable_softmax(logits, name): 
     a = logits - tf.reduce_max(logits, axis=-1, keepdims=True) 
@@ -471,15 +475,23 @@ class MultiPlayerAgent():
         action_arr = []
         value_arr = []
 
-        for idx in range(HERO_COUNT):
-            tuple_val = self.session.run([self.value[idx], self.a_policy_new[idx][0], self.a_policy_new[idx][1], self.a_policy_new[idx][2]], feed_dict={self.multi_s: s})
+        for hero_idx in range(HERO_COUNT):
+            tuple_val = self.session.run([self.value[hero_idx], self.a_policy_new[hero_idx][0], self.a_policy_new[hero_idx][1], self.a_policy_new[hero_idx][2]], feed_dict={self.multi_s: s})
             value = tuple_val[0]
             chosen_policy = tuple_val[1:]
             #chosen_policy = self.session.run(self.a_policy_new, feed_dict={self.s: s})
+            
             actions = []
-            for idx in range(self.policy_head_num):            
-                ac = np.random.choice(range(chosen_policy[idx].shape[1]), p=chosen_policy[idx][0])
+            for _idx in range(self.policy_head_num):            
+                ac = np.random.choice(range(chosen_policy[_idx].shape[1]), p=chosen_policy[_idx][0])
                 actions.append(ac)
+
+            skill_is_dir = False
+            skill_dir_mask = g_dir_skill_mask[hero_idx]
+            check_if_skill = actions[0] >= 3 and actions[0] <= 6
+            if check_if_skill:
+                skill_is_dir = skill_dir_mask[actions[0] - 3]
+
             if actions[0] == 0:
                 # Stay still
                 actions[1] = -1
@@ -491,22 +503,11 @@ class MultiPlayerAgent():
                 # Normal attack
                 actions[1] = -1
                 actions[2] = -1
-            elif actions[0] == 3:
+            elif check_if_skill:
                 # skill 1 attack
                 actions[1] = -1
-                #actions[2] = -1
-            elif actions[0] == 4:
-                # skill 2 attack
-                actions[1] = -1
-                actions[2] = -1        
-            elif actions[0] == 5:
-                # skill 3 attack
-                actions[1] = -1
-                actions[2] = -1
-            elif actions[0] == 6:
-                # skill 4 attack
-                actions[1] = -1
-            #    actions[2] = -1 
+                if not skill_is_dir:
+                    actions[2] = -1
             else:
                 print('Action predict wrong:{}'.format(actions[0]))
 

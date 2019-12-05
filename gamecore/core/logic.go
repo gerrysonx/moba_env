@@ -212,7 +212,7 @@ func (game *Game) Testcase6(center_area_width int, player_count int) {
 	rand_num_2 := rand.Intn(born_area_side_width)
 
 	herobase := new(Lusian)
-	hero0 := herobase.Init(int32(1), float32(start_pos+rand_num_1), float32(start_pos+rand_num_2))
+	hero0 := herobase.Init(int32(0), float32(start_pos+rand_num_1), float32(start_pos+rand_num_2))
 	game.BattleUnits = append(game.BattleUnits, hero0)
 	game.OppoHero = herobase
 
@@ -225,7 +225,7 @@ func (game *Game) Testcase6(center_area_width int, player_count int) {
 	for idx := 0; idx < player_count; idx += 1 {
 		rand_num_3 := rand.Intn(born_area_side_width)
 		rand_num_4 := rand.Intn(born_area_side_width)
-		inited_hero := self_heroes[idx].Init(int32(0), float32(start_pos+rand_num_3), float32(start_pos+rand_num_4))
+		inited_hero := self_heroes[idx].Init(int32(1), float32(start_pos+rand_num_3), float32(start_pos+rand_num_4))
 		game.BattleUnits = append(game.BattleUnits, inited_hero)
 		game.DefaultHeroes = append(game.DefaultHeroes, inited_hero.(HeroFunc))
 	}
