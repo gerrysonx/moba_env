@@ -12,18 +12,18 @@ class MobaMultiPlayerEnv(gym.Env):
 	def restart_proc(self):
 	#	print('moba_env restart_proc is called.')
 		self.done = False
-        self.hero_count = 2
+		self.hero_count = 2
 		self.state = np.zeros((self.hero_count, 12))
 		self.reward = 0
 		self.info = None
 		self.self_0_health = 0
-        self.self_1_health = 0
+		self.self_1_health = 0
 		self.oppo_health = 0
 		self.step_idx = 0	
 		self.full_self_0_health = 0
-        self.full_self_1_health = 0
+		self.full_self_1_health = 0
 		self.full_oppo_health = 0
-        		
+				
 		pass
 
 	def __init__(self):
@@ -51,7 +51,7 @@ class MobaMultiPlayerEnv(gym.Env):
 		my_env['TF_CPP_MIN_LOG_LEVEL'] = '3'
 		gamecore_file_path = '{}/../../../gamecore/gamecore'.format(root_folder)
 		self.proc = subprocess.Popen([gamecore_file_path, 
-								'-render=true', '-gym_mode=true', '-debug_log=true', '-slow_tick=false', '-multi_player=true', manual_str],
+								'-render=true', '-gym_mode=true', '-debug_log=false', '-slow_tick=false', '-multi_player=true', manual_str],
 								stdin=subprocess.PIPE,
 								stdout=subprocess.PIPE,
 								stderr=subprocess.PIPE, env=my_env)
@@ -65,27 +65,30 @@ class MobaMultiPlayerEnv(gym.Env):
 	def step(self, total_actions):
 		#time.sleep(1)
 		# action is 4-dimension vector
+		self.proc.stdin.write(b'2\n')
+		self.proc.stdin.flush() 
 		self.step_idx += 1
-        for hero_idx in range(self.hero_count):
-            action = total_actions[hero_idx]
-            action_encode = 0
-            action_encode = (action[0] << 12)
+		for hero_idx in range(self.hero_count):
+			action = total_actions[hero_idx]
+			action_encode = 0
+			action_encode = (action[0] << 12)
 
-            move_dir_encode = 0
-            if action[1] != -1:
-                move_dir_encode = (action[1] << 8)	
+			move_dir_encode = 0
+			if action[1] != -1:
+				move_dir_encode = (action[1] << 8)	
 
-            skill_dir_encode = 0
-            if action[2] != -1:
-                skill_dir_encode = (action[2] << 4)	
+			skill_dir_encode = 0
+			if action[2] != -1:
+			    skill_dir_encode = (action[2] << 4)	
 
-            encoded_action_val = (self.step_idx << 16) + action_encode + move_dir_encode + skill_dir_encode
-            self.proc.stdin.write('{}\n'.format(encoded_action_val).encode())
-            self.proc.stdin.flush()
+			encoded_action_val = (self.step_idx << 16) + action_encode + move_dir_encode + skill_dir_encode
+			self.proc.stdin.write('{}\n'.format(encoded_action_val).encode())
+			self.proc.stdin.flush()
 
-        # Wait for response.
+		# Wait for response.
 		while True:
 			json_str = self.proc.stdout.readline()
+			#print('When step, recv game process response {}'.format(json_str))
 			if json_str == None or len(json_str) == 0:
 				print('json_str == None or len(json_str) == 0')
 				self.done = True
@@ -111,13 +114,14 @@ class MobaMultiPlayerEnv(gym.Env):
 				else:
 					harm_reward = 0.002
 					self.reward = 0
-					if self.self_health  > jobj['SelfHeroHealth']:
+					if self.self_0_health  > jobj['SelfHero0Health'] or self.self_1_health  > jobj['SelfHero1Health']:
 						self.reward -= harm_reward
 					if self.oppo_health  > jobj['OppoHeroHealth']:
 						self.reward += harm_reward
 
 					self.oppo_health = jobj['OppoHeroHealth']
-					self.self_health = jobj['SelfHeroHealth']
+					self.self_0_health = jobj['SelfHero0Health']
+					self.self_1_health = jobj['SelfHero1Health']
 
 					self.done = False
 				break
@@ -128,7 +132,7 @@ class MobaMultiPlayerEnv(gym.Env):
 				return self.state, self.reward, self.done, self.step_idx	
 
 		norm_base = 1000.0	
-        # Player 1 perspective
+		# Player 1 perspective
 		self.state[0][0] = jobj['SelfHero0PosX'] / norm_base - 0.5
 		self.state[0][1] = jobj['SelfHero0PosY'] / norm_base - 0.5
 		self.state[0][2] = jobj['SelfHero0Health'] / self.full_self_0_health - 0.5
@@ -143,9 +147,9 @@ class MobaMultiPlayerEnv(gym.Env):
 
 		self.state[0][9] = 0#jobj['SlowBuffState']
 		self.state[0][10] = jobj['SlowBuffRemainTime']
-        self.state[0][11] = 0
+		self.state[0][11] = 0
 
-        # Player 2 perspective
+		# Player 2 perspective
 		self.state[1][0] = jobj['SelfHero1PosX'] / norm_base - 0.5
 		self.state[1][1] = jobj['SelfHero1PosY'] / norm_base - 0.5
 		self.state[1][2] = jobj['SelfHero1Health'] / self.full_self_1_health - 0.5
@@ -160,7 +164,7 @@ class MobaMultiPlayerEnv(gym.Env):
 
 		self.state[1][9] = 0#jobj['SlowBuffState']
 		self.state[1][10] = jobj['SlowBuffRemainTime']
-        self.state[1][11] = 1
+		self.state[1][11] = 1
 
 
 		return self.state, self.reward, self.done, self.step_idx
@@ -173,8 +177,10 @@ class MobaMultiPlayerEnv(gym.Env):
 		#self.proc.stdout.readline()
 		self.proc.stdin.write(b'36864\n')
 		self.proc.stdin.flush()
+#		print('Send reset signal to game process.')
 		while True:
 			json_str = self.proc.stdout.readline()
+	#		print('When reset, recv game process response {}'.format(json_str))
 			if json_str == None or len(json_str) == 0:
 				print('When resetting env, json_str == None or len(json_str) == 0')
 				return self.state

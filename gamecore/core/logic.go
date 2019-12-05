@@ -212,7 +212,7 @@ func (game *Game) Testcase6(center_area_width int, player_count int) {
 	rand_num_2 := rand.Intn(born_area_side_width)
 
 	herobase := new(Lusian)
-	hero0 := herobase.Init(int32(0), float32(start_pos+rand_num_1), float32(start_pos+rand_num_2))
+	hero0 := herobase.Init(int32(1), float32(start_pos+rand_num_1), float32(start_pos+rand_num_2))
 	game.BattleUnits = append(game.BattleUnits, hero0)
 	game.OppoHero = herobase
 
@@ -225,7 +225,7 @@ func (game *Game) Testcase6(center_area_width int, player_count int) {
 	for idx := 0; idx < player_count; idx += 1 {
 		rand_num_3 := rand.Intn(born_area_side_width)
 		rand_num_4 := rand.Intn(born_area_side_width)
-		inited_hero := self_heroes[idx].Init(int32(1), float32(start_pos+rand_num_3), float32(start_pos+rand_num_4))
+		inited_hero := self_heroes[idx].Init(int32(0), float32(start_pos+rand_num_3), float32(start_pos+rand_num_4))
 		game.BattleUnits = append(game.BattleUnits, inited_hero)
 		game.DefaultHeroes = append(game.DefaultHeroes, inited_hero.(HeroFunc))
 	}
@@ -236,15 +236,18 @@ func (game *Game) Testcase6(center_area_width int, player_count int) {
 
 func (game *Game) Init() {
 	game.LogicTime = 0
-	game.BattleField = &BattleField{Restricted_x: 400, Restricted_y: 400, Restricted_w: 200, Restricted_h: 200}
+	game.BattleField = &BattleField{Restricted_x: 200, Restricted_y: 200, Restricted_w: 600, Restricted_h: 600}
 	// map_units := game.BattleField.LoadMap("./map/3_corridors.png")
 
 	game.BattleUnits = []BaseFunc{}
 	game.AddUnits = []BaseFunc{}
 	game.skill_targets = []SkillTarget{}
 	game.skill_targets_add = []SkillTarget{}
-	game.Testcase6(60, 2)
-	LogStr(fmt.Sprintf("Game is inited, oppo hero slow buff state:%v", game.OppoHero.(BaseFunc).GetBuff(BuffSpeedSlow)))
+	game.DefaultHeroes = []HeroFunc{}
+	game.OppoHeroes = []HeroFunc{}
+	game.Testcase6(200, 2)
+	LogStr("Game Inited.")
+	// LogStr(fmt.Sprintf("Game is inited, oppo hero slow buff state:%v", game.OppoHero.(BaseFunc).GetBuff(BuffSpeedSlow)))
 	// game.Testcase1()
 }
 
@@ -344,6 +347,8 @@ func (game *Game) DumpMultiPlayerGameState() []byte {
 	self_hero_0_unit := game.DefaultHeroes[0].(BaseFunc)
 	self_hero_1_unit := game.DefaultHeroes[1].(BaseFunc)
 	oppo_unit := game.OppoHero.(BaseFunc)
+	LogStr(fmt.Sprintf("DumpMultiPlayerGameState, unit 1 health:%v, unit 2 health:%v, oppo health:%v", self_hero_0_unit.Health(), self_hero_1_unit.Health(), oppo_unit.Health()))
+
 	if (self_hero_0_unit.Health() > 0 || self_hero_1_unit.Health() > 0) && oppo_unit.Health() > 0 {
 		game.multi_player_train_state.SelfWin = 0
 		game.multi_player_train_state.SelfHero0PosX = self_hero_0_unit.Position()[0]
@@ -371,20 +376,23 @@ func (game *Game) DumpMultiPlayerGameState() []byte {
 				slow_buff_remain_time_ratio = (slow_buff.base.Life + slow_buff.addTime - game.LogicTime) / slow_buff.base.Life
 			}
 		}
-		game.train_state.SlowBuffState = float32(slow_buff_state)
-		game.train_state.SlowBuffRemainTime = float32(slow_buff_remain_time_ratio)
+		game.multi_player_train_state.SlowBuffState = float32(slow_buff_state)
+		game.multi_player_train_state.SlowBuffRemainTime = float32(slow_buff_remain_time_ratio)
 
 	} else {
+		game.multi_player_train_state.SelfHero0Health = 0
+		game.multi_player_train_state.SelfHero1Health = 0
+		game.multi_player_train_state.OppoHeroHealth = 0
 		if oppo_unit.Health() <= 0 {
-			game.train_state.SelfWin = 1
+			game.multi_player_train_state.SelfWin = 1
 		} else {
-			game.train_state.SelfWin = -1
+			game.multi_player_train_state.SelfWin = -1
 		}
 	}
 
-	e, err := json.Marshal(game.train_state)
+	e, err := json.Marshal(game.multi_player_train_state)
 	if err != nil {
-		return []byte(fmt.Sprintf("Marshal train_state failed.%v", game.train_state))
+		return []byte(fmt.Sprintf("Marshal train_state failed.%v", game.multi_player_train_state))
 
 	}
 
@@ -500,7 +508,7 @@ func (game *Game) HandleMultiPlayerAction(player_idx int, action_code_0 int, act
 	switch action_code_0 {
 	case 0: // do nothing
 		// Remain the same position
-		game.DefaultHero.SetTargetPos(cur_pos[0], cur_pos[1])
+		battle_unit.(HeroFunc).SetTargetPos(cur_pos[0], cur_pos[1])
 	case 1:
 		// move
 		dir := ConvertNum2Dir(action_code_1)
@@ -512,38 +520,38 @@ func (game *Game) HandleMultiPlayerAction(player_idx int, action_code_0 int, act
 		// game.DefaultHero.SetTargetPos(target_pos_x, target_pos_y)
 		is_target_within := game.BattleField.Within(target_pos_x, target_pos_y)
 		if is_target_within {
-			game.DefaultHero.SetTargetPos(target_pos_x, target_pos_y)
+			battle_unit.(HeroFunc).SetTargetPos(target_pos_x, target_pos_y)
 		}
 
 	case 2:
 		// normal attack
 		// Remain the same position
-		game.DefaultHero.SetTargetPos(cur_pos[0], cur_pos[1])
+		battle_unit.(HeroFunc).SetTargetPos(cur_pos[0], cur_pos[1])
 	case 3:
 		// skill 1
 		dir := ConvertNum2Dir(action_code_2)
 		offset_x = dir[0]
 		offset_y = dir[1]
-		game.DefaultHero.UseSkill(0, offset_x, offset_y)
+		battle_unit.(HeroFunc).UseSkill(0, offset_x, offset_y)
 		// Set skill target
 	case 4:
 		// skill 2
 		dir := ConvertNum2Dir(action_code_2)
 		offset_x = dir[0]
 		offset_y = dir[1]
-		game.DefaultHero.UseSkill(1, offset_x, offset_y)
+		battle_unit.(HeroFunc).UseSkill(1, offset_x, offset_y)
 	case 5:
 		// skill 3
 		dir := ConvertNum2Dir(action_code_2)
 		offset_x = dir[0]
 		offset_y = dir[1]
-		game.DefaultHero.UseSkill(2, offset_x, offset_y)
+		battle_unit.(HeroFunc).UseSkill(2, offset_x, offset_y)
 	case 6:
 		// extra skill
 		dir := ConvertNum2Dir(action_code_2)
 		offset_x = dir[0]
 		offset_y = dir[1]
-		game.DefaultHero.UseSkill(3, offset_x, offset_y)
+		battle_unit.(HeroFunc).UseSkill(3, offset_x, offset_y)
 
 	case 9:
 		game.Init()

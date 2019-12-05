@@ -208,6 +208,11 @@ func key_call_back(w *glfw.Window, char rune) {
 	case "4":
 		fmt.Println("Key 4 is pressed.")
 		core.GameInst.DefaultHero.UseSkill(3)
+
+	case "5":
+		core.GameInst.Init()
+		game_state_str := core.GameInst.DumpMultiPlayerGameState()
+		fmt.Printf("%d@%s\n", 9999999, game_state_str)
 	}
 
 }
@@ -221,12 +226,16 @@ func mouse_button_call_back(w *glfw.Window, button glfw.MouseButton, action glfw
 		if core.GameInst.ManualCtrlEnemy {
 			core.GameInst.OppoHero.SetTargetPos(float32(x), float32(1000-y))
 		} else {
-			core.GameInst.DefaultHero.SetTargetPos(float32(x), float32(1000-y))
+			if core.GameInst.DefaultHero != nil {
+				core.GameInst.DefaultHero.SetTargetPos(float32(x), float32(1000-y))
+			}
+
 		}
 
 	case action == glfw.Release && button == glfw.MouseButtonRight:
-
-		core.GameInst.DefaultHero.SetSkillTargetPos(float32(x), float32(1000-y))
+		if core.GameInst.DefaultHero != nil {
+			core.GameInst.DefaultHero.SetSkillTargetPos(float32(x), float32(1000-y))
+		}
 
 	}
 }

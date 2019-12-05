@@ -50,9 +50,9 @@ g_save_pb_model = False
 g_out_tb = True
 
 # Control if train or play
-g_is_train = False
+g_is_train = True
 # True means start a new train task without loading previous model.
-g_start_anew = False
+g_start_anew = True
 
 # Control if use priority sampling
 g_enable_per = False
@@ -86,7 +86,7 @@ class Environment(object):
 
   def reset(self):
     self._screen = self.env.reset()
-    ob, _1, _2, _3 = self.step([0, 0, 0]) 
+    ob, _1, _2, _3 = self.step([[0, 0, 0], [0,0,0]]) 
 
     return ob
 
@@ -103,7 +103,7 @@ class MultiPlayer_Data_Generator():
         horizon: int timesteps_per_actor_batch
         '''
         t = 0
-        ac = [0, 0, 0]
+        ac = [[0, 0, 0], [0,0,0]]
 
         new = True # marks if we're on first timestep of an episode
         ob = self.env.reset()
@@ -361,7 +361,7 @@ class MultiPlayerAgent():
 
     def _init_single_actor_net(self, scope, input_pl, trainable=True):        
         my_initializer = tf.contrib.layers.xavier_initializer()
-        with tf.variable_scope(scope):
+        with tf.variable_scope(scope, reuse=tf.AUTO_REUSE):
             flat_output_size = F*C
             flat_output = tf.reshape(input_pl, [-1, flat_output_size], name='flat_output')
 
@@ -381,7 +381,7 @@ class MultiPlayerAgent():
                 fc_W_1 = tf.get_variable(shape=[EMBED_SIZE + STATE_SIZE, self.layer_size], name='fc_W_1',
                     trainable=trainable, initializer=my_initializer)
 
-                fc_b_1 = tf.get_variable(shape=[EMBED_SIZE], name='fc_b_1',
+                fc_b_1 = tf.get_variable(shape=[self.layer_size], name='fc_b_1',
                     trainable=trainable, initializer=my_initializer)                    
 
                 tf.summary.histogram("fc_W_1", fc_W_1)
@@ -392,7 +392,7 @@ class MultiPlayerAgent():
                 fc_W_1 = tf.get_variable(shape=[flat_output_size, self.layer_size], name='fc_W_1',
                     trainable=trainable, initializer=my_initializer)
 
-                fc_b_1 = tf.get_variable(shape=[EMBED_SIZE], name='fc_b_1',
+                fc_b_1 = tf.get_variable(shape=[self.layer_size], name='fc_b_1',
                     trainable=trainable, initializer=my_initializer)
 
                 tf.summary.histogram("fc_W_1", fc_W_1)
@@ -403,7 +403,7 @@ class MultiPlayerAgent():
             fc_W_2 = tf.get_variable(shape=[self.layer_size, self.layer_size], name='fc_W_2',
                 trainable=trainable, initializer=my_initializer)
 
-            fc_b_2 = tf.get_variable(shape=[EMBED_SIZE], name='fc_b_2',
+            fc_b_2 = tf.get_variable(shape=[self.layer_size], name='fc_b_2',
                 trainable=trainable, initializer=my_initializer)
 
             tf.summary.histogram("fc_W_2", fc_W_2)
@@ -415,7 +415,7 @@ class MultiPlayerAgent():
             fc_W_3 = tf.get_variable(shape=[self.layer_size, self.layer_size], name='fc_W_3',
                 trainable=trainable, initializer=my_initializer)
 
-            fc_b_3 = tf.get_variable(shape=[EMBED_SIZE], name='fc_b_3',
+            fc_b_3 = tf.get_variable(shape=[self.layer_size], name='fc_b_3',
                 trainable=trainable, initializer=my_initializer)
 
             tf.summary.histogram("fc_W_3", fc_W_3)
@@ -472,7 +472,7 @@ class MultiPlayerAgent():
         value_arr = []
 
         for idx in range(HERO_COUNT):
-            tuple_val = self.session.run([self.value[idx], self.a_policy_new[idx][0], self.a_policy_new[idx][1], self.a_policy_new[idx][2]], feed_dict={self.s: s[idx]})
+            tuple_val = self.session.run([self.value[idx], self.a_policy_new[idx][0], self.a_policy_new[idx][1], self.a_policy_new[idx][2]], feed_dict={self.multi_s: s})
             value = tuple_val[0]
             chosen_policy = tuple_val[1:]
             #chosen_policy = self.session.run(self.a_policy_new, feed_dict={self.s: s})
@@ -513,7 +513,7 @@ class MultiPlayerAgent():
             action_arr.append(actions)
             value_arr.append(value)
 
-        return action_arr, value_arr
+        return action_arr, sum(value_arr)
 
     def greedy_predict(self, s):
         # Calculate a eval prob.
@@ -588,8 +588,8 @@ class MultiPlayerAgent():
                 
                 if g_out_tb and i == (inner_loop_count - 1) and _idx == (EPOCH_NUM -1):
                     g_step += 1
-                    train_writer.add_summary(summary_new_val, g_step)
-                    train_writer.add_summary(summary_old_val, g_step)
+                    #train_writer.add_summary(summary_new_val, g_step)
+                    #train_writer.add_summary(summary_old_val, g_step)
 
                 Entropy_list.append(entropy)
                 KL_distance_list.append(kl_distance)
