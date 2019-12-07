@@ -76,24 +76,16 @@ func (hero *Vayne) UseSkill(skill_idx uint8, a ...interface{}) {
 
 	switch skill_idx {
 	case 0:
-		// hero.DoDirHarm(a...)
-		DoStompHarm(hero)
 
+		PushEnemyAway(hero, a...)
 	case 1:
-		// Overdrive
-		// Slow direction
-		SlowDirEnemy(hero, a...)
 
 	case 2:
-		// Power Fist
-		// Self Offset direction
-		JumpTowardsEnemy(hero, a...)
+		//SlowDirEnemy(hero, a...)
+		DoStompHarm(hero)
 
 	case 3:
-		// Static Field
-		// Target offset
-		// hero.PushEnemyAway(a)
-		GrabEnemyAtNose(hero, a...)
+		//JumpTowardsEnemy(hero, a...)
 	}
 
 	// Donot restore CD time when skill not used.

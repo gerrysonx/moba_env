@@ -253,7 +253,7 @@ func PushEnemyAway(hero HeroFunc, a ...interface{}) {
 		var dir vec3.T
 		unit = skill_target.hero
 		dir = skill_target.dir
-		AlterUnitPosition(dir, unit, 100)
+		AlterUnitPosition(dir, unit, 40)
 	}
 
 	LogStr(fmt.Sprintf("UseSkill 3 is called, has_more_params:%v, now_seconds:%v", has_more_params, game.LogicTime))
@@ -270,7 +270,7 @@ func PushEnemyAway(hero HeroFunc, a ...interface{}) {
 		skill_target.dir[1] = pos_y
 		// Find the target hero along the direction
 		my_pos := hero.(BaseFunc).Position()
-		_find, _enemy := CheckEnemyOnDir(hero.(BaseFunc).Camp(), &my_pos, &skill_target.dir)
+		_find, _enemy := CheckEnemyOnDirWithinDist(hero.(BaseFunc).Camp(), &my_pos, &skill_target.dir, 60)
 
 		if _find {
 			skill_target.hero = _enemy

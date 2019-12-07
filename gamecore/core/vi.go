@@ -56,7 +56,7 @@ func (hero *Vi) Init(a ...interface{}) BaseFunc {
 	pos_x := a[1].(float32)
 	pos_y := a[2].(float32)
 	InitHeroWithCamp(hero, wanted_camp, pos_x, pos_y)
-	hero.skillusefrequency[0] = 2
+	hero.skillusefrequency[0] = 0.1
 	hero.skillusefrequency[1] = 2
 	hero.skillusefrequency[2] = 2
 	hero.skillusefrequency[3] = 2
@@ -76,23 +76,15 @@ func (hero *Vi) UseSkill(skill_idx uint8, a ...interface{}) {
 
 	switch skill_idx {
 	case 0:
-		// hero.DoDirHarm(a...)
 		DoDirHarm(hero, a...)
 
 	case 1:
-		// Overdrive
-		// Slow direction
-		SlowDirEnemy(hero, a...)
+		//SlowDirEnemy(hero, a...)
 
 	case 2:
-		// Power Fist
-		// Self Offset direction
-		JumpTowardsEnemy(hero, a...)
+		//JumpTowardsEnemy(hero, a...)
 
 	case 3:
-		// Static Field
-		// Target offset
-		// hero.PushEnemyAway(a)
 		PushEnemyAway(hero, a...)
 	}
 

@@ -23,17 +23,18 @@ ONE_HOT_SIZE = 10
 STATE_SIZE = 11
 F = STATE_SIZE + 1
 EMBED_SIZE = 5
+LAYER_SIZE = 128
 
 C = 1
 HERO_COUNT = 2
 # Hero skill mask, to indicate if a hero skill is a directional one.
-g_dir_skill_mask = [[False, True, True, True], [True, True, True, True]]
+g_dir_skill_mask = [[True, False, False, False], [True, False, False, True]]
 
 NUM_FRAME_PER_ACTION = 4
-BATCH_SIZE = 64
+BATCH_SIZE = 4096
 EPOCH_NUM = 4
-LEARNING_RATE = 1e-3
-TIMESTEPS_PER_ACTOR_BATCH = 256*8
+LEARNING_RATE = 8e-3
+TIMESTEPS_PER_ACTOR_BATCH = 256*512
 GAMMA = 0.99
 LAMBDA = 0.95
 NUM_STEPS = 5000
@@ -235,7 +236,7 @@ class MultiPlayerAgent():
         self.restrict_y_max = 0.5
 
         # Full connection layer node size
-        self.layer_size = 128
+        self.layer_size = LAYER_SIZE
 
         self._init_input()
         self._init_nn()
@@ -620,7 +621,7 @@ def learn(num_steps=NUM_STEPS):
         if model_file != None:
             saver.restore(session,model_file)
 
-    _save_frequency = 50
+    _save_frequency = 1
     max_rew = -1000000
     for timestep in range(num_steps):
         ob, ac, atarg, tdlamret, seg = data_generator.get_one_step_data()
