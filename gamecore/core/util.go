@@ -61,6 +61,20 @@ func CheckUnitOnDir(position *vec3.T, dir *vec3.T) (bool, BaseFunc) {
 	return false, nil
 }
 
+func GetEnemyClearDir(my_camp int32, position *vec3.T) (bool, vec3.T) {
+	check_dirs := []vec3.T{{1, 0}, {1, 1}, {0, 1}, {-1, 1}, {-1, 0}, {-1, -1}, {0, -1}, {1, -1}}
+	var has_enemy bool
+
+	for _, v := range check_dirs {
+		has_enemy, _ = CheckEnemyOnDir(my_camp, position, &v)
+		if has_enemy == false {
+			return true, v
+		}
+	}
+
+	return false, check_dirs[0]
+}
+
 func CheckEnemyOnDir(my_camp int32, position *vec3.T, dir *vec3.T) (bool, BaseFunc) {
 	game := &GameInst
 
@@ -102,6 +116,9 @@ func CheckEnemyOnDirWithinDist(my_camp int32, position *vec3.T, dir *vec3.T, dis
 func CheckEnemyNearby(camp int32, radius float32, position *vec3.T) (bool, BaseFunc) {
 	game := &GameInst
 	dist := float32(0)
+	min_dist := radius
+	var min_dist_enemy BaseFunc
+	min_dist_enemy = nil
 	for _, v := range game.BattleUnits {
 		if _, ok := v.(*Bullet); ok {
 			continue
@@ -109,9 +126,14 @@ func CheckEnemyNearby(camp int32, radius float32, position *vec3.T) (bool, BaseF
 
 		unit_pos := v.Position()
 		dist = vec3.Distance(position, &unit_pos)
-		if (dist < radius) && (v.Camp() != camp) && (v.Health() > 0) {
-			return true, v
+		if (dist < min_dist) && (v.Camp() != camp) && (v.Health() > 0) {
+			min_dist = dist
+			min_dist_enemy = v
 		}
+	}
+
+	if min_dist_enemy != nil {
+		return true, min_dist_enemy
 	}
 
 	// fmt.Println("->CheckEnemyNearby")

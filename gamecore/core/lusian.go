@@ -60,7 +60,13 @@ func (hero *Lusian) Tick(gap_time float64) {
 			}
 		} else {
 			// March to the opposite direction of enemy
-			dir = vec3.Sub(&dir_b, &dir_a)
+			has_clear_dir, clear_dir := GetEnemyClearDir(hero.Camp(), &pos)
+			if has_clear_dir {
+				dir = clear_dir
+			} else {
+				dir = vec3.Sub(&dir_b, &dir_a)
+			}
+
 		}
 
 		if need_move {

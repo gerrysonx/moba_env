@@ -51,7 +51,7 @@ class MobaMultiPlayerEnv(gym.Env):
 		my_env['TF_CPP_MIN_LOG_LEVEL'] = '3'
 		gamecore_file_path = '{}/../../../gamecore/gamecore'.format(root_folder)
 		self.proc = subprocess.Popen([gamecore_file_path, 
-								'-render=true', '-gym_mode=true', '-debug_log=false', '-slow_tick=false', '-multi_player=true', manual_str],
+								'-render=true', '-gym_mode=true', '-debug_log=false', '-slow_tick=true', '-multi_player=true', manual_str],
 								stdin=subprocess.PIPE,
 								stdout=subprocess.PIPE,
 								stderr=subprocess.PIPE, env=my_env)
