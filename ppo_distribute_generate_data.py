@@ -692,6 +692,9 @@ def learn(num_steps=NUM_STEPS):
 
 
 if __name__=='__main__':
+    if len(sys.argv) > 1:
+        TIMESTEPS_PER_ACTOR_BATCH = int(sys.argv[1])
+
     bb = {1:'a', 2:'b', 3:'c'}
     #print(list(bb))
     a = list(map(lambda x: math.pow(x, -2), range(1, 10)))

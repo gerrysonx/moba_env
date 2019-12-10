@@ -738,6 +738,9 @@ def play_game_with_saved_model():
 
 if __name__=='__main__':
     bb = {1:'a', 2:'b', 3:'c'}
+    if len(sys.argv) > 1:
+        g_data_generator_count = int(sys.argv[1])
+
     #print(list(bb))
     a = list(map(lambda x: math.pow(x, -2), range(1, 10)))
     for val in a:
