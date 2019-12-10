@@ -55,7 +55,7 @@ g_out_tb = True
 # Control if train or play
 g_is_train = True
 # True means start a new train task without loading previous model.
-g_start_anew = True
+g_start_anew = False
 
 # Control if use priority sampling
 g_enable_per = False
@@ -91,7 +91,7 @@ class Environment(object):
 
   def reset(self):
     self._screen = self.env.reset()
-    ob, _1, _2, _3 = self.step([[0, 0, 0], [0,0,0]]) 
+    ob, _1, _2, _3 = self.step([[0, 0, 0], [0,0,0]])
 
     return ob
 
@@ -351,17 +351,18 @@ class MultiPlayerAgent():
         a_prob_arr_arr = []
         a_logits_arr_arr = []
         value_arr = []
-        merged_summary_arr = []
+
         with tf.variable_scope(scope):
             for actor_idx in range(actor_count):
                 input_pl = self.multi_s[:,actor_idx,:,:]
                 # Share weights
-                a_prob_arr, a_logits_arr, value, merged_summary = self._init_single_actor_net(scope, input_pl, trainable)
+                a_prob_arr, a_logits_arr, value = self._init_single_actor_net(scope, input_pl, trainable)
                 a_prob_arr_arr.append(a_prob_arr)
                 a_logits_arr_arr.append(a_logits_arr)
                 value_arr.append(value)
-                merged_summary_arr.append(merged_summary)     
-            return a_prob_arr_arr, a_logits_arr_arr, value_arr, merged_summary_arr
+
+            merged_summary = tf.summary.merge_all()
+            return a_prob_arr_arr, a_logits_arr_arr, value_arr, merged_summary
         pass
 
     def _init_single_actor_net(self, scope, input_pl, trainable=True):        
@@ -468,8 +469,8 @@ class MultiPlayerAgent():
             value = tf.matmul(output3, fc1_W_v) + fc1_b_v
             value = tf.reshape(value, [-1, ], name = "value_output")
             tf.summary.histogram("value_head", value)
-            merged_summary = tf.summary.merge_all()
-            return a_prob_arr, a_logits_arr, value, merged_summary
+            
+            return a_prob_arr, a_logits_arr, value
 
     def predict(self, s):
         # Calculate a eval prob.
@@ -483,7 +484,7 @@ class MultiPlayerAgent():
             #chosen_policy = self.session.run(self.a_policy_new, feed_dict={self.s: s})
             
             actions = []
-            for _idx in range(self.policy_head_num):            
+            for _idx in range(self.policy_head_num):
                 ac = np.random.choice(range(chosen_policy[_idx].shape[1]), p=chosen_policy[_idx][0])
                 actions.append(ac)
 
