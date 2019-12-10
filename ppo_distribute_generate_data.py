@@ -35,7 +35,7 @@ NUM_FRAME_PER_ACTION = 4
 BATCH_SIZE = 4096
 EPOCH_NUM = 4
 LEARNING_RATE = 8e-3
-TIMESTEPS_PER_ACTOR_BATCH = 256*512
+TIMESTEPS_PER_ACTOR_BATCH = 8192
 GAMMA = 0.99
 LAMBDA = 0.95
 NUM_STEPS = 5000
@@ -611,18 +611,20 @@ def restore_from_ckpt(saver, session, ckpt_no):
         return
 
     while True:
-        try:
-            model_file = '{}/../ckpt/mnist.ckpt-{}'.format(root_folder, ckpt_no)
+        model_file = '{}/../ckpt/mnist.ckpt-{}'.format(root_folder, ckpt_no)
+        try:            
             saver.restore(session, model_file)
+            print('restore file success:{}'.format(model_file))
             break
         except:
-            time.sleep(2)
+            print('restore file failed:{}, continue to try...'.format(model_file))
+            time.sleep(30)
             continue
 
 
 def dump_generated_data_2_file(file_name, seg):
     with open(file_name, 'wb') as file_handle:
-        pickle.dump(file_handle, seg)
+        pickle.dump(seg, file_handle)
 
     pass
 

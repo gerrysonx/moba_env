@@ -45,7 +45,7 @@ RANDOM_START_STEPS = 4
 global g_step
 
 # Generating data worker count
-g_data_generator_count = 10
+g_data_generator_count = 3
 
 # Use hero id embedding
 g_embed_hero_id = False
@@ -571,7 +571,7 @@ class MultiPlayerAgent():
 
         return action_arr, value_arr
 
-    def learn_one_traj(self, timestep, ob, ac, atarg, tdlamret, seg, train_writer):
+    def learn_one_traj(self, timestep, ob, ac, atarg, tdlamret, lens, rets, unclipped_rets, train_writer):
         global g_step
         self.session.run(self.update_policy_net_op)
 
@@ -579,12 +579,18 @@ class MultiPlayerAgent():
 
         Entropy_list = []
         KL_distance_list = []
-
+        atarg = np.array(atarg)
+        ob = np.array(ob)
+        ac = np.array(ac)
+        tdlamret = np.array(tdlamret)
+        
         for _idx in range(EPOCH_NUM):
-            indices = np.random.permutation(len(ob))
+            indices = np.random.permutation(len(ob)).tolist()
             inner_loop_count = (len(ob)//BATCH_SIZE)
             for i in range(inner_loop_count):
-                temp_indices = indices[i*BATCH_SIZE : (i+1)*BATCH_SIZE]
+                temp_indices = indices[i*BATCH_SIZE : (i+1)*BATCH_SIZE]               
+
+             #   print('temp_indices len:{}, shape:{}, adv len:{}'.format(type(temp_indices), temp_indices[:20], type(atarg)))
                 # Minimize loss.
                 _, entropy, kl_distance, summary_new_val, summary_old_val = self.session.run([self.optimizer, self.policy_entropy, self.kl_distance, self.summary_new, self.summary_old], {
                     self.lrmult : lrmult,
@@ -602,20 +608,21 @@ class MultiPlayerAgent():
                 Entropy_list.append(entropy)
                 KL_distance_list.append(kl_distance)
 
-        self.lenbuffer.extend(seg["ep_lens"])
-        self.rewbuffer.extend(seg["ep_rets"])
-        self.unclipped_rewbuffer.extend(seg["ep_unclipped_rets"])
+        self.lenbuffer.extend(lens)
+        self.rewbuffer.extend(rets)
+        self.unclipped_rewbuffer.extend(unclipped_rets)
         return np.mean(Entropy_list), np.mean(KL_distance_list)
 
 def get_one_step_data(timestep, work_thread_count):
     root_folder = os.path.split(os.path.abspath(__file__))[0]
-    ob, ac, std_atvtg, tdlamret = [], [], [], []
+    ob, ac, std_atvtg, tdlamret, lens, rets, unclipped_rets = [], [], [], [], [], [], []
     # Enumerate data files under folder
     data_folder_path = '{}/../distribute_collected_train_data/{}'.format(root_folder, timestep)
     collected_all_data_files = False
     while not collected_all_data_files:
         for root, _, files in os.walk(data_folder_path):
             if len(files) < work_thread_count:
+                print('Already has {} files, waiting for the worker thread generate more data files.'.format(len(files)))
                 break
 
             for file_name in files:
@@ -626,16 +633,19 @@ def get_one_step_data(timestep, work_thread_count):
                     ac.extend(_seg["ac"])
                     std_atvtg.extend(_seg["std_atvtg"])
                     tdlamret.extend(_seg["tdlamret"])
+                    lens.extend(_seg["ep_lens"])
+                    rets.extend(_seg["ep_rets"])
+                    unclipped_rets.extend(_seg["ep_unclipped_rets"])                    
 
             collected_all_data_files = True
-            break
-        print('Already has {} files, waiting for the worker thread generate more data files.'.format(len(files)))
+            break        
         time.sleep(2)
+    print('Successfully collected {} files.'.format(len(files)))
+    return ob, ac, std_atvtg, tdlamret, lens, rets, unclipped_rets
 
-    return ob, ac, std_atvtg, tdlamret
-    pass
 
 def learn(num_steps=NUM_STEPS):
+    root_folder = os.path.split(os.path.abspath(__file__))[0]
     global g_step
     g_step = 0
     session = tf.Session()
@@ -645,15 +655,16 @@ def learn(num_steps=NUM_STEPS):
     agent = MultiPlayerAgent(session, action_space_map, a_space_keys)
     train_writer = tf.summary.FileWriter('summary_log_gerry', graph=tf.get_default_graph()) 
     saver = tf.train.Saver(max_to_keep=1)
+    max_rew = -10000
 
     for timestep in range(num_steps):
-        ob, ac, atarg, tdlamret = get_one_step_data(timestep, g_data_generator_count)
+        ob, ac, atarg, tdlamret, lens, rets, unclipped_rets = get_one_step_data(timestep, g_data_generator_count)
 
-        entropy, kl_distance = agent.learn_one_traj(timestep, ob, ac, atarg, tdlamret, seg, train_writer)
+        entropy, kl_distance = agent.learn_one_traj(timestep, ob, ac, atarg, tdlamret, lens, rets, unclipped_rets, train_writer)
 
         max_rew = max(max_rew, np.max(agent.unclipped_rewbuffer))
 
-        saver.save(session,'ckpt/mnist.ckpt', global_step=timestep)
+        saver.save(session, '{}/../ckpt/mnist.ckpt'.format(root_folder), global_step=timestep + 1)
 
         summary0 = tf.Summary()
         summary0.value.add(tag='EpLenMean', simple_value=np.mean(agent.lenbuffer))
