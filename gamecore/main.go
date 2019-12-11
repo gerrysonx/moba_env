@@ -7,6 +7,8 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"runtime"
+	"strings"
 	"time"
 
 	"./core"
@@ -14,6 +16,17 @@ import (
 )
 
 func main() {
+	defer func() {
+		var buffer [2048 * 1024]byte
+		runtime.Stack(buffer[0:], true)
+		crashed_stack := string(buffer[0:])
+		if strings.Contains(crashed_stack, "panic") {
+			fmt.Printf("stack is:%v\n", crashed_stack)
+		} else {
+			fmt.Printf("no panic")
+		}
+	}()
+
 	_target_frame_gap_time := flag.Float64("frame_gap", 0.03, "")
 	_fix_update := flag.Bool("fix_update", true, "a bool")
 	_run_render := flag.Bool("render", true, "a bool")
