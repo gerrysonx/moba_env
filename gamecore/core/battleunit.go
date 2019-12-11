@@ -95,6 +95,7 @@ func NewBuff(buff_id int32, a ...interface{}) *Buff {
 }
 
 type BaseInfo struct {
+	type_id             int32
 	velocity            vec3.T
 	position            vec3.T
 	direction           vec3.T
@@ -155,6 +156,7 @@ type BaseFunc interface {
 
 	Tick(gap_time float64)
 	Init(a ...interface{}) BaseFunc
+	GetId() int32
 }
 
 func (baseinfo *BaseInfo) Velocity() vec3.T {
@@ -286,6 +288,11 @@ func (baseinfo *BaseInfo) GetBuff(idx int32) *Buff {
 	}
 }
 
+func (baseinfo *BaseInfo) GetId() int32 {
+	return baseinfo.type_id
+
+}
+
 func (baseinfo *BaseInfo) ClearAllBuff() {
 	baseinfo.buffs = map[int32]*Buff{}
 }
@@ -298,6 +305,7 @@ type JsonInfo struct {
 	Stub1       float32
 	Speed       float32
 	ViewRange   float32
+	Id          int32
 }
 
 func (baseinfo *BaseInfo) InitFromJson(cfg_name string) bool {
@@ -331,6 +339,8 @@ func (baseinfo *BaseInfo) InitFromJson(cfg_name string) bool {
 		baseinfo.damage = jsoninfo.Damage
 		baseinfo.speed = jsoninfo.Speed
 		baseinfo.view_range = jsoninfo.ViewRange
+		baseinfo.type_id = jsoninfo.Id
+
 	} else {
 		file_handle.Close()
 		return false

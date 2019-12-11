@@ -347,7 +347,7 @@ func (game *Game) DumpMultiPlayerGameState() []byte {
 	self_hero_0_unit := game.DefaultHeroes[0].(BaseFunc)
 	self_hero_1_unit := game.DefaultHeroes[1].(BaseFunc)
 	oppo_unit := game.OppoHero.(BaseFunc)
-	LogStr(fmt.Sprintf("DumpMultiPlayerGameState, unit 1 health:%v, unit 2 health:%v, oppo health:%v", self_hero_0_unit.Health(), self_hero_1_unit.Health(), oppo_unit.Health()))
+	// LogStr(fmt.Sprintf("DumpMultiPlayerGameState, unit 1 health:%v, unit 2 health:%v, oppo health:%v", self_hero_0_unit.Health(), self_hero_1_unit.Health(), oppo_unit.Health()))
 
 	if (self_hero_0_unit.Health() > 0 || self_hero_1_unit.Health() > 0) && oppo_unit.Health() > 0 {
 		game.multi_player_train_state.SelfWin = 0
@@ -499,8 +499,16 @@ func (game *Game) HandleMultiAction(action_code_0 int, action_code_1 int, action
 }
 
 func (game *Game) HandleMultiPlayerAction(player_idx int, action_code_0 int, action_code_1 int, action_code_2 int) {
+	if action_code_0 == 9 {
+		game.Init()
+		return
+	}
+
 	battle_unit := game.DefaultHeroes[player_idx].(BaseFunc)
 	cur_pos := battle_unit.Position()
+	if battle_unit.Health() <= 0 {
+		return
+	}
 
 	offset_x := float32(0)
 	offset_y := float32(0)
@@ -553,8 +561,6 @@ func (game *Game) HandleMultiPlayerAction(player_idx int, action_code_0 int, act
 		offset_y = dir[1]
 		battle_unit.(HeroFunc).UseSkill(3, offset_x, offset_y)
 
-	case 9:
-		game.Init()
 	}
 }
 

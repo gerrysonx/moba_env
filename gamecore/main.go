@@ -4,7 +4,9 @@ import (
 	"flag"
 	"fmt"
 	_ "image/png"
+	"log"
 	"os"
+	"path/filepath"
 	"time"
 
 	"./core"
@@ -21,7 +23,13 @@ func main() {
 	_debug_log := flag.Bool("debug_log", false, "a bool")
 	_slow_tick := flag.Bool("slow_tick", false, "a bool")
 	_multi_player := flag.Bool("multi_player", true, "a bool")
-	file_handle, _err := os.Create("mobacore.log")
+
+	root_dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	file_handle, _err := os.Create(fmt.Sprintf("%s/../mobacore.log", root_dir))
 	if _err != nil {
 		fmt.Println("Create log file failed.")
 		return
@@ -70,7 +78,7 @@ func main() {
 				if *_multi_player {
 					game_state_str := core.GameInst.DumpMultiPlayerGameState()
 					// core.LogBytes(file_handle, game_state_str)
-					core.LogStr(fmt.Sprintf("Every step, logic_time:%v, _action_stamp:%d, game_state_str:%s", core.GameInst.LogicTime, _action_stamp, game_state_str))
+					// core.LogStr(fmt.Sprintf("Every step, logic_time:%v, _action_stamp:%d, game_state_str:%s", core.GameInst.LogicTime, _action_stamp, game_state_str))
 					fmt.Printf("%d@%s\n", _action_stamp, game_state_str)
 				} else {
 					game_state_str := core.GameInst.DumpGameState()
@@ -82,14 +90,14 @@ func main() {
 				if *_multi_player {
 					// Input hero count.
 					fmt.Scanf("%d\n", &action_code)
-					core.LogStr(fmt.Sprintf("_multi_player mode, time:%v, get action code:%v", core.GameInst.LogicTime, action_code))
+					// core.LogStr(fmt.Sprintf("_multi_player mode, time:%v, get action code:%v", core.GameInst.LogicTime, action_code))
 					if action_code == 36864 {
 						// Init game
 						_action_stamp = 0
 						core.GameInst.HandleMultiPlayerAction(0, 9, 0, 0)
 						_last_input_time = 0
-						game_state_str := core.GameInst.DumpMultiPlayerGameState()
-						core.LogStr(fmt.Sprintf("After game.init, time:%v, game state is:%s", core.GameInst.LogicTime, game_state_str))
+						// game_state_str := core.GameInst.DumpMultiPlayerGameState()
+						// core.LogStr(fmt.Sprintf("After game.init, time:%v, game state is:%s", core.GameInst.LogicTime, game_state_str))
 						continue
 					}
 
@@ -103,8 +111,8 @@ func main() {
 						action_code_0 = (action_code >> 12) & 0xf
 						action_code_1 = (action_code >> 8) & 0xf
 						action_code_2 = (action_code >> 4) & 0xf
-						core.LogStr(fmt.Sprintf("_multi_player mode, player id:%d get action code:%v, action_code_0:%v, action_code_1:%v, action_code_2:%v",
-							_idx, action_code, action_code_0, action_code_1, action_code_2))
+						// core.LogStr(fmt.Sprintf("_multi_player mode, player id:%d get action code:%v, action_code_0:%v, action_code_1:%v, action_code_2:%v",
+						// 	_idx, action_code, action_code_0, action_code_1, action_code_2))
 
 						core.GameInst.HandleMultiPlayerAction(_idx, action_code_0, action_code_1, action_code_2)
 

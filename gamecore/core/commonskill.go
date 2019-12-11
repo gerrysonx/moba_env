@@ -11,6 +11,7 @@ import (
 type SkillTargetCallback func(*SkillTarget)
 type SkillTarget struct {
 	trigger_time float64
+	src          BaseFunc
 	hero         BaseFunc
 	dir          vec3.T
 	pos          vec3.T
@@ -25,6 +26,9 @@ func SlowDirection(dir vec3.T, src_pos vec3.T, camp int32, distance float32) {
 	game := &GameInst
 	dist := float32(0)
 	for _, v := range game.BattleUnits {
+		if _, ok := v.(*Bullet); ok {
+			continue
+		}
 		unit_pos := v.Position()
 		dist = vec3.Distance(&src_pos, &unit_pos)
 		if (dist < distance) && (v.Camp() != camp) && (v.Health() > 0) {
@@ -40,11 +44,16 @@ func SlowDirection(dir vec3.T, src_pos vec3.T, camp int32, distance float32) {
 	}
 }
 
-func ChainDamage(dir vec3.T, src_pos vec3.T, camp int32, distance float32, damage float32) {
+func ChainDamage(dir vec3.T, src_pos vec3.T, camp int32, distance float32, damage float32) (bool, []BaseFunc) {
 	// We shall calculate cos(Theta)
+	var targets []BaseFunc
+	damaged_dealed := false
 	game := &GameInst
 	dist := float32(0)
 	for _, v := range game.BattleUnits {
+		if _, ok := v.(*Bullet); ok {
+			continue
+		}
 		unit_pos := v.Position()
 		dist = vec3.Distance(&src_pos, &unit_pos)
 		if (dist < distance) && (v.Camp() != camp) && (v.Health() > 0) {
@@ -53,10 +62,14 @@ func ChainDamage(dir vec3.T, src_pos vec3.T, camp int32, distance float32, damag
 			target_dir.Normalize()
 			if vec3.Angle(target_dir, &dir) < 0.35 {
 				// Means the direction is almost the same
+				targets = append(targets, v)
 				v.DealDamage(damage)
+				damaged_dealed = true
 			}
 		}
 	}
+
+	return damaged_dealed, targets
 }
 
 func AlterUnitPosition(dir vec3.T, move_unit BaseFunc, distance float32) {
@@ -72,18 +85,30 @@ func AlterUnitPosition(dir vec3.T, move_unit BaseFunc, distance float32) {
 	}
 }
 
-func AoEDamage(src_pos vec3.T, radius float32, camp int32, damage float32) {
+func AoEDamage(src_pos vec3.T, radius float32, camp int32, damage float32) (bool, []BaseFunc) {
 	// We shall calculate cos(Theta)
+	damaged_dealed := false
+	var hit_units []BaseFunc
 	game := &GameInst
 	dist := float32(0)
 	for _, v := range game.BattleUnits {
+		if _, ok := v.(*Bullet); ok {
+			continue
+		}
 		unit_pos := v.Position()
 		dist = vec3.Distance(&src_pos, &unit_pos)
 		if (dist < radius) && (v.Camp() != camp) && (v.Health() > 0) {
 			// Means the direction is almost the same
+			LogStr(fmt.Sprintf("AoEDamage toward enemy:%v, attack range:%v, dist:%v, radius:%v, time:%v",
+				v.GetId(), v.AttackRange(), dist, radius, game.LogicTime))
+
 			v.DealDamage(damage)
+			hit_units = append(hit_units, v)
+			damaged_dealed = true
 		}
 	}
+
+	return damaged_dealed, hit_units
 }
 
 func AddSpeedBuff(target_units []BaseFunc, buff_id int32) {
@@ -251,12 +276,15 @@ func PushEnemyAway(hero HeroFunc, a ...interface{}) {
 	callback := func(skill_target *SkillTarget) {
 		var unit BaseFunc
 		var dir vec3.T
+		var src BaseFunc
 		unit = skill_target.hero
 		dir = skill_target.dir
+		src = skill_target.src
 		AlterUnitPosition(dir, unit, 40)
+		LogStr(fmt.Sprintf("PushEnemyAway is emitted, from :%v to %v, time:%v", src.GetId(), unit.GetId(), game.LogicTime))
 	}
 
-	LogStr(fmt.Sprintf("UseSkill 3 is called, has_more_params:%v, now_seconds:%v", has_more_params, game.LogicTime))
+	// LogStr(fmt.Sprintf("PushEnemyAway is called, has_more_params:%v, now_seconds:%v", has_more_params, game.LogicTime))
 
 	skill_target := SkillTarget{}
 	skill_target.callback = callback
@@ -274,10 +302,10 @@ func PushEnemyAway(hero HeroFunc, a ...interface{}) {
 
 		if _find {
 			skill_target.hero = _enemy
-
+			skill_target.src = hero.(BaseFunc)
 			skill_target.dir.Normalize()
-			game.AddTarget(skill_target)
-			LogStr(fmt.Sprintf("UseSkill 3, AddTarget dir skill, dir is:%v, %v", pos_x, pos_y))
+			callback(&skill_target)
+			//	game.AddTarget(skill_target)
 		}
 
 	} else {
@@ -311,8 +339,11 @@ func PushEnemyAway(hero HeroFunc, a ...interface{}) {
 }
 
 func DoStompHarm(hero HeroFunc) {
-
-	AoEDamage(hero.(BaseFunc).Position(), 20, hero.(BaseFunc).Camp(), 500.0)
+	game := &GameInst
+	damage_dealed, targets := AoEDamage(hero.(BaseFunc).Position(), 20, hero.(BaseFunc).Camp(), 500.0)
+	if damage_dealed {
+		LogStr(fmt.Sprintf("DoStompHarm emit real harm.from:%v to:%v, at time:%v", hero.(BaseFunc).GetId(), targets[0].GetId(), game.LogicTime))
+	}
 }
 
 func DoDirHarm(hero HeroFunc, a ...interface{}) {
@@ -326,11 +357,14 @@ func DoDirHarm(hero HeroFunc, a ...interface{}) {
 		var dir vec3.T
 		unit = skill_target.hero
 		dir = skill_target.dir
-		ChainDamage(dir, unit.Position(), unit.Camp(), 20, 500.0)
-		LogStr(fmt.Sprintf("DoBigHarm skill callback is called, dir is:%v, %v", dir[0], dir[1]))
+		damage_dealed, targets := ChainDamage(dir, unit.Position(), unit.Camp(), 20, 500.0)
+		if damage_dealed {
+			LogStr(fmt.Sprintf("DoDirHarm emit real harm, from:%v to:%v, time:%v", unit.GetId(), targets[0].GetId(), game.LogicTime))
+		}
+
 	}
 
-	LogStr(fmt.Sprintf("DoBigHarm is called, has_more_params:%v, now_seconds:%v", has_more_params, game.LogicTime))
+	// LogStr(fmt.Sprintf("DoBigHarm is called, has_more_params:%v, now_seconds:%v", has_more_params, game.LogicTime))
 
 	skill_target := SkillTarget{}
 	skill_target.callback = callback
@@ -344,7 +378,8 @@ func DoDirHarm(hero HeroFunc, a ...interface{}) {
 		skill_target.dir[0] = pos_x
 		skill_target.dir[1] = pos_y
 		skill_target.dir.Normalize()
-		game.AddTarget(skill_target)
+		callback(&skill_target)
+		//	game.AddTarget(skill_target)
 	} else {
 		// UI mode, we're waiting for mouse to be pressed.
 		hero.SetSkillTargetPos(0, 0)

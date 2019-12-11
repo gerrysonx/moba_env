@@ -42,6 +42,7 @@ func (hero *Lusian) Tick(gap_time float64) {
 				game.AddUnits = append(game.AddUnits, bullet)
 
 				hero.SetLastAttackTime(now_seconds)
+				//		LogStr(fmt.Sprintf("Lusian attack:%v, time:%v", enemy.GetId(), game.LogicTime))
 			}
 		}
 
@@ -51,21 +52,25 @@ func (hero *Lusian) Tick(gap_time float64) {
 		dir_b := hero.Position()
 		var dir vec3.T
 		need_move := true
-		if dist > enemy.AttackRange()+10 {
+		if dist > enemy.AttackRange()+25 {
 			if canAttack == false {
 				// March towards enemy
 				dir = vec3.Sub(&dir_a, &dir_b)
+				//		LogStr(fmt.Sprintf("Lusian need move toward enemy:%v, attack range:%v, dist:%v time:%v", enemy.GetId(), enemy.AttackRange(), dist, game.LogicTime))
 			} else {
 				need_move = false
 			}
 		} else {
 			// March to the opposite direction of enemy
+
 			has_clear_dir, clear_dir := GetEnemyClearDir(hero.Camp(), &pos)
 			if has_clear_dir {
 				dir = clear_dir
 			} else {
 				dir = vec3.Sub(&dir_b, &dir_a)
 			}
+			//	LogStr(fmt.Sprintf("Lusian need move toward enemy:%v, attack range:%v, dist:%v, has_clear_dir:%v, time:%v",
+			//		enemy.GetId(), enemy.AttackRange(), dist, has_clear_dir, game.LogicTime))
 
 		}
 
@@ -77,6 +82,9 @@ func (hero *Lusian) Tick(gap_time float64) {
 			dir = dir.Scaled(float32(hero.speed))
 			newPos := vec3.Add(&pos, &dir)
 			hero.SetPosition(newPos)
+			// dist_after_move := vec3.Distance(&pos_enemy, &pos)
+			//	LogStr(fmt.Sprintf("Lusian need move toward enemy:%v, attack range:%v, dist:%v, dist_after_move:%v, time:%v",
+			//		enemy.GetId(), enemy.AttackRange(), dist, dist_after_move, game.LogicTime))
 		}
 
 		return
