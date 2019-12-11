@@ -16,12 +16,28 @@ import (
 )
 
 func main() {
+
+	root_dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	defer func() {
 		var buffer [2048 * 1024]byte
 		runtime.Stack(buffer[0:], true)
 		crashed_stack := string(buffer[0:])
 		if strings.Contains(crashed_stack, "panic") {
 			fmt.Printf("stack is:%v\n", crashed_stack)
+			now := time.Now()
+			crash_file_handle, _err0 := os.Create(fmt.Sprintf("%s/../crash_%v.log", root_dir, now.UnixNano()))
+			if _err0 != nil {
+				fmt.Println("Create crash_file_handle file failed.")
+				return
+			}
+			crash_file_handle.WriteString(crashed_stack)
+			crash_file_handle.WriteString("\n")
+			crash_file_handle.Sync()
+			crash_file_handle.Close()
 		} else {
 			fmt.Printf("no panic")
 		}
@@ -36,11 +52,6 @@ func main() {
 	_debug_log := flag.Bool("debug_log", false, "a bool")
 	_slow_tick := flag.Bool("slow_tick", false, "a bool")
 	_multi_player := flag.Bool("multi_player", true, "a bool")
-
-	root_dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
-	if err != nil {
-		log.Fatal(err)
-	}
 
 	file_handle, _err := os.Create(fmt.Sprintf("%s/../mobacore.log", root_dir))
 	if _err != nil {
