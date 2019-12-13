@@ -44,6 +44,8 @@ RANDOM_START_STEPS = 4
 
 global g_step
 
+g_worker_id = 0
+
 # Use hero id embedding
 g_embed_hero_id = False
 
@@ -658,7 +660,7 @@ def learn(num_steps=NUM_STEPS):
         else:
             os.mkdir(data_folder_path)
 
-        data_file_name = '{}/../distribute_collected_train_data/{}/seg_{}.data'.format(root_folder, timestep, int(time.time()*1000))       
+        data_file_name = '{}/../distribute_collected_train_data/{}/seg_{}.data'.format(root_folder, timestep, int(time.time()*100000 + g_worker_id))       
         dump_generated_data_2_file(data_file_name, seg)
         print('Timestep:{}, generated data:{}.'.format(timestep, data_file_name))
 
@@ -694,6 +696,9 @@ def learn(num_steps=NUM_STEPS):
 if __name__=='__main__':
     if len(sys.argv) > 1:
         TIMESTEPS_PER_ACTOR_BATCH = int(sys.argv[1])
+        
+    if len(sys.argv) > 2:    
+        g_worker_id = int(sys.argv[2])
 
     bb = {1:'a', 2:'b', 3:'c'}
     #print(list(bb))
