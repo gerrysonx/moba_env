@@ -8,8 +8,8 @@ import subprocess
 if __name__=='__main__':
     root_folder = os.path.split(os.path.abspath(__file__))[0]
 
-    horizon_total = 8192 * 64
-    horizon_per_worker = 8192 * 4
+    horizon_total = 8192 * 16
+    horizon_per_worker = 8192 * 2
     worker_count = horizon_total // horizon_per_worker
 
     train_full_path = '{}/ppo_distribute_train.py'.format(root_folder)
@@ -20,4 +20,4 @@ if __name__=='__main__':
     subprocess.Popen(['python', train_full_path, '{}'.format(worker_count)], env=my_env)
 
     for i in range(worker_count):
-        subprocess.Popen(['python', generate_full_path, '{}'.format(horizon_per_worker)], env=my_env)
+        subprocess.Popen(['python', generate_full_path, '{}'.format(horizon_per_worker), '{}'.format(i)], env=my_env)

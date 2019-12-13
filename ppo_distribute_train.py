@@ -640,7 +640,7 @@ def get_one_step_data(timestep, work_thread_count):
             collected_all_data_files = True
             break        
         time.sleep(2)
-    print('Successfully collected {} files.'.format(len(files)))
+    print('Successfully collected {} files, data size:{}.'.format(len(files), len(ob)))
     return ob, ac, std_atvtg, tdlamret, lens, rets, unclipped_rets
 
 
