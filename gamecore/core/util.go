@@ -62,13 +62,19 @@ func CheckUnitOnDir(position *vec3.T, dir *vec3.T) (bool, BaseFunc) {
 }
 
 func GetEnemyClearDir(my_camp int32, position *vec3.T) (bool, vec3.T) {
-	check_dirs := []vec3.T{{1, 0}, {1, 1}, {0, 1}, {-1, 1}, {-1, 0}, {-1, -1}, {0, -1}, {1, -1}}
-	var has_enemy bool
+	check_dirs := []vec3.T{{1, 0}, {1, 0.5}, {1, 1}, {0.5, 1}, {0, 1}, {-0.5, 1}, {-1, 1},
+		{-1, 0.5}, {-1, 0}, {-1, -0.5}, {-1, -1}, {-0.5, -1}, {0, -1}, {0.5, -1}, {1, -1}, {1, -0.5}}
 
-	for _, v := range check_dirs {
-		has_enemy, _ = CheckEnemyOnDirAngle(my_camp, position, &v, 1.2)
-		if has_enemy == false {
-			return true, v
+	var has_enemy bool
+	gap := float32(0.2)
+	clear_view_angle_threshold := float32(1.4)
+	for _x := float32(-1); _x <= float32(1); _x += gap {
+		for _y := float32(-1); _y <= float32(1); _y += gap {
+			v := vec3.T{_x, _y, 0}
+			has_enemy, _ = CheckEnemyOnDirAngle(my_camp, position, &v, clear_view_angle_threshold)
+			if has_enemy == false {
+				return true, v
+			}
 		}
 	}
 
