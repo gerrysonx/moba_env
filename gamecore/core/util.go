@@ -62,23 +62,27 @@ func CheckUnitOnDir(position *vec3.T, dir *vec3.T) (bool, BaseFunc) {
 }
 
 func GetEnemyClearDir(my_camp int32, position *vec3.T) (bool, vec3.T) {
-	check_dirs := []vec3.T{{1, 0}, {1, 0.5}, {1, 1}, {0.5, 1}, {0, 1}, {-0.5, 1}, {-1, 1},
-		{-1, 0.5}, {-1, 0}, {-1, -0.5}, {-1, -1}, {-0.5, -1}, {0, -1}, {0.5, -1}, {1, -1}, {1, -0.5}}
+	game := &GameInst
+	total_dir := vec3.T{0, 0, 0}
 
-	var has_enemy bool
-	gap := float32(0.2)
-	clear_view_angle_threshold := float32(1.4)
-	for _x := float32(-1); _x <= float32(1); _x += gap {
-		for _y := float32(-1); _y <= float32(1); _y += gap {
-			v := vec3.T{_x, _y, 0}
-			has_enemy, _ = CheckEnemyOnDirAngle(my_camp, position, &v, clear_view_angle_threshold)
-			if has_enemy == false {
-				return true, v
-			}
+	for _, v := range game.BattleUnits {
+		if _, ok := v.(*Bullet); ok {
+			continue
+		}
+
+		if v.Camp() != my_camp {
+			unit_pos := v.Position()
+			unit_dir := unit_pos.Sub(position)
+			unit_dir.Normalize()
+			total_dir = *total_dir.Add(unit_dir)
 		}
 	}
 
-	return false, check_dirs[0]
+	total_dir.Normalize()
+	total_dir[0] = -total_dir[0]
+	total_dir[1] = -total_dir[1]
+
+	return false, total_dir
 }
 
 func CheckEnemyOnDirAngle(my_camp int32, position *vec3.T, dir *vec3.T, angle_threshold float32) (bool, BaseFunc) {
