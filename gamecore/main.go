@@ -24,8 +24,8 @@ func main() {
 
 	defer func() {
 		var buffer [2048 * 1024]byte
-		runtime.Stack(buffer[0:], true)
-		crashed_stack := string(buffer[0:])
+		size := runtime.Stack(buffer[0:], true)
+		crashed_stack := string(buffer[0:size])
 		if strings.Contains(crashed_stack, "panic") {
 			fmt.Printf("stack is:%v\n", crashed_stack)
 			now := time.Now()
