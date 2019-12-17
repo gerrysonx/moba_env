@@ -633,7 +633,7 @@ def dump_generated_data_2_file(file_name, seg):
 
 def learn(num_steps=NUM_STEPS):
     global g_step
-    g_step = 0
+    
 
     root_folder = os.path.split(os.path.abspath(__file__))[0]   
 
@@ -646,60 +646,40 @@ def learn(num_steps=NUM_STEPS):
     data_generator = MultiPlayer_Data_Generator(agent)
 
     saver = tf.train.Saver()
-
+    base_step = g_step
     for timestep in range(num_steps):
-        restore_from_ckpt(saver, session, timestep)
+        g_step = base_step + timestep
+        restore_from_ckpt(saver, session, g_step)
         ob, ac, atarg, tdlamret, seg = data_generator.get_one_step_data()
 
         #
         # Check if there is a folder with name 'timestep', if not, create one, and put all generated data in it
         # 
-        data_folder_path = '{}/../distribute_collected_train_data/{}'.format(root_folder, timestep)
+        data_folder_path = '{}/../distribute_collected_train_data/{}'.format(root_folder, g_step)
         if os.path.exists(data_folder_path):
             pass
         else:
             os.mkdir(data_folder_path)
 
-        data_file_name = '{}/../distribute_collected_train_data/{}/seg_{}.data'.format(root_folder, timestep, int(time.time()*100000 + g_worker_id))       
+        data_file_name = '{}/../distribute_collected_train_data/{}/seg_{}_{}.data'.format(root_folder, g_step, g_worker_id, int(time.time()*100000))       
         dump_generated_data_2_file(data_file_name, seg)
-        print('Timestep:{}, generated data:{}.'.format(timestep, data_file_name))
+        print('Timestep:{}, generated data:{}.'.format(g_step, data_file_name))
 
-
-
-    session = tf.Session()
-    action_space_map = {'action':7, 'move':8, 'skill':8}
-    a_space_keys = ['action', 'move', 'skill']
-    agent = Agent(session, action_space_map, a_space_keys)
-
-    saver = tf.train.Saver(max_to_keep=1)
-    model_file=tf.train.latest_checkpoint('ckpt/')
-    if model_file != None:
-        saver.restore(session, model_file)
-
-    env = Environment()
-    
-    ob = env.reset()
-
-    while True:
-        time.sleep(0.2)
-        ac, _ = agent.greedy_predict(ob[np.newaxis, ...])
-        print('Predict :{}'.format(ac))
-
-        ob, unclipped_rew, new, _ = env.step(ac)
-        if new:
-            print('Game is finishd, reward is:{}'.format(unclipped_rew))
-            ob = env.reset()
-
-    pass
 
 
 if __name__=='__main__':
+    global g_step
+    g_step = 0
+    
     if len(sys.argv) > 1:
         TIMESTEPS_PER_ACTOR_BATCH = int(sys.argv[1])
         
     if len(sys.argv) > 2:    
         g_worker_id = int(sys.argv[2])
-
+        
+    if len(sys.argv) > 3:    
+        g_step = int(sys.argv[3])
+        
     bb = {1:'a', 2:'b', 3:'c'}
     #print(list(bb))
     a = list(map(lambda x: math.pow(x, -2), range(1, 10)))

@@ -32,9 +32,9 @@ HERO_COUNT = 2
 g_dir_skill_mask = [[True, False, False, False], [True, False, False, True]]
 
 NUM_FRAME_PER_ACTION = 4
-BATCH_SIZE = 4096
+BATCH_SIZE = 4096*8
 EPOCH_NUM = 4
-LEARNING_RATE = 8e-3
+LEARNING_RATE = 2e-2
 TIMESTEPS_PER_ACTOR_BATCH = 256*512
 GAMMA = 0.99
 LAMBDA = 0.95
@@ -572,7 +572,6 @@ class MultiPlayerAgent():
         return action_arr, value_arr
 
     def learn_one_traj(self, timestep, ob, ac, atarg, tdlamret, lens, rets, unclipped_rets, train_writer):
-        global g_step
         self.session.run(self.update_policy_net_op)
 
         lrmult = max(1.0 - float(timestep) / self.num_total_steps, .0)
@@ -598,12 +597,8 @@ class MultiPlayerAgent():
                     self.multi_s: ob[temp_indices],
                     self.multi_a: ac[temp_indices],
                     self.cumulative_r: tdlamret[temp_indices],
-                })
-                
-                if g_out_tb and i == (inner_loop_count - 1) and _idx == (EPOCH_NUM -1):
-                    g_step += 1
-                    #train_writer.add_summary(summary_new_val, g_step)
-                    #train_writer.add_summary(summary_old_val, g_step)
+                })                
+
 
                 Entropy_list.append(entropy)
                 KL_distance_list.append(kl_distance)
@@ -639,33 +634,35 @@ def get_one_step_data(timestep, work_thread_count):
 
             collected_all_data_files = True
             break        
-        time.sleep(2)
-    print('Successfully collected {} files, data size:{}.'.format(len(files), len(ob)))
+        time.sleep(10)
+    print('Successfully collected {} files, data size:{} from {}.'.format(len(files), len(ob), timestep))
     return ob, ac, std_atvtg, tdlamret, lens, rets, unclipped_rets
 
 
 def learn(num_steps=NUM_STEPS):
     root_folder = os.path.split(os.path.abspath(__file__))[0]
     global g_step
-    g_step = 0
+    
     session = tf.Session()
 
     action_space_map = {'action':7, 'move':8, 'skill':8}
     a_space_keys = ['action', 'move', 'skill']
     agent = MultiPlayerAgent(session, action_space_map, a_space_keys)
     train_writer = tf.summary.FileWriter('summary_log_gerry', graph=tf.get_default_graph()) 
-    saver = tf.train.Saver(max_to_keep=1)
+    saver = tf.train.Saver(max_to_keep=50)
     max_rew = -10000
-
+    base_step = g_step
     for timestep in range(num_steps):
-        ob, ac, atarg, tdlamret, lens, rets, unclipped_rets = get_one_step_data(timestep, g_data_generator_count)
+        g_step = base_step + timestep
+        ob, ac, atarg, tdlamret, lens, rets, unclipped_rets = get_one_step_data(g_step, g_data_generator_count)
 
-        entropy, kl_distance = agent.learn_one_traj(timestep, ob, ac, atarg, tdlamret, lens, rets, unclipped_rets, train_writer)
+        entropy, kl_distance = agent.learn_one_traj(g_step, ob, ac, atarg, tdlamret, lens, rets, unclipped_rets, train_writer)
 
         max_rew = max(max_rew, np.max(agent.unclipped_rewbuffer))
 
-        saver.save(session, '{}/../ckpt/mnist.ckpt'.format(root_folder), global_step=timestep + 1)
+        saver.save(session, '{}/../ckpt/mnist.ckpt'.format(root_folder), global_step=g_step + 1)
 
+        '''
         summary0 = tf.Summary()
         summary0.value.add(tag='EpLenMean', simple_value=np.mean(agent.lenbuffer))
         train_writer.add_summary(summary0, g_step)
@@ -673,7 +670,7 @@ def learn(num_steps=NUM_STEPS):
         summary1 = tf.Summary()
         summary1.value.add(tag='UnClippedEpRewMean', simple_value=np.mean(agent.unclipped_rewbuffer))
         train_writer.add_summary(summary1, g_step)
-
+        '''
         print('Timestep:', timestep,
             "\tEpLenMean:", '%.3f'%np.mean(agent.lenbuffer),
             "\tEpRewMean:", '%.3f'%np.mean(agent.rewbuffer),
@@ -737,10 +734,16 @@ def play_game_with_saved_model():
 
 
 if __name__=='__main__':
+    global g_step
+    g_step = 0
+    
     bb = {1:'a', 2:'b', 3:'c'}
     if len(sys.argv) > 1:
         g_data_generator_count = int(sys.argv[1])
-
+        
+    if len(sys.argv) > 2:    
+        g_step = int(sys.argv[2])
+        
     #print(list(bb))
     a = list(map(lambda x: math.pow(x, -2), range(1, 10)))
     for val in a:
