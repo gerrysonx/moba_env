@@ -59,7 +59,7 @@ func (hero *Vi) Init(a ...interface{}) BaseFunc {
 	hero.skillusefrequency[0] = 0.1
 	hero.skillusefrequency[1] = 2000
 	hero.skillusefrequency[2] = 2000
-	hero.skillusefrequency[3] = 0.1
+	hero.skillusefrequency[3] = 4
 	return hero
 }
 

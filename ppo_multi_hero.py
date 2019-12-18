@@ -28,13 +28,13 @@ LAYER_SIZE = 128
 C = 1
 HERO_COUNT = 2
 # Hero skill mask, to indicate if a hero skill is a directional one.
-g_dir_skill_mask = [[True, False, False, False], [True, False, False, True]]
+g_dir_skill_mask = [[True, False, True, False], [True, False, False, True]]
 
 NUM_FRAME_PER_ACTION = 4
 BATCH_SIZE = 4096
 EPOCH_NUM = 4
 LEARNING_RATE = 8e-3
-TIMESTEPS_PER_ACTOR_BATCH = 256*512
+TIMESTEPS_PER_ACTOR_BATCH = 8192*16
 GAMMA = 0.99
 LAMBDA = 0.95
 NUM_STEPS = 5000
@@ -55,7 +55,7 @@ g_out_tb = True
 # Control if train or play
 g_is_train = True
 # True means start a new train task without loading previous model.
-g_start_anew = False
+g_start_anew = True
 
 # Control if use priority sampling
 g_enable_per = False
