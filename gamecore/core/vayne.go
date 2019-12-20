@@ -58,7 +58,7 @@ func (hero *Vayne) Init(a ...interface{}) BaseFunc {
 	InitHeroWithCamp(hero, wanted_camp, pos_x, pos_y)
 	hero.skillusefrequency[0] = 4
 	hero.skillusefrequency[1] = 2000
-	hero.skillusefrequency[2] = 4
+	hero.skillusefrequency[2] = 0.1
 	hero.skillusefrequency[3] = 2000
 	return hero
 }

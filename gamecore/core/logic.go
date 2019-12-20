@@ -236,7 +236,7 @@ func (game *Game) Testcase6(center_area_width int, player_count int) {
 
 func (game *Game) Init() {
 	game.LogicTime = 0
-	game.BattleField = &BattleField{Restricted_x: 200, Restricted_y: 200, Restricted_w: 600, Restricted_h: 600}
+	game.BattleField = &BattleField{Restricted_x: 400, Restricted_y: 400, Restricted_w: 200, Restricted_h: 200}
 	// map_units := game.BattleField.LoadMap("./map/3_corridors.png")
 
 	game.BattleUnits = []BaseFunc{}
@@ -245,7 +245,7 @@ func (game *Game) Init() {
 	game.skill_targets_add = []SkillTarget{}
 	game.DefaultHeroes = []HeroFunc{}
 	game.OppoHeroes = []HeroFunc{}
-	game.Testcase6(200, 2)
+	game.Testcase6(150, 2)
 	LogStr("Game Inited.")
 	// LogStr(fmt.Sprintf("Game is inited, oppo hero slow buff state:%v", game.OppoHero.(BaseFunc).GetBuff(BuffSpeedSlow)))
 	// game.Testcase1()

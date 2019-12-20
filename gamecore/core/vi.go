@@ -76,7 +76,8 @@ func (hero *Vi) UseSkill(skill_idx uint8, a ...interface{}) {
 
 	switch skill_idx {
 	case 0:
-		DoDirHarm(hero, a...)
+		// DoDirHarm(hero, a...)
+		DoStompHarm(hero)
 
 	case 1:
 		//SlowDirEnemy(hero, a...)
