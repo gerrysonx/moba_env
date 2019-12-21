@@ -47,12 +47,12 @@ func (hero *Lusian) Tick(gap_time float64) {
 		}
 
 		// Check enemy and self distance
-		dist := vec3.Distance(&pos_enemy, &pos)
+		// dist := vec3.Distance(&pos_enemy, &pos)
 		dir_a := enemy.Position()
 		dir_b := hero.Position()
 		var dir vec3.T
 		need_move := true
-		if dist > enemy.AttackRange()+35 {
+		if true { // dist > enemy.AttackRange()
 			if canAttack == false {
 				// March towards enemy
 				dir = vec3.Sub(&dir_a, &dir_b)
