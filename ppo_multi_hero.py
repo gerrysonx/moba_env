@@ -28,7 +28,7 @@ LAYER_SIZE = 128
 C = 1
 HERO_COUNT = 2
 # Hero skill mask, to indicate if a hero skill is a directional one.
-g_dir_skill_mask = [[True, False, True, False], [False, False, False, True]]
+g_dir_skill_mask = [[False, False, False, False], [False, False, False, False]]
 
 NUM_FRAME_PER_ACTION = 4
 BATCH_SIZE = 4096

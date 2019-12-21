@@ -56,10 +56,10 @@ func (hero *Vi) Init(a ...interface{}) BaseFunc {
 	pos_x := a[1].(float32)
 	pos_y := a[2].(float32)
 	InitHeroWithCamp(hero, wanted_camp, pos_x, pos_y)
-	hero.skillusefrequency[0] = 0.1
+	hero.skillusefrequency[0] = 2000
 	hero.skillusefrequency[1] = 2000
 	hero.skillusefrequency[2] = 2000
-	hero.skillusefrequency[3] = 4
+	hero.skillusefrequency[3] = 2000
 	return hero
 }
 
@@ -77,7 +77,7 @@ func (hero *Vi) UseSkill(skill_idx uint8, a ...interface{}) {
 	switch skill_idx {
 	case 0:
 		// DoDirHarm(hero, a...)
-		DoStompHarm(hero)
+		// DoStompHarm(hero)
 
 	case 1:
 		//SlowDirEnemy(hero, a...)
@@ -86,7 +86,7 @@ func (hero *Vi) UseSkill(skill_idx uint8, a ...interface{}) {
 		//JumpTowardsEnemy(hero, a...)
 
 	case 3:
-		PushEnemyAway(hero, a...)
+		// PushEnemyAway(hero, a...)
 	}
 
 }

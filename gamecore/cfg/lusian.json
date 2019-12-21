@@ -1,9 +1,9 @@
 {
 	"id" : 1007,
 	"attackFreq" : 1,
-	"attackRange" : 60,
+	"attackRange" : 20,
 	"viewRange" : 2000,
-	"health" : 700,
-	"damage" : 50,
+	"health" : 1200,
+	"damage" : 100,
 	"speed" : 40
 }

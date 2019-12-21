@@ -85,6 +85,37 @@ func AlterUnitPosition(dir vec3.T, move_unit BaseFunc, distance float32) {
 	}
 }
 
+func AoESucker(src_hero BaseFunc, radius float32, camp int32, damage float32, revive_hp float32) (bool, []BaseFunc) {
+	src_pos := src_hero.Position()
+	// We shall calculate cos(Theta)
+	damaged_dealed := false
+	var hit_units []BaseFunc
+	game := &GameInst
+	dist := float32(0)
+	for _, v := range game.BattleUnits {
+		if _, ok := v.(*Bullet); ok {
+			continue
+		}
+		unit_pos := v.Position()
+		dist = vec3.Distance(&src_pos, &unit_pos)
+		if (dist < radius) && (v.Camp() != camp) && (v.Health() > 0) {
+			// Means the direction is almost the same
+			LogStr(fmt.Sprintf("AoEDamage toward enemy:%v, attack range:%v, dist:%v, radius:%v, time:%v",
+				v.GetId(), v.AttackRange(), dist, radius, game.LogicTime))
+
+			v.DealDamage(damage)
+			hit_units = append(hit_units, v)
+			damaged_dealed = true
+		}
+	}
+
+	if damaged_dealed {
+		src_hero.DealDamage(-revive_hp)
+	}
+
+	return damaged_dealed, hit_units
+}
+
 func AoEDamage(src_pos vec3.T, radius float32, camp int32, damage float32) (bool, []BaseFunc) {
 	// We shall calculate cos(Theta)
 	damaged_dealed := false
@@ -343,6 +374,14 @@ func DoStompHarm(hero HeroFunc) {
 	damage_dealed, targets := AoEDamage(hero.(BaseFunc).Position(), 20, hero.(BaseFunc).Camp(), 500.0)
 	if damage_dealed {
 		LogStr(fmt.Sprintf("DoStompHarm emit real harm.from:%v to:%v, at time:%v", hero.(BaseFunc).GetId(), targets[0].GetId(), game.LogicTime))
+	}
+}
+
+func BloodSucker(hero HeroFunc) {
+	game := &GameInst
+	damage_dealed, targets := AoESucker(hero.(BaseFunc), 20, hero.(BaseFunc).Camp(), 400.0, 400.0)
+	if damage_dealed {
+		LogStr(fmt.Sprintf("BloodSucker emit real harm.from:%v to:%v, at time:%v", hero.(BaseFunc).GetId(), targets[0].GetId(), game.LogicTime))
 	}
 }
 

@@ -245,6 +245,12 @@ func (baseinfo *BaseInfo) SetMaxHealth(max_health float32) {
 
 func (baseinfo *BaseInfo) DealDamage(damage float32) bool {
 	baseinfo.health -= damage
+	if baseinfo.health > baseinfo.max_health {
+		baseinfo.health = baseinfo.max_health
+	}
+	if baseinfo.health < 0 {
+		baseinfo.health = 0
+	}
 	return true
 }
 
