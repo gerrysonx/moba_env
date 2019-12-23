@@ -245,6 +245,10 @@ func (game *Game) Init() {
 	game.skill_targets_add = []SkillTarget{}
 	game.DefaultHeroes = []HeroFunc{}
 	game.OppoHeroes = []HeroFunc{}
+	game.multi_player_train_state.SelfHero0Health = 0
+	game.multi_player_train_state.SelfHero1Health = 0
+	game.multi_player_train_state.OppoHeroHealth = 0
+
 	game.Testcase6(150, 2)
 	LogStr("Game Inited.")
 	// LogStr(fmt.Sprintf("Game is inited, oppo hero slow buff state:%v", game.OppoHero.(BaseFunc).GetBuff(BuffSpeedSlow)))
@@ -380,9 +384,6 @@ func (game *Game) DumpMultiPlayerGameState() []byte {
 		game.multi_player_train_state.SlowBuffRemainTime = float32(slow_buff_remain_time_ratio)
 
 	} else {
-		game.multi_player_train_state.SelfHero0Health = 0
-		game.multi_player_train_state.SelfHero1Health = 0
-		game.multi_player_train_state.OppoHeroHealth = 0
 		if oppo_unit.Health() <= 0 {
 			game.multi_player_train_state.SelfWin = 1
 		} else {

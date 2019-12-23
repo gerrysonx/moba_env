@@ -111,6 +111,8 @@ class MobaMultiPlayerEnv(gym.Env):
 						self.reward = -1
 					else:
 						self.reward = 1#jobj['SelfWin']
+						hp_reward = (self.self_0_health + self.self_1_health) / (self.full_self_0_health + self.full_self_1_health)
+						self.reward += hp_reward
 				else:
 					harm_reward = 0.002
 					self.reward = 0
