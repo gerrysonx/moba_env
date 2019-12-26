@@ -235,7 +235,9 @@ func (game *Game) Testcase6(center_area_width int, player_count int) {
 }
 
 func (game *Game) Init() {
-	game.LogicTime = 0
+	now := time.Now()
+	game.LogicTime = float64(now.UnixNano()) / 1e9
+
 	game.BattleField = &BattleField{Restricted_x: 400, Restricted_y: 400, Restricted_w: 200, Restricted_h: 200}
 	// map_units := game.BattleField.LoadMap("./map/3_corridors.png")
 

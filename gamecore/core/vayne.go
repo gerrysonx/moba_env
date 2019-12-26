@@ -1,6 +1,8 @@
 package core
 
 import (
+	"fmt"
+
 	"github.com/ungerik/go3d/vec3"
 )
 
@@ -68,8 +70,18 @@ func (hero *Vayne) UseSkill(skill_idx uint8, a ...interface{}) {
 	// Check CD
 	now_seconds := game.LogicTime
 	old_skill_use_time := hero.LastSkillUseTime(skill_idx)
+
 	if (old_skill_use_time + hero.skillusefrequency[skill_idx]) > now_seconds {
+		LogStr(fmt.Sprintf("BloodSucker CD time not come, skill_idx:%v, old_skill_use_time:%v, from:%v at time:%v",
+			skill_idx,
+			old_skill_use_time,
+			hero.GetId(), game.LogicTime))
 		return
+	} else {
+		LogStr(fmt.Sprintf("BloodSucker CD time OK, skill_idx:%v, old_skill_use_time:%v, from:%v at time:%v",
+			skill_idx,
+			old_skill_use_time,
+			hero.GetId(), game.LogicTime))
 	}
 
 	hero.SetLastSkillUseTime(skill_idx, now_seconds)
