@@ -111,7 +111,7 @@ class MobaMultiPlayerEnv(gym.Env):
 						self.reward = -1
 					else:
 						self.reward = 1#jobj['SelfWin']
-						hp_reward = (self.self_0_health + self.self_1_health) / (self.full_self_0_health + self.full_self_1_health)
+						hp_reward = (jobj['SelfHero0Health'] + jobj['SelfHero1Health']) / (jobj['SelfHero0HealthFull'] + jobj['SelfHero1HealthFull'])
 						self.reward += hp_reward
 				else:
 					harm_reward = 0.002
@@ -137,15 +137,15 @@ class MobaMultiPlayerEnv(gym.Env):
 		# Player 1 perspective
 		self.state[0][0] = jobj['SelfHero0PosX'] / norm_base - 0.5
 		self.state[0][1] = jobj['SelfHero0PosY'] / norm_base - 0.5
-		self.state[0][2] = jobj['SelfHero0Health'] / self.full_self_0_health - 0.5
+		self.state[0][2] = jobj['SelfHero0Health'] / jobj['SelfHero0HealthFull'] - 0.5
 
 		self.state[0][3] = jobj['SelfHero1PosX'] / norm_base - 0.5
 		self.state[0][4] = jobj['SelfHero1PosY'] / norm_base - 0.5
-		self.state[0][5] = jobj['SelfHero1Health'] / self.full_self_1_health - 0.5
+		self.state[0][5] = jobj['SelfHero1Health'] / jobj['SelfHero1HealthFull'] - 0.5
 
 		self.state[0][6] = jobj['OppoHeroPosX'] / norm_base - 0.5
 		self.state[0][7] = jobj['OppoHeroPosY'] / norm_base - 0.5
-		self.state[0][8] = jobj['OppoHeroHealth'] / self.full_oppo_health - 0.5
+		self.state[0][8] = jobj['OppoHeroHealth'] / jobj['OppoHeroHealthFull'] - 0.5
 
 		self.state[0][9] = 0#jobj['SlowBuffState']
 		self.state[0][10] = jobj['SlowBuffRemainTime']
@@ -154,15 +154,15 @@ class MobaMultiPlayerEnv(gym.Env):
 		# Player 2 perspective
 		self.state[1][0] = jobj['SelfHero1PosX'] / norm_base - 0.5
 		self.state[1][1] = jobj['SelfHero1PosY'] / norm_base - 0.5
-		self.state[1][2] = jobj['SelfHero1Health'] / self.full_self_1_health - 0.5
+		self.state[1][2] = jobj['SelfHero1Health'] / jobj['SelfHero1HealthFull'] - 0.5
 
 		self.state[1][3] = jobj['SelfHero0PosX'] / norm_base - 0.5
 		self.state[1][4] = jobj['SelfHero0PosY'] / norm_base - 0.5
-		self.state[1][5] = jobj['SelfHero0Health'] / self.full_self_0_health - 0.5
+		self.state[1][5] = jobj['SelfHero0Health'] / jobj['SelfHero0HealthFull'] - 0.5
 
 		self.state[1][6] = jobj['OppoHeroPosX'] / norm_base - 0.5
 		self.state[1][7] = jobj['OppoHeroPosY'] / norm_base - 0.5
-		self.state[1][8] = jobj['OppoHeroHealth'] / self.full_oppo_health - 0.5
+		self.state[1][8] = jobj['OppoHeroHealth'] / jobj['OppoHeroHealthFull'] - 0.5
 
 		self.state[1][9] = 0#jobj['SlowBuffState']
 		self.state[1][10] = jobj['SlowBuffRemainTime']
@@ -195,12 +195,12 @@ class MobaMultiPlayerEnv(gym.Env):
 					continue
 				jobj = json.loads(parts[1])	
 
-				self.full_self_0_health = jobj['SelfHero0Health']
-				self.self_0_health = self.full_self_0_health
-				self.full_self_1_health = jobj['SelfHero1Health']
-				self.self_1_health = self.full_self_1_health
-				self.full_oppo_health = jobj['OppoHeroHealth']
-				self.oppo_health = self.full_oppo_health
+				self.full_self_0_health = jobj['SelfHero0HealthFull']
+				self.self_0_health = jobj['SelfHero0Health']
+				self.full_self_1_health = jobj['SelfHero1HealthFull']
+				self.self_1_health = jobj['SelfHero1Health']
+				self.full_oppo_health = jobj['OppoHeroHealthFull']
+				self.oppo_health = jobj['OppoHeroHealth']
 				break
 
 			except:

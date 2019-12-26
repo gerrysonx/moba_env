@@ -22,17 +22,20 @@ type GameTrainState struct {
 }
 
 type GameMultiPlayerTrainState struct {
-	SelfHero0PosX   float32
-	SelfHero0PosY   float32
-	SelfHero0Health float32
+	SelfHero0PosX       float32
+	SelfHero0PosY       float32
+	SelfHero0Health     float32
+	SelfHero0HealthFull float32
 
-	SelfHero1PosX   float32
-	SelfHero1PosY   float32
-	SelfHero1Health float32
+	SelfHero1PosX       float32
+	SelfHero1PosY       float32
+	SelfHero1Health     float32
+	SelfHero1HealthFull float32
 
-	OppoHeroPosX   float32
-	OppoHeroPosY   float32
-	OppoHeroHealth float32
+	OppoHeroPosX       float32
+	OppoHeroPosY       float32
+	OppoHeroHealth     float32
+	OppoHeroHealthFull float32
 
 	SlowBuffState      float32
 	SlowBuffRemainTime float32
@@ -360,14 +363,17 @@ func (game *Game) DumpMultiPlayerGameState() []byte {
 		game.multi_player_train_state.SelfHero0PosX = self_hero_0_unit.Position()[0]
 		game.multi_player_train_state.SelfHero0PosY = self_hero_0_unit.Position()[1]
 		game.multi_player_train_state.SelfHero0Health = self_hero_0_unit.Health()
+		game.multi_player_train_state.SelfHero0HealthFull = self_hero_0_unit.MaxHealth()
 
 		game.multi_player_train_state.SelfHero1PosX = self_hero_1_unit.Position()[0]
 		game.multi_player_train_state.SelfHero1PosY = self_hero_1_unit.Position()[1]
 		game.multi_player_train_state.SelfHero1Health = self_hero_1_unit.Health()
+		game.multi_player_train_state.SelfHero1HealthFull = self_hero_1_unit.MaxHealth()
 
 		game.multi_player_train_state.OppoHeroPosX = oppo_unit.Position()[0]
 		game.multi_player_train_state.OppoHeroPosY = oppo_unit.Position()[1]
 		game.multi_player_train_state.OppoHeroHealth = oppo_unit.Health()
+		game.multi_player_train_state.OppoHeroHealthFull = oppo_unit.MaxHealth()
 
 		slow_buff_state := 0.0
 		slow_buff := oppo_unit.GetBuff(BuffSpeedSlow)

@@ -164,7 +164,7 @@ func main() {
 
 				if *_slow_tick {
 					gap_time_in_nanoseconds := *_target_frame_gap_time * float64(time.Second)
-					time.Sleep(time.Duration(gap_time_in_nanoseconds))
+					time.Sleep(time.Duration(gap_time_in_nanoseconds) * 2)
 				}
 			}
 

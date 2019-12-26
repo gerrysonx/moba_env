@@ -31,10 +31,10 @@ HERO_COUNT = 2
 g_dir_skill_mask = [[False, False, False, False], [False, False, False, False]]
 
 NUM_FRAME_PER_ACTION = 4
-BATCH_SIZE = 64 * 64
+BATCH_SIZE = 64
 EPOCH_NUM = 4
 LEARNING_RATE = 1e-3
-TIMESTEPS_PER_ACTOR_BATCH = 64*2*16 * 64
+TIMESTEPS_PER_ACTOR_BATCH = 64*2*16
 GAMMA = 0.99
 LAMBDA = 0.95
 NUM_STEPS = 5000
@@ -91,9 +91,8 @@ class Environment(object):
 
   def reset(self):
     self._screen = self.env.reset()
-    ob, _1, _2, _3 = self.step([[0, 0, 0], [0,0,0]])
 
-    return ob
+    return self.obs
 
 
 class MultiPlayer_Data_Generator():
