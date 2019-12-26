@@ -94,9 +94,8 @@ class Environment(object):
 
   def reset(self):
     self._screen = self.env.reset()
-    ob, _1, _2, _3 = self.step([[0, 0, 0], [0,0,0]])
 
-    return ob
+    return self.obs
 
 
 class MultiPlayer_Data_Generator():
