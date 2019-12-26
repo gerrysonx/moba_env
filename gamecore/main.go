@@ -43,7 +43,7 @@ func main() {
 		}
 	}()
 
-	_target_frame_gap_time := flag.Float64("frame_gap", 0.03, "")
+	_target_frame_gap_time := flag.Float64("frame_gap", 0.015, "")
 	_fix_update := flag.Bool("fix_update", true, "a bool")
 	_run_render := flag.Bool("render", true, "a bool")
 	_input_gap_time := flag.Float64("input_gap", 0.2, "")
