@@ -1,8 +1,10 @@
 {
+	"name" : "blitzcrank",
 	"attackFreq" : 1,
 	"attackRange" : 20,
 	"viewRange" : 2000,
 	"health" : 350,
 	"damage" : 50,
-	"speed" : 25
+	"speed" : 25,
+	"skills" : [0, -1, 1, 2, 3]
 }

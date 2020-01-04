@@ -68,6 +68,9 @@ func main() {
 	flag.Parse()
 	core.LogStr(fmt.Sprintf("main is called"))
 
+	core.SkillMgrInst.LoadCfgFolder(fmt.Sprintf("%s/cfg/skills", root_dir))
+	core.HeroMgrInst.LoadCfgFolder(fmt.Sprintf("%s/cfg/heroes", root_dir))
+
 	core.GameInst = core.Game{}
 	core.GameInst.Init()
 	core.GameInst.ManualCtrlEnemy = *_manual_enemy

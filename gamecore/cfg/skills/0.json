@@ -1,0 +1,7 @@
+{
+    "name" : "slow_targets",
+    "desc" : "slow down her targets by 50%",
+    "life" : 5,
+    "type" : 0,
+    "val1" : 0.5
+}

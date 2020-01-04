@@ -1,0 +1,8 @@
+{
+    "name" : "chain_damage",
+    "desc" : "deal damage along a specified line.",
+    "life" : 5,
+    "type" : 0,
+    "cd" : 10,
+    "val1" : 3
+}

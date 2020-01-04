@@ -1,9 +1,10 @@
 {
-	"id" : 1007,
+	"name" : "vayne",
 	"attackFreq" : 1,
 	"attackRange" : 20,
 	"viewRange" : 2000,
-	"health" : 1200,
+	"health" : 1000,
 	"damage" : 100,
-	"speed" : 40
+	"speed" : 40,
+	"skills" : [0, -1, 1, 2, 3]
 }

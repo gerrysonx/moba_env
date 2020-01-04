@@ -15,7 +15,7 @@ func (bullet *Bullet) Init(a ...interface{}) BaseFunc {
 
 	if bullet_template.Damage() == 0 {
 		// Not initialized yet, initialize first, load config from json file
-		bullet_template.InitFromJson("./cfg/bullet.json")
+		bullet_template.InitFromJson("./cfg/units/bullet.json")
 	} else {
 		// Already initialized, we can copy
 	}

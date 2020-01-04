@@ -1,0 +1,8 @@
+{
+    "name" : "chronic_heal",
+    "desc" : "heal targets for a period of time.",
+    "life" : 5,
+    "type" : 0,
+    "cd" : 10,
+    "val1" : 3
+}

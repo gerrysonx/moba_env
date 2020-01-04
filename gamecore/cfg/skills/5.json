@@ -1,0 +1,8 @@
+{
+    "name" : "shield",
+    "desc" : "shield targets from damage.",
+    "life" : 5,
+    "type" : 0,
+    "cd" : 10,
+    "val1" : 3
+}

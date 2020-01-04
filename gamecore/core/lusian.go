@@ -159,7 +159,7 @@ func (hero *Lusian) Init(a ...interface{}) BaseFunc {
 	wanted_camp := a[0].(int32)
 	if lusian_template.health == 0 {
 		// Not initialized yet, initialize first, load config from json file
-		lusian_template.InitFromJson("./cfg/lusian.json")
+		lusian_template.InitFromJson("./cfg/heroes/lusian.json")
 	} else {
 		// Already initialized, we can copy
 	}

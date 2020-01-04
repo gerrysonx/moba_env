@@ -17,6 +17,13 @@ const (
 	BuffAttackFreq = 3
 )
 
+const (
+	SkillTypeDir    = 0
+	SkillTypeRadius = 1
+	SkillTypeSector = 2
+	SkillTypeSpot   = 3
+)
+
 type Buff struct {
 	base    BuffConfig
 	addTime float64
@@ -155,7 +162,6 @@ type BaseFunc interface {
 	ClearAllBuff()
 
 	Tick(gap_time float64)
-	Init(a ...interface{}) BaseFunc
 	GetId() int32
 }
 
@@ -312,6 +318,7 @@ type JsonInfo struct {
 	Speed       float32
 	ViewRange   float32
 	Id          int32
+	Skills      []int32
 }
 
 func (baseinfo *BaseInfo) InitFromJson(cfg_name string) bool {

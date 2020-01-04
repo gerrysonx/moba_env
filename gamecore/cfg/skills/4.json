@@ -1,0 +1,8 @@
+{
+    "name" : "area_damage",
+    "desc" : "deal damage in a specified area.",
+    "life" : 5,
+    "type" : 0,
+    "cd" : 10,
+    "val1" : 3
+}
