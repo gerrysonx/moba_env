@@ -24,6 +24,14 @@ const (
 	SkillTypeSpot   = 3
 )
 
+const (
+	UnitTypeBullet  = 0
+	UnitTypeTower   = 1
+	UnitTypeAncient = 2
+	UnitTypeMonster = 3
+	UnitTypeFootman = 4
+)
+
 type Buff struct {
 	base    BuffConfig
 	addTime float64

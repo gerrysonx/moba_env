@@ -108,9 +108,6 @@ func main() {
 					// core.LogStr(fmt.Sprintf("Every step, logic_time:%v, _action_stamp:%d, game_state_str:%s", core.GameInst.LogicTime, _action_stamp, game_state_str))
 					fmt.Printf("%d@%s\n", _action_stamp, game_state_str)
 				} else {
-					game_state_str := core.GameInst.DumpGameState()
-					// core.LogBytes(file_handle, game_state_str)
-					fmt.Printf("%d@%s\n", _action_stamp, game_state_str)
 				}
 
 				//action_code = 4352
@@ -151,18 +148,8 @@ func main() {
 
 				} else {
 					// Input action code
-					fmt.Scanf("%d\n", &action_code)
-					_action_stamp = action_code >> 16
+					// Only handle multi player mode.
 
-					action_code_0 = (action_code >> 12) & 0xf
-					action_code_1 = (action_code >> 8) & 0xf
-					action_code_2 = (action_code >> 4) & 0xf
-
-					core.GameInst.HandleMultiAction(action_code_0, action_code_1, action_code_2)
-					if 9 == action_code_0 {
-						// Instantly output
-						_last_input_time = 0
-					}
 				}
 
 				if *_slow_tick {
@@ -178,9 +165,7 @@ func main() {
 					// core.LogBytes(file_handle, game_state_str)
 					fmt.Printf("%d@%s\n", _action_stamp, game_state_str)
 				} else {
-					game_state_str := core.GameInst.DumpGameState()
-					// core.LogBytes(file_handle, game_state_str)
-					fmt.Printf("%d@%s\n", _action_stamp, game_state_str)
+
 				}
 				gap_time_in_nanoseconds := *_target_frame_gap_time * float64(time.Second)
 				time.Sleep(time.Duration(gap_time_in_nanoseconds))

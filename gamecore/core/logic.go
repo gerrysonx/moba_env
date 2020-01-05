@@ -171,11 +171,11 @@ func (game *Game) GetGameState(reverse bool) []float32 {
 	var oppo_unit BaseFunc
 
 	if reverse {
-		oppo_unit = game.DefaultHero.(BaseFunc)
-		self_unit = game.OppoHero.(BaseFunc)
+		oppo_unit = game.SelfHeroes[0].(BaseFunc)
+		self_unit = game.OppoHeroes[0].(BaseFunc)
 	} else {
-		self_unit = game.DefaultHero.(BaseFunc)
-		oppo_unit = game.OppoHero.(BaseFunc)
+		self_unit = game.SelfHeroes[0].(BaseFunc)
+		oppo_unit = game.OppoHeroes[0].(BaseFunc)
 	}
 
 	game_state := make([]float32, 8)
@@ -202,9 +202,9 @@ func (game *Game) GetGameState(reverse bool) []float32 {
 
 func (game *Game) DumpMultiPlayerGameState() []byte {
 	//fmt.Printf("->DumpGameState, len(game.BattleUnits) is:%d, logictime:%f\n", len(game.BattleUnits), game.LogicTime)
-	self_hero_0_unit := game.DefaultHeroes[0].(BaseFunc)
-	self_hero_1_unit := game.DefaultHeroes[1].(BaseFunc)
-	oppo_unit := game.OppoHero.(BaseFunc)
+	self_hero_0_unit := game.SelfHeroes[0].(BaseFunc)
+	self_hero_1_unit := game.SelfHeroes[1].(BaseFunc)
+	oppo_unit := game.OppoHeroes[0].(BaseFunc)
 	// LogStr(fmt.Sprintf("DumpMultiPlayerGameState, unit 1 health:%v, unit 2 health:%v, oppo health:%v", self_hero_0_unit.Health(), self_hero_1_unit.Health(), oppo_unit.Health()))
 
 	if (self_hero_0_unit.Health() > 0 || self_hero_1_unit.Health() > 0) && oppo_unit.Health() > 0 {
@@ -295,74 +295,13 @@ func (game *Game) Tick(gap_time float64) {
 
 }
 
-func (game *Game) HandleMultiAction(action_code_0 int, action_code_1 int, action_code_2 int) {
-	battle_unit := game.DefaultHero.(BaseFunc)
-	cur_pos := battle_unit.Position()
-
-	offset_x := float32(0)
-	offset_y := float32(0)
-
-	switch action_code_0 {
-	case 0: // do nothing
-		// Remain the same position
-		game.DefaultHero.SetTargetPos(cur_pos[0], cur_pos[1])
-	case 1:
-		// move
-		dir := ConvertNum2Dir(action_code_1)
-		offset_x = dir[0]
-		offset_y = dir[1]
-		target_pos_x := float32(cur_pos[0] + offset_x)
-		target_pos_y := float32(cur_pos[1] + offset_y)
-		// Check self position
-		// game.DefaultHero.SetTargetPos(target_pos_x, target_pos_y)
-		is_target_within := game.BattleField.Within(target_pos_x, target_pos_y)
-		if is_target_within {
-			game.DefaultHero.SetTargetPos(target_pos_x, target_pos_y)
-		}
-
-	case 2:
-		// normal attack
-		// Remain the same position
-		game.DefaultHero.SetTargetPos(cur_pos[0], cur_pos[1])
-	case 3:
-		// skill 1
-		dir := ConvertNum2Dir(action_code_2)
-		offset_x = dir[0]
-		offset_y = dir[1]
-		game.DefaultHero.UseSkill(0, offset_x, offset_y)
-		// Set skill target
-	case 4:
-		// skill 2
-		dir := ConvertNum2Dir(action_code_2)
-		offset_x = dir[0]
-		offset_y = dir[1]
-		game.DefaultHero.UseSkill(1, offset_x, offset_y)
-	case 5:
-		// skill 3
-		dir := ConvertNum2Dir(action_code_2)
-		offset_x = dir[0]
-		offset_y = dir[1]
-		game.DefaultHero.UseSkill(2, offset_x, offset_y)
-	case 6:
-		// extra skill
-		dir := ConvertNum2Dir(action_code_2)
-		offset_x = dir[0]
-		offset_y = dir[1]
-		game.DefaultHero.UseSkill(3, offset_x, offset_y)
-
-	case 9:
-		game.Init()
-	}
-
-}
-
 func (game *Game) HandleMultiPlayerAction(player_idx int, action_code_0 int, action_code_1 int, action_code_2 int) {
 	if action_code_0 == 9 {
 		game.Init()
 		return
 	}
 
-	battle_unit := game.DefaultHeroes[player_idx].(BaseFunc)
+	battle_unit := game.SelfHeroes[player_idx].(BaseFunc)
 	cur_pos := battle_unit.Position()
 	if battle_unit.Health() <= 0 {
 		return
@@ -420,47 +359,6 @@ func (game *Game) HandleMultiPlayerAction(player_idx int, action_code_0 int, act
 		battle_unit.(HeroFunc).UseSkill(3, offset_x, offset_y)
 
 	}
-}
-
-func (game *Game) HandleAction(action_code int) {
-	battle_unit := game.DefaultHero.(BaseFunc)
-	cur_pos := battle_unit.Position()
-
-	offset_x := float32(0)
-	offset_y := float32(0)
-	const_val := float32(100)
-
-	switch action_code {
-	case 0: // do nothing
-	case 1:
-		offset_x = float32(-const_val)
-		offset_y = float32(-const_val)
-	case 2:
-		offset_x = float32(0)
-		offset_y = float32(-const_val)
-	case 3:
-		offset_x = float32(const_val)
-		offset_y = float32(-const_val)
-	case 4:
-		offset_x = float32(-const_val)
-		offset_y = float32(0)
-	case 5:
-		offset_x = float32(const_val)
-		offset_y = float32(0)
-	case 6:
-		offset_x = float32(-const_val)
-		offset_y = float32(const_val)
-	case 7:
-		offset_x = float32(0)
-		offset_y = float32(const_val)
-	case 8:
-		offset_x = float32(const_val)
-		offset_y = float32(const_val)
-	case 9:
-		game.Init()
-	}
-
-	game.DefaultHero.SetTargetPos(float32(cur_pos[0]+offset_x), float32(cur_pos[1]+offset_y))
 }
 
 // Global game object

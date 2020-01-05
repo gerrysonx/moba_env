@@ -195,19 +195,19 @@ func key_call_back(w *glfw.Window, char rune) {
 	switch string(char) {
 	case "1":
 		fmt.Println("Key 1 is pressed.")
-		core.GameInst.DefaultHero.UseSkill(0)
+		core.GameInst.SelfHeroes[0].UseSkill(0)
 
 	case "2":
 		fmt.Println("Key 2 is pressed.")
-		core.GameInst.DefaultHero.UseSkill(1)
+		core.GameInst.SelfHeroes[0].UseSkill(1)
 
 	case "3":
 		fmt.Println("Key 3 is pressed.")
-		core.GameInst.DefaultHero.UseSkill(2)
+		core.GameInst.SelfHeroes[0].UseSkill(2)
 
 	case "4":
 		fmt.Println("Key 4 is pressed.")
-		core.GameInst.DefaultHero.UseSkill(3)
+		core.GameInst.SelfHeroes[0].UseSkill(3)
 
 	case "5":
 		core.GameInst.Init()
@@ -224,17 +224,17 @@ func mouse_button_call_back(w *glfw.Window, button glfw.MouseButton, action glfw
 
 		//	fmt.Println("Left mouse button is released.", button, action, mod, x, y)
 		if core.GameInst.ManualCtrlEnemy {
-			core.GameInst.OppoHero.SetTargetPos(float32(x), float32(1000-y))
+			core.GameInst.OppoHeroes[0].SetTargetPos(float32(x), float32(1000-y))
 		} else {
-			if core.GameInst.DefaultHero != nil {
-				core.GameInst.DefaultHero.SetTargetPos(float32(x), float32(1000-y))
+			if core.GameInst.SelfHeroes[0] != nil {
+				core.GameInst.SelfHeroes[0].SetTargetPos(float32(x), float32(1000-y))
 			}
 
 		}
 
 	case action == glfw.Release && button == glfw.MouseButtonRight:
-		if core.GameInst.DefaultHero != nil {
-			core.GameInst.DefaultHero.SetSkillTargetPos(float32(x), float32(1000-y))
+		if core.GameInst.SelfHeroes[0] != nil {
+			core.GameInst.SelfHeroes[0].SetSkillTargetPos(float32(x), float32(1000-y))
 		}
 
 	}

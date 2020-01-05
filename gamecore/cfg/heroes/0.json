@@ -1,4 +1,5 @@
 {
+	"name" : "bullet",	
 	"attackFreq" : 0.2,
 	"attackRange" : 5,
 	"health" : 600,

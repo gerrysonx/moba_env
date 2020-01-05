@@ -87,46 +87,41 @@ func (battle_field *BattleField) LoadMap(filename string) []BaseFunc {
 			color := img.At(int(idx), int(idy))
 			r, g, b, _ := color.RGBA()
 			var unit BaseFunc
+			unit_camp := -1
+			unit_id := -1
 			switch {
 			case r == 0 && g != 0 && b == 0:
-				tmp := Tower{}
-				tmp.camp = 0
-				unit = &tmp
+				unit_camp = 0
+				unit_id = UnitTypeBullet
 
 			case r != 0 && g == 0 && b == 0:
-				tmp := Tower{}
-				tmp.camp = 1
-				unit = &tmp
+				unit_camp = 1
+				unit_id = UnitTypeBullet
 
 			case r == 0 && g != 0 && b != 0:
-				tmp := Ancient{}
-				tmp.camp = 1
-				unit = &tmp
+				unit_camp = 1
+				unit_id = UnitTypeAncient
 
 			case r != 0 && g == 0 && b != 0:
-				tmp := Ancient{}
-				tmp.camp = 0
-				unit = &tmp
+				unit_camp = 0
+				unit_id = UnitTypeAncient
 
 			case r == 0 && g == 0 && b != 0:
-				tmp := Monster{}
-				tmp.camp = 2
-				unit = &tmp
+				unit_camp = 2
+				unit_id = UnitTypeMonster
 			default:
 				continue
 			}
 
-			var pos vec3.T
-			pos[0] = float32(idx)
-			pos[1] = float32(idy)
-			unit.SetPosition(pos)
-
 			has_cluster_core := false
+			var pos vec3.T
+			pos[0], pos[1] = float32(idx), float32(idy)
 			for _, tmp_unit := range battle_units {
 				if unit.Camp() != tmp_unit.Camp() {
 					continue
 				}
 				tmp_pos := tmp_unit.Position()
+
 				distance := vec3.Distance(&pos, &tmp_pos)
 				if distance < 40 {
 					has_cluster_core = true
@@ -135,7 +130,8 @@ func (battle_field *BattleField) LoadMap(filename string) []BaseFunc {
 
 			}
 			if !has_cluster_core {
-				battle_units = append(battle_units, unit.Init())
+				unit = HeroMgrInst.Spawn(unit_id, int32(unit_camp), float32(idx), float32(idy))
+				battle_units = append(battle_units, unit)
 			}
 		}
 	}

@@ -1,4 +1,5 @@
 {
+	"name" : "tower",
 	"attackFreq" : 1.5,
 	"attackRange" : 60,
 	"health" : 1000,
