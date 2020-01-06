@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"path/filepath"
+	"reflect"
 	"strconv"
 	"strings"
 	"time"
@@ -26,7 +26,7 @@ type Hero struct {
 	BaseInfo
 	targetpos      vec3.T
 	skilltargetpos vec3.T
-	skills         [4]Skill
+	skills         [5]Skill
 }
 
 func (baseinfo *Hero) SetTargetPos(x float32, y float32) {
@@ -102,16 +102,7 @@ func (hero *Hero) ManualCtrl(gap_time float64) {
 	}
 }
 
-func (hero *Hero) InitFromJson(cfg_name string) bool {
-	// Need to initialize buffs
-	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
-	if err != nil {
-		log.Fatal(err)
-	}
-	full_path := fmt.Sprintf("%s/%s", dir, cfg_name)
-
-	hero.buffs = make(map[int32]*Buff)
-
+func (hero *Hero) InitFromJson(full_path string) bool {
 	file_handle, err := os.Open(full_path)
 	if err != nil {
 		return false
@@ -136,8 +127,13 @@ func (hero *Hero) InitFromJson(cfg_name string) bool {
 		hero.speed = jsoninfo.Speed
 		hero.view_range = jsoninfo.ViewRange
 		hero.type_id = jsoninfo.Id
-		for i := 0; i < 4; i += 1 {
-			hero.skills[i] = SkillMgrInst.skills[jsoninfo.Skills[i]]
+		hero.name = jsoninfo.Name
+		for i := 0; i < len(jsoninfo.Skills); i += 1 {
+			if jsoninfo.Skills[i] == -1 {
+				hero.skills[i].Name = ""
+			} else {
+				hero.skills[i] = SkillMgrInst.skills[jsoninfo.Skills[i]]
+			}
 		}
 
 	} else {
@@ -189,6 +185,10 @@ func (heromgr *HeroMgr) LoadCfg(id int32, config_file_name string) {
 	heromgr.heroes[id] = hero
 }
 
+func GetType(obj interface{}) reflect.Type {
+	return reflect.TypeOf(obj)
+}
+
 func (heromgr *HeroMgr) LoadCfgFolder(config_file_folder string) {
 	// Load all skill configs under folder
 	heromgr.heroes = make(map[int32]*Hero)
@@ -210,8 +210,9 @@ func (heromgr *HeroMgr) LoadCfgFolder(config_file_folder string) {
 func (heromgr *HeroMgr) Spawn(a ...interface{}) BaseFunc {
 	hero_id := a[0].(int32)
 	wanted_camp := a[1].(int32)
-	new_hero := new(Hero)
-	*new_hero = *(heromgr.heroes[hero_id])
+	hero_template := heromgr.heroes[hero_id]
+	new_hero := GetHeroByName(hero_template.name)
+	new_hero.Copy(hero_template)
 
 	pos_x := a[2].(float32)
 	pos_y := a[3].(float32)

@@ -3,7 +3,7 @@
 	"Restricted_y" : 100,
 	"Restricted_w" : 800,
 	"Restricted_h" : 800,
-	"SelfHeroes" : [1006],
-	"OppoHeroes" : [2001, 2002],
+	"SelfHeroes" : [2001, 2002],
+	"OppoHeroes" : [1007],
 	"SpawnAreaWidth" : 200
 }

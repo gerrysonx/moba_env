@@ -182,11 +182,14 @@ func InitWithCamp(battle_unit BaseFunc, camp int32) {
 	}
 }
 
-func InitHeroWithCamp(hero_unit HeroFunc, camp int32, pos_x float32, pos_y float32) {
-	battle_unit := hero_unit.(BaseFunc)
+func InitHeroWithCamp(battle_unit BaseFunc, camp int32, pos_x float32, pos_y float32) {
 	InitWithCamp(battle_unit, camp)
 	battle_unit.SetPosition(vec3.T{pos_x, pos_y})
-	hero_unit.SetTargetPos(pos_x, pos_y)
+	hero_unit := battle_unit.(HeroFunc)
+	if hero_unit != nil {
+		hero_unit.SetTargetPos(pos_x, pos_y)
+	}
+
 	battle_unit.SetDirection(vec3.T{0, 0})
 	battle_unit.ClearAllBuff()
 	battle_unit.ClearLastSkillUseTime()

@@ -125,6 +125,7 @@ type BaseInfo struct {
 	damage              float32
 	speed               float32 // unit is meter per second
 	buffs               map[int32]*Buff
+	name                string
 }
 
 type BaseFunc interface {
@@ -171,10 +172,16 @@ type BaseFunc interface {
 
 	Tick(gap_time float64)
 	GetId() int32
+
+	Copy(src BaseFunc)
 }
 
 func (baseinfo *BaseInfo) Velocity() vec3.T {
 	return baseinfo.velocity
+}
+
+func (baseinfo *BaseInfo) SetVelocity(newVel vec3.T) {
+	baseinfo.velocity = newVel
 }
 
 func (baseinfo *BaseInfo) SetPosition(newPos vec3.T) {
@@ -317,6 +324,16 @@ func (baseinfo *BaseInfo) ClearAllBuff() {
 	baseinfo.buffs = map[int32]*Buff{}
 }
 
+func (baseinfo *BaseInfo) Copy(src BaseFunc) {
+	baseinfo.SetPosition(src.Position())
+	baseinfo.SetHealth(src.Health())
+	baseinfo.SetMaxHealth(src.MaxHealth())
+	baseinfo.SetAttackFreq(src.AttackFreq())
+	baseinfo.SetDamage(src.Damage())
+	baseinfo.SetDirection(src.Direction())
+	baseinfo.SetSpeed(src.Speed())
+}
+
 type JsonInfo struct {
 	AttackRange float32
 	AttackFreq  float64
@@ -327,6 +344,7 @@ type JsonInfo struct {
 	ViewRange   float32
 	Id          int32
 	Skills      []int32
+	Name        string
 }
 
 func (baseinfo *BaseInfo) InitFromJson(cfg_name string) bool {
