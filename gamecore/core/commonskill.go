@@ -568,7 +568,12 @@ func NormalAttackEnemy(hero BaseFunc, enemy BaseFunc) {
 		dir_a := enemy.Position()
 		dir_b := hero.Position()
 		dir := vec3.Sub(&dir_a, &dir_b)
-		bullet := new(Bullet).Init(hero.Camp(), hero.Position(), dir, hero.Damage())
+		bullet := HeroMgrInst.Spawn(int32(UnitTypeBullet), hero.Camp(), hero.Position()[0], hero.Position()[1])
+		dir.Normalize()
+		bullet.SetDirection(dir)
+		bullet.SetDamage(hero.Damage())
+		bullet.SetLastAttackTime(game.LogicTime)
+
 		game.AddUnits = append(game.AddUnits, bullet)
 
 		hero.SetLastAttackTime(now_seconds)

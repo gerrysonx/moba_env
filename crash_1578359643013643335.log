@@ -1,0 +1,18 @@
+goroutine 1 [running, locked to thread]:
+main.main.func1(0x7fff43bdbee1, 0x3a)
+	/home/gerrysun/work/ml-prjs/go-lang/moba/moba_env/gamecore/main.go:27 +0xa5
+panic(0x65bf60, 0xc00093a000)
+	/usr/lib/go-1.13/src/runtime/panic.go:679 +0x1e0
+_/home/gerrysun/work/ml-prjs/go-lang/moba/moba_env/gamecore/core.InitHeroWithCamp(0x6b7280, 0xc000938000, 0x43de000000000000, 0xc0440c8000)
+	/home/gerrysun/work/ml-prjs/go-lang/moba/moba_env/gamecore/core/util.go:188 +0xc5
+_/home/gerrysun/work/ml-prjs/go-lang/moba/moba_env/gamecore/core.(*HeroMgr).Spawn(0x9eab00, 0xc0000cf738, 0x4, 0x4, 0x0, 0x0)
+	/home/gerrysun/work/ml-prjs/go-lang/moba/moba_env/gamecore/core/hero.go:219 +0x22b
+_/home/gerrysun/work/ml-prjs/go-lang/moba/moba_env/gamecore/core.NormalAttackEnemy(0x6b7a00, 0xc0000eee00, 0x6b7640, 0xc0000f8000)
+	/home/gerrysun/work/ml-prjs/go-lang/moba/moba_env/gamecore/core/commonskill.go:571 +0x34e
+_/home/gerrysun/work/ml-prjs/go-lang/moba/moba_env/gamecore/core.(*Vi).Tick(0xc0000eee00, 0x3f8eb851eb851eb8)
+	/home/gerrysun/work/ml-prjs/go-lang/moba/moba_env/gamecore/core/vi.go:32 +0x23d
+_/home/gerrysun/work/ml-prjs/go-lang/moba/moba_env/gamecore/core.(*Game).Tick(0x9ee160, 0x3f8eb851eb851eb8)
+	/home/gerrysun/work/ml-prjs/go-lang/moba/moba_env/gamecore/core/logic.go:269 +0x1d4
+main.main()
+	/home/gerrysun/work/ml-prjs/go-lang/moba/moba_env/gamecore/main.go:176 +0x109f
+

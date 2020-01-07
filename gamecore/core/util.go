@@ -185,8 +185,8 @@ func InitWithCamp(battle_unit BaseFunc, camp int32) {
 func InitHeroWithCamp(battle_unit BaseFunc, camp int32, pos_x float32, pos_y float32) {
 	InitWithCamp(battle_unit, camp)
 	battle_unit.SetPosition(vec3.T{pos_x, pos_y})
-	hero_unit := battle_unit.(HeroFunc)
-	if hero_unit != nil {
+	hero_unit, ok := battle_unit.(HeroFunc)
+	if ok {
 		hero_unit.SetTargetPos(pos_x, pos_y)
 	}
 

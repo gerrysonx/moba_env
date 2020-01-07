@@ -137,10 +137,14 @@ type BaseFunc interface {
 	Direction() vec3.T
 	SetDirection(direction vec3.T)
 
-	ViewRange() float32   // In meters
+	ViewRange() float32 // In meters
+	SetViewRange(val float32)
+
 	AttackRange() float32 // In meters
-	AttackFreq() float64  // Time gap between two attacks, in seconds
-	SetAttackFreq(new_freq float64) bool
+	SetAttackRange(val float32)
+
+	AttackFreq() float64 // Time gap between two attacks, in seconds
+	SetAttackFreq(new_freq float64)
 
 	LastAttackTime() float64
 	SetLastAttackTime(float64)
@@ -172,6 +176,7 @@ type BaseFunc interface {
 
 	Tick(gap_time float64)
 	GetId() int32
+	SetId(int32)
 
 	Copy(src BaseFunc)
 }
@@ -204,17 +209,24 @@ func (baseinfo *BaseInfo) AttackRange() float32 {
 	return baseinfo.attack_range
 }
 
+func (baseinfo *BaseInfo) SetAttackRange(val float32) {
+	baseinfo.attack_range = val
+}
+
 func (baseinfo *BaseInfo) ViewRange() float32 {
 	return baseinfo.view_range
+}
+
+func (baseinfo *BaseInfo) SetViewRange(val float32) {
+	baseinfo.view_range = val
 }
 
 func (baseinfo *BaseInfo) AttackFreq() float64 {
 	return baseinfo.attack_freq
 }
 
-func (baseinfo *BaseInfo) SetAttackFreq(new_freq float64) bool {
+func (baseinfo *BaseInfo) SetAttackFreq(new_freq float64) {
 	baseinfo.attack_freq = new_freq
-	return true
 }
 
 func (baseinfo *BaseInfo) LastAttackTime() float64 {
@@ -317,7 +329,10 @@ func (baseinfo *BaseInfo) GetBuff(idx int32) *Buff {
 
 func (baseinfo *BaseInfo) GetId() int32 {
 	return baseinfo.type_id
+}
 
+func (baseinfo *BaseInfo) SetId(val int32) {
+	baseinfo.type_id = val
 }
 
 func (baseinfo *BaseInfo) ClearAllBuff() {
@@ -332,6 +347,9 @@ func (baseinfo *BaseInfo) Copy(src BaseFunc) {
 	baseinfo.SetDamage(src.Damage())
 	baseinfo.SetDirection(src.Direction())
 	baseinfo.SetSpeed(src.Speed())
+	baseinfo.SetViewRange(src.ViewRange())
+	baseinfo.SetAttackRange(src.AttackRange())
+	baseinfo.SetId(src.GetId())
 }
 
 type JsonInfo struct {
