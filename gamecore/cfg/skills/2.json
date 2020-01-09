@@ -1,8 +1,8 @@
 {
-    "name" : "skipto_targets",
+    "name" : "DoStompHarm",
     "desc" : "dashes forward to the target location",
     "life" : 5,
-    "type" : 0,
+    "type" : 1,
     "cd" : 10,
     "val1" : 3
 }

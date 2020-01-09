@@ -1,5 +1,5 @@
 {
-    "name" : "speedup_targets",
+    "name" : "PushEnemyAway",
     "desc" : "increase friend unit speed",
     "life" : 5,
     "type" : 0,

@@ -166,9 +166,9 @@ func (hero *Hero) UseSkill(skill_idx uint8, a ...interface{}) {
 
 	switch hero.skills[skill_idx].Type {
 	case SkillTypeDir:
-		PushEnemyAway(hero, a...)
+		SkillMgrInst.skills[hero.skills[skill_idx].Id].SkillFunc(hero, a...)
 	case SkillTypeRadius:
-		BloodSucker(hero)
+		SkillMgrInst.skills[hero.skills[skill_idx].Id].SkillFunc(hero)
 	case SkillTypeSpot:
 	}
 }

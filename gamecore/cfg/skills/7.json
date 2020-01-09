@@ -2,7 +2,7 @@
     "name" : "instant_heal",
     "desc" : "heal units instantly.",
     "life" : 5,
-    "type" : 0,
+    "type" : 3,
     "cd" : 10,
     "val1" : 3
 }

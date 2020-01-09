@@ -1,5 +1,5 @@
 {
-    "name" : "area_damage",
+    "name" : "DoDirHarm",
     "desc" : "deal damage in a specified area.",
     "life" : 5,
     "type" : 0,

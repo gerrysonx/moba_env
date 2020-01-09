@@ -1,7 +1,8 @@
 {
-    "name" : "slow_targets",
+    "name" : "GrabEnemyAtNose",
     "desc" : "slow down her targets by 50%",
     "life" : 5,
     "type" : 0,
+    "cd" : 3, 
     "val1" : 0.5
 }

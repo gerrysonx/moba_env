@@ -10,14 +10,25 @@ import (
 	"strings"
 )
 
+const (
+	SkillTypeDir    = 0
+	SkillTypeRadius = 1
+	SkillTypeSector = 2
+	SkillTypeSpot   = 3
+)
+
+type SkillFuncDef func(hero HeroFunc, a ...interface{})
+
 type Skill struct {
-	Name string
-	Desc string
-	Type int32
-	Life float64
-	Val1 float32
-	Val2 float32
-	Val3 float32
+	Id        int32
+	Name      string
+	Desc      string
+	Type      int32
+	Life      float64
+	Val1      float32
+	Val2      float32
+	Val3      float32
+	SkillFunc SkillFuncDef
 }
 
 type SkillMgr struct {
@@ -40,6 +51,8 @@ func (skillmgr *SkillMgr) LoadCfg(id int32, config_file_name string) {
 	var skill Skill
 
 	if err = json.Unmarshal(buffer, &skill); err == nil {
+		skill.SkillFunc = GetSkillFuncByName(skill.Name)
+		skill.Id = id
 		skillmgr.skills[id] = skill
 	} else {
 		fmt.Println("Error is:", err)

@@ -1,5 +1,5 @@
 {
-    "name" : "shield",
+    "name" : "SlowDirEnemy",
     "desc" : "shield targets from damage.",
     "life" : 5,
     "type" : 0,

@@ -369,7 +369,7 @@ func PushEnemyAway(hero HeroFunc, a ...interface{}) {
 	}
 }
 
-func DoStompHarm(hero HeroFunc) {
+func DoStompHarm(hero HeroFunc, a ...interface{}) {
 	game := &GameInst
 	damage_dealed, targets := AoEDamage(hero.(BaseFunc).Position(), 20, hero.(BaseFunc).Camp(), 500.0)
 	if damage_dealed {
@@ -377,7 +377,7 @@ func DoStompHarm(hero HeroFunc) {
 	}
 }
 
-func BloodSucker(hero HeroFunc) {
+func BloodSucker(hero HeroFunc, a ...interface{}) {
 	game := &GameInst
 	damage_dealed, targets := AoESucker(hero.(BaseFunc), 20, hero.(BaseFunc).Camp(), 400.0, 400.0)
 	if damage_dealed {

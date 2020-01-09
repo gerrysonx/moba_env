@@ -18,13 +18,6 @@ const (
 )
 
 const (
-	SkillTypeDir    = 0
-	SkillTypeRadius = 1
-	SkillTypeSector = 2
-	SkillTypeSpot   = 3
-)
-
-const (
 	UnitTypeBullet  = 0
 	UnitTypeTower   = 1
 	UnitTypeAncient = 2

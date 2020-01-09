@@ -1,5 +1,5 @@
 {
-    "name" : "jump_off",
+    "name" : "JumpTowardsEnemy",
     "desc" : "jump off enemies.",
     "life" : 5,
     "type" : 0,
