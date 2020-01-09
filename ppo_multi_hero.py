@@ -15,6 +15,7 @@ import tensorflow as tf
 import random, cv2
 import time
 import math
+import json
 
 
 EPSILON = 0.2
@@ -28,7 +29,8 @@ LAYER_SIZE = 128
 C = 1
 HERO_COUNT = 2
 # Hero skill mask, to indicate if a hero skill is a directional one.
-g_dir_skill_mask = [[False, False, False, False], [False, False, False, False]]
+# Dynamically load src hero skill types
+g_dir_skill_mask = []
 
 NUM_FRAME_PER_ACTION = 4
 BATCH_SIZE = 64
@@ -706,6 +708,28 @@ def play_game_with_saved_model():
 
     pass
 
+def FindHeroSkills(hero_cfg_file_path, hero_id):
+    hero_cfg_file = '{}/{}.json'.format(hero_cfg_file_path, hero_id)
+    hero_skills = []
+    with open(hero_cfg_file, 'r') as file_handle:
+        hero_cfg = json.load(file_handle)
+        hero_skills = hero_cfg['skills']
+        return hero_skills
+    
+def GetSkillTypes(skill_cfg_file_path, hero_skills):
+    skill_dir_type_check = []
+    for skill_id in hero_skills:
+        skill_dir_type = False
+        skill_id = int(skill_id)
+        if -1 != skill_id:
+            skill_cfg_file = '{}/{}.json'.format(skill_cfg_file_path, skill_id)
+            with open(skill_cfg_file, 'r') as file_handle:
+                skill_cfg = json.load(file_handle)
+                if 0 == skill_cfg['type']:
+                    skill_dir_type = True
+        skill_dir_type_check.append(skill_dir_type)
+    return skill_dir_type_check
+
 
 if __name__=='__main__':
     bb = {1:'a', 2:'b', 3:'c'}
@@ -716,8 +740,26 @@ if __name__=='__main__':
     print(a)
 
     try:
-        # Write control file
+        # Load train self heroes skill masks
         root_folder = os.path.split(os.path.abspath(__file__))[0]
+        g_dir_skill_mask = []
+        
+        cfg_file_path = '{}/gamecore/cfg'.format(root_folder)
+        training_map_file = '{}/maps/0.json'.format(cfg_file_path)
+        hero_cfg_file_path = '{}/heroes'.format(cfg_file_path)
+        skill_cfg_file_path = '{}/skills'.format(cfg_file_path)
+        map_dict = None
+        with open(training_map_file, 'r') as file_handle:
+            map_dict = json.load(file_handle)
+
+        for hero_id in map_dict['SelfHeroes']:
+            hero_skills = FindHeroSkills(hero_cfg_file_path, hero_id)
+            hero_skill_types = GetSkillTypes(skill_cfg_file_path, hero_skills)
+            g_dir_skill_mask.append(hero_skill_types)
+            
+        HERO_COUNT = len(g_dir_skill_mask)
+
+        # Write control file
         ctrl_file_path = '{}/ctrl.txt'.format(root_folder)
         file_handle = open(ctrl_file_path, 'w')
         if g_is_train:
@@ -726,7 +768,7 @@ if __name__=='__main__':
             file_handle.write('0')
 
         file_handle.close()
-    except:
+    except Exception as ex:
         pass	  
 
     if g_is_train:

@@ -47,6 +47,7 @@ type GameMultiPlayerTrainState struct {
 }
 
 type Game struct {
+	SceneId     int
 	CurrentTime float64
 	LogicTime   float64
 	BattleUnits []BaseFunc
@@ -149,7 +150,7 @@ func (game *Game) Init() {
 	game.multi_player_train_state.SelfHero1Health = 0
 	game.multi_player_train_state.OppoHeroHealth = 0
 
-	game.LoadTestCase("./cfg/maps/0.json")
+	game.LoadTestCase(fmt.Sprintf("./cfg/maps/%d.json", game.SceneId))
 
 	LogStr("Game Inited.")
 }

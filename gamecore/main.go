@@ -52,6 +52,7 @@ func main() {
 	_debug_log := flag.Bool("debug_log", false, "a bool")
 	_slow_tick := flag.Bool("slow_tick", false, "a bool")
 	_multi_player := flag.Bool("multi_player", true, "a bool")
+	_scene_id := flag.Int("scene", 0, "a bool")
 
 	file_handle, _err := os.Create(fmt.Sprintf("%s/../mobacore.log", root_dir))
 	if _err != nil {
@@ -72,9 +73,13 @@ func main() {
 	core.HeroMgrInst.LoadCfgFolder(fmt.Sprintf("%s/cfg/heroes", root_dir))
 
 	core.GameInst = core.Game{}
-	core.GameInst.Init()
+
 	core.GameInst.ManualCtrlEnemy = *_manual_enemy
 	core.GameInst.MultiPlayer = *_multi_player
+	core.GameInst.SceneId = *_scene_id
+
+	core.GameInst.Init()
+
 	if *_run_render {
 		render.RendererInst = render.Renderer{}
 		render.RendererInst.InitRenderEnv(&core.GameInst)
