@@ -6,5 +6,5 @@
 	"health" : 1000,
 	"damage" : 100,
 	"speed" : 40,
-	"skills" : [-1, 1, 2, 3]
+	"skills" : [4, 5, 2, 3]
 }

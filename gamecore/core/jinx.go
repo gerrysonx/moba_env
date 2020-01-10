@@ -13,8 +13,6 @@ type Jinx struct {
 	inference_gap  float64
 }
 
-var jinx_template Jinx
-
 func (hero *Jinx) Tick(gap_time float64) {
 	game := &GameInst
 	if game.ManualCtrlEnemy {
@@ -125,41 +123,4 @@ func (hero *Jinx) Tick(gap_time float64) {
 	} else {
 		//	panic("Not supposed to be here")
 	}
-}
-
-func (hero *Jinx) Init(a ...interface{}) BaseFunc {
-	wanted_camp := a[0].(int32)
-	if jinx_template.health == 0 {
-		// Not initialized yet, initialize first, load config from json file
-		jinx_template.InitFromJson("./cfg/jinx.json")
-	} else {
-		// Already initialized, we can copy
-	}
-
-	*hero = jinx_template
-	pos_x := a[1].(float32)
-	pos_y := a[2].(float32)
-
-	InitHeroWithCamp(hero, wanted_camp, pos_x, pos_y)
-	hero.action_type = 0
-	hero.inference_gap = 0.1
-	hero.SetLastAttackTime(0.0)
-	hero.PrepareInput()
-	return hero
-}
-
-func (hero *Jinx) UseSkill(skill_idx uint8, a ...interface{}) {
-
-	switch skill_idx {
-	case 0:
-		// Zap!
-
-	case 1:
-		// Flame Chompers!
-
-	case 2:
-		// Super Mega Death Rocket!
-
-	}
-
 }

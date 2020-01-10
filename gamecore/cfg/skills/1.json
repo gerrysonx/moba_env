@@ -3,6 +3,6 @@
     "desc" : "increase friend unit speed",
     "life" : 5,
     "type" : 0,
-    "cd" : 10, 
+    "cd" : 0.1, 
     "val1" : 3
 }

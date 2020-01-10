@@ -3,6 +3,6 @@
     "desc" : "deal damage along a specified line.",
     "life" : 5,
     "type" : 1,
-    "cd" : 10,
+    "cd" : 0.1,
     "val1" : 3
 }

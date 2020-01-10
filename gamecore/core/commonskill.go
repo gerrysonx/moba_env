@@ -315,7 +315,7 @@ func PushEnemyAway(hero HeroFunc, a ...interface{}) {
 		LogStr(fmt.Sprintf("PushEnemyAway is emitted, from :%v to %v, time:%v", src.GetId(), unit.GetId(), game.LogicTime))
 	}
 
-	// LogStr(fmt.Sprintf("PushEnemyAway is called, has_more_params:%v, now_seconds:%v", has_more_params, game.LogicTime))
+	LogStr(fmt.Sprintf("PushEnemyAway is called, has_more_params:%v, now_seconds:%v", has_more_params, game.LogicTime))
 
 	skill_target := SkillTarget{}
 	skill_target.callback = callback
@@ -403,7 +403,7 @@ func DoDirHarm(hero HeroFunc, a ...interface{}) {
 
 	}
 
-	// LogStr(fmt.Sprintf("DoBigHarm is called, has_more_params:%v, now_seconds:%v", has_more_params, game.LogicTime))
+	LogStr(fmt.Sprintf("DoBigHarm is called, has_more_params:%v, now_seconds:%v", has_more_params, game.LogicTime))
 
 	skill_target := SkillTarget{}
 	skill_target.callback = callback
@@ -453,7 +453,7 @@ func SlowDirEnemy(hero HeroFunc, a ...interface{}) {
 		LogStr(fmt.Sprintf("SlowDirection is called, AddSpeedBuff calling finished."))
 	}
 
-	LogStr(fmt.Sprintf("UseSkill 1 is called, has_more_params:%v", has_more_params))
+	LogStr(fmt.Sprintf("SlowDirEnemy is called, has_more_params:%v", has_more_params))
 
 	skill_target := SkillTarget{}
 	skill_target.callback = callback

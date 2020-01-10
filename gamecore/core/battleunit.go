@@ -155,6 +155,9 @@ type BaseFunc interface {
 	MaxHealth() float32
 	SetMaxHealth(float32)
 
+	Name() string
+	SetName(string)
+
 	Damage() float32
 	SetDamage(damage float32)
 	DealDamage(damage float32) bool
@@ -332,6 +335,14 @@ func (baseinfo *BaseInfo) ClearAllBuff() {
 	baseinfo.buffs = map[int32]*Buff{}
 }
 
+func (baseinfo *BaseInfo) Name() string {
+	return baseinfo.name
+}
+
+func (baseinfo *BaseInfo) SetName(name string) {
+	baseinfo.name = name
+}
+
 func (baseinfo *BaseInfo) Copy(src BaseFunc) {
 	baseinfo.SetPosition(src.Position())
 	baseinfo.SetHealth(src.Health())
@@ -343,6 +354,7 @@ func (baseinfo *BaseInfo) Copy(src BaseFunc) {
 	baseinfo.SetViewRange(src.ViewRange())
 	baseinfo.SetAttackRange(src.AttackRange())
 	baseinfo.SetId(src.GetId())
+	baseinfo.SetName(src.Name())
 }
 
 type JsonInfo struct {

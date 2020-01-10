@@ -14,19 +14,26 @@ import (
 	"github.com/ungerik/go3d/vec3"
 )
 
+const (
+	SkillCount = 5
+)
+
 type HeroFunc interface {
 	SetTargetPos(x float32, y float32)
 	TargetPos() vec3.T
 	SetSkillTargetPos(x float32, y float32)
 	SkillTargetPos() vec3.T
 	UseSkill(skill_idx uint8, a ...interface{})
+	GetSkills() []Skill
+	SetSkills([]Skill)
+	CopyHero(HeroFunc)
 }
 
 type Hero struct {
 	BaseInfo
 	targetpos      vec3.T
 	skilltargetpos vec3.T
-	skills         [5]Skill
+	skills         [SkillCount]Skill
 }
 
 func (baseinfo *Hero) SetTargetPos(x float32, y float32) {
@@ -47,9 +54,23 @@ func (baseinfo *Hero) SkillTargetPos() vec3.T {
 	return baseinfo.skilltargetpos
 }
 
+func (hero *Hero) GetSkills() []Skill {
+	return hero.skills[0:]
+}
+
+func (hero *Hero) SetSkills(skills []Skill) {
+	for i := 0; i < SkillCount; i += 1 {
+		hero.skills[i] = skills[i]
+	}
+}
+
 func (hero *Hero) Tick(gap_time float64) {
 	now := time.Now()
 	fmt.Printf("Hero is ticking, %v gap_time is:%v\n", now, gap_time)
+}
+
+func (hero *Hero) CopyHero(src HeroFunc) {
+	hero.SetSkills(src.GetSkills())
 }
 
 var hero_template Hero
@@ -102,7 +123,7 @@ func (hero *Hero) ManualCtrl(gap_time float64) {
 	}
 }
 
-func (hero *Hero) InitFromJson(full_path string) bool {
+func (hero *Hero) InitFromJson(full_path string, id int32) bool {
 	file_handle, err := os.Open(full_path)
 	if err != nil {
 		return false
@@ -126,7 +147,7 @@ func (hero *Hero) InitFromJson(full_path string) bool {
 		hero.damage = jsoninfo.Damage
 		hero.speed = jsoninfo.Speed
 		hero.view_range = jsoninfo.ViewRange
-		hero.type_id = jsoninfo.Id
+		hero.type_id = id
 		hero.name = jsoninfo.Name
 		for i := 0; i < len(jsoninfo.Skills); i += 1 {
 			if jsoninfo.Skills[i] == -1 {
@@ -143,20 +164,35 @@ func (hero *Hero) InitFromJson(full_path string) bool {
 	return true
 }
 
+func (hero *Hero) DumpState() {
+	LogStr(fmt.Sprintf("hero name is:%v, hero id:%v", hero.name, hero.GetId()))
+	for i := 0; i < 4; i += 1 {
+		skill_idx := i
+		LogStr(fmt.Sprintf("skill_idx:%v, name is:%v, call back is:%v",
+			skill_idx,
+			hero.skills[skill_idx].Name,
+			hero.skills[skill_idx].SkillFunc))
+	}
+
+}
+
 func (hero *Hero) UseSkill(skill_idx uint8, a ...interface{}) {
 	game := &GameInst
 	// Check CD
 	now_seconds := game.LogicTime
 	old_skill_use_time := hero.LastSkillUseTime(skill_idx)
+	hero.DumpState()
 
 	if (old_skill_use_time + hero.skills[skill_idx].Life) > now_seconds {
-		LogStr(fmt.Sprintf("BloodSucker CD time not come, skill_idx:%v, old_skill_use_time:%v, from:%v at time:%v",
+		LogStr(fmt.Sprintf("%v CD time not come, skill_idx:%v, old_skill_use_time:%v, from:%v at time:%v",
+			hero.skills[skill_idx].Name,
 			skill_idx,
 			old_skill_use_time,
 			hero.GetId(), game.LogicTime))
 		return
 	} else {
-		LogStr(fmt.Sprintf("BloodSucker CD time OK, skill_idx:%v, old_skill_use_time:%v, from:%v at time:%v",
+		LogStr(fmt.Sprintf("%v CD time OK, skill_idx:%v, old_skill_use_time:%v, from:%v at time:%v",
+			hero.skills[skill_idx].Name,
 			skill_idx,
 			old_skill_use_time,
 			hero.GetId(), game.LogicTime))
@@ -181,7 +217,7 @@ var HeroMgrInst HeroMgr
 
 func (heromgr *HeroMgr) LoadCfg(id int32, config_file_name string) {
 	hero := new(Hero)
-	hero.InitFromJson(config_file_name)
+	hero.InitFromJson(config_file_name, id)
 	heromgr.heroes[id] = hero
 }
 
@@ -207,12 +243,18 @@ func (heromgr *HeroMgr) LoadCfgFolder(config_file_folder string) {
 		heromgr.LoadCfg(id32, cfg_full_file_name)
 	}
 }
+
 func (heromgr *HeroMgr) Spawn(a ...interface{}) BaseFunc {
 	hero_id := a[0].(int32)
 	wanted_camp := a[1].(int32)
 	hero_template := heromgr.heroes[hero_id]
 	new_hero := GetHeroByName(hero_template.name)
+
 	new_hero.Copy(hero_template)
+	hero_unit, ok := new_hero.(HeroFunc)
+	if ok {
+		hero_unit.CopyHero(hero_template)
+	}
 
 	pos_x := a[2].(float32)
 	pos_y := a[3].(float32)

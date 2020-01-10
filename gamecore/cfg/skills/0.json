@@ -3,6 +3,6 @@
     "desc" : "slow down her targets by 50%",
     "life" : 5,
     "type" : 0,
-    "cd" : 3, 
+    "cd" : 0.1, 
     "val1" : 0.5
 }

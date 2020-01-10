@@ -1,0 +1,1131 @@
+main is called
+Game Inited.
+Game Inited.
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time OK, skill_idx:0, old_skill_use_time:0, from:2001 at time:1.5786269546477294e+09
+DoBigHarm is called, has_more_params:true, now_seconds:1.5786269546477294e+09
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+BloodSucker CD time OK, skill_idx:3, old_skill_use_time:0, from:2002 at time:1.5786269546477294e+09
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time OK, skill_idx:0, old_skill_use_time:0, from:2002 at time:1.5786269550677323e+09
+DoBigHarm is called, has_more_params:true, now_seconds:1.5786269550677323e+09
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+BloodSucker CD time not come, skill_idx:3, old_skill_use_time:1.5786269546477294e+09, from:2002 at time:1.5786269552777338e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.5786269546477294e+09, from:2001 at time:1.5786269556977367e+09
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoStompHarm CD time OK, skill_idx:2, old_skill_use_time:0, from:2002 at time:1.5786269556977367e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.5786269546477294e+09, from:2001 at time:1.5786269559077382e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.5786269546477294e+09, from:2001 at time:1.5786269565377426e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+SlowDirEnemy CD time OK, skill_idx:1, old_skill_use_time:0, from:2001 at time:1.5786269569577456e+09
+SlowDirEnemy is called, has_more_params:true
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.5786269546477294e+09, from:2001 at time:1.578626957167747e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+BloodSucker CD time OK, skill_idx:3, old_skill_use_time:0, from:2001 at time:1.5786269573777485e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+BloodSucker CD time not come, skill_idx:3, old_skill_use_time:1.5786269573777485e+09, from:2001 at time:1.5786269584277558e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.5786269546477294e+09, from:2001 at time:1.5786269586377573e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.5786269546477294e+09, from:2001 at time:1.5786269590577602e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+BloodSucker CD time not come, skill_idx:3, old_skill_use_time:1.5786269573777485e+09, from:2001 at time:1.5786269592677617e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.5786269546477294e+09, from:2001 at time:1.5786269594777632e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+SlowDirEnemy CD time not come, skill_idx:1, old_skill_use_time:1.5786269569577456e+09, from:2001 at time:1.578626959897766e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time OK, skill_idx:0, old_skill_use_time:1.5786269546477294e+09, from:2001 at time:1.578626960317769e+09
+DoBigHarm is called, has_more_params:true, now_seconds:1.578626960317769e+09
+DoDirHarm emit real harm, from:2001 to:1007, time:1.578626960317769e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.578626960317769e+09, from:2001 at time:1.5786269605277705e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.578626960317769e+09, from:2001 at time:1.5786269615777779e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.578626960317769e+09, from:2001 at time:1.5786269617877793e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoStompHarm CD time OK, skill_idx:2, old_skill_use_time:0, from:2001 at time:1.5786269624177837e+09
+AoEDamage toward enemy:1007, attack range:20, dist:19.421751, radius:20, time:1.5786269624177837e+09
+DoStompHarm emit real harm.from:2001 to:1007, at time:1.5786269624177837e+09
+Game Inited.
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+BloodSucker CD time OK, skill_idx:3, old_skill_use_time:0, from:2001 at time:1.5786269575513284e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time OK, skill_idx:0, old_skill_use_time:0, from:2001 at time:1.5786269579713314e+09
+DoBigHarm is called, has_more_params:true, now_seconds:1.5786269579713314e+09
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoStompHarm CD time OK, skill_idx:2, old_skill_use_time:0, from:2002 at time:1.5786269579713314e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+BloodSucker CD time not come, skill_idx:3, old_skill_use_time:1.5786269575513284e+09, from:2001 at time:1.5786269581813328e+09
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time OK, skill_idx:0, old_skill_use_time:0, from:2002 at time:1.5786269581813328e+09
+DoBigHarm is called, has_more_params:true, now_seconds:1.5786269581813328e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoStompHarm CD time OK, skill_idx:2, old_skill_use_time:0, from:2001 at time:1.5786269583913343e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.5786269579713314e+09, from:2001 at time:1.5786269586013358e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.5786269579713314e+09, from:2001 at time:1.5786269592313402e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+SlowDirEnemy CD time OK, skill_idx:1, old_skill_use_time:0, from:2001 at time:1.5786269594413416e+09
+SlowDirEnemy is called, has_more_params:true
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+SlowDirEnemy CD time not come, skill_idx:1, old_skill_use_time:1.5786269594413416e+09, from:2001 at time:1.578626959651343e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+BloodSucker CD time not come, skill_idx:3, old_skill_use_time:1.5786269575513284e+09, from:2001 at time:1.5786269598613446e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+SlowDirEnemy CD time not come, skill_idx:1, old_skill_use_time:1.5786269594413416e+09, from:2001 at time:1.578626960071346e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.5786269579713314e+09, from:2001 at time:1.5786269602813475e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoStompHarm CD time not come, skill_idx:2, old_skill_use_time:1.5786269583913343e+09, from:2001 at time:1.5786269607013505e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.5786269579713314e+09, from:2001 at time:1.578626960911352e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoStompHarm CD time not come, skill_idx:2, old_skill_use_time:1.5786269583913343e+09, from:2001 at time:1.5786269615413563e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+BloodSucker CD time not come, skill_idx:3, old_skill_use_time:1.5786269575513284e+09, from:2001 at time:1.5786269619613593e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.5786269579713314e+09, from:2001 at time:1.5786269621713607e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+SlowDirEnemy CD time not come, skill_idx:1, old_skill_use_time:1.5786269594413416e+09, from:2001 at time:1.5786269623813622e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.5786269579713314e+09, from:2001 at time:1.5786269625913637e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.5786269579713314e+09, from:2001 at time:1.5786269628013651e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+SlowDirEnemy CD time not come, skill_idx:1, old_skill_use_time:1.5786269594413416e+09, from:2001 at time:1.5786269630113666e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time OK, skill_idx:0, old_skill_use_time:1.5786269579713314e+09, from:2001 at time:1.5786269634313695e+09
+DoBigHarm is called, has_more_params:true, now_seconds:1.5786269634313695e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.5786269634313695e+09, from:2001 at time:1.578626963641371e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.5786269634313695e+09, from:2001 at time:1.5786269638513725e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+SlowDirEnemy CD time not come, skill_idx:1, old_skill_use_time:1.5786269594413416e+09, from:2001 at time:1.578626964061374e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+SlowDirEnemy CD time not come, skill_idx:1, old_skill_use_time:1.5786269594413416e+09, from:2001 at time:1.5786269642713754e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+BloodSucker CD time OK, skill_idx:3, old_skill_use_time:1.5786269575513284e+09, from:2001 at time:1.578626964481377e+09
+AoEDamage toward enemy:1007, attack range:20, dist:19.795506, radius:20, time:1.578626964481377e+09
+BloodSucker emit real harm.from:2001 to:1007, at time:1.578626964481377e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.5786269634313695e+09, from:2001 at time:1.5786269646913784e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.5786269634313695e+09, from:2001 at time:1.5786269655313842e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+BloodSucker CD time not come, skill_idx:3, old_skill_use_time:1.578626964481377e+09, from:2001 at time:1.5786269657413857e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+SlowDirEnemy CD time not come, skill_idx:1, old_skill_use_time:1.5786269594413416e+09, from:2001 at time:1.578626966791393e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoStompHarm CD time OK, skill_idx:2, old_skill_use_time:1.5786269583913343e+09, from:2001 at time:1.5786269670013945e+09
+AoEDamage toward enemy:1007, attack range:20, dist:19.682392, radius:20, time:1.5786269670013945e+09
+DoStompHarm emit real harm.from:2001 to:1007, at time:1.5786269670013945e+09
+Game Inited.
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+SlowDirEnemy CD time OK, skill_idx:1, old_skill_use_time:0, from:2001 at time:1.5786269611777267e+09
+SlowDirEnemy is called, has_more_params:true
+UseSkill 1, AddTarget dir skill, dir is:20, -20
+SlowDirection AddSpeedBuff is called, trigger_time:1.578626966207727e+09, buff.base.Life:5, now speed:4
+SlowDirection is called, AddSpeedBuff calling finished.
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+SlowDirEnemy CD time not come, skill_idx:1, old_skill_use_time:1.5786269611777267e+09, from:2001 at time:1.5786269613877282e+09
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time OK, skill_idx:0, old_skill_use_time:0, from:2002 at time:1.5786269613877282e+09
+DoBigHarm is called, has_more_params:true, now_seconds:1.5786269613877282e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+SlowDirEnemy CD time not come, skill_idx:1, old_skill_use_time:1.5786269611777267e+09, from:2001 at time:1.5786269615977297e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time OK, skill_idx:0, old_skill_use_time:0, from:2001 at time:1.5786269618077312e+09
+DoBigHarm is called, has_more_params:true, now_seconds:1.5786269618077312e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.5786269618077312e+09, from:2001 at time:1.5786269620177326e+09
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.5786269613877282e+09, from:2002 at time:1.578626962227734e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+BloodSucker CD time OK, skill_idx:3, old_skill_use_time:0, from:2001 at time:1.5786269624377356e+09
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+SlowDirEnemy CD time OK, skill_idx:1, old_skill_use_time:0, from:2002 at time:1.5786269624377356e+09
+SlowDirEnemy is called, has_more_params:true
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+BloodSucker CD time not come, skill_idx:3, old_skill_use_time:1.5786269624377356e+09, from:2001 at time:1.578626962647737e+09
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoStompHarm CD time OK, skill_idx:2, old_skill_use_time:0, from:2002 at time:1.578626962647737e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+BloodSucker CD time not come, skill_idx:3, old_skill_use_time:1.5786269624377356e+09, from:2001 at time:1.5786269628577385e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+BloodSucker CD time not come, skill_idx:3, old_skill_use_time:1.5786269624377356e+09, from:2001 at time:1.57862696306774e+09
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+SlowDirEnemy CD time not come, skill_idx:1, old_skill_use_time:1.5786269624377356e+09, from:2002 at time:1.57862696306774e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.5786269618077312e+09, from:2001 at time:1.578626963487743e+09
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.5786269613877282e+09, from:2002 at time:1.578626963487743e+09
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.5786269613877282e+09, from:2002 at time:1.5786269636977444e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.5786269618077312e+09, from:2001 at time:1.5786269639077458e+09
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.5786269613877282e+09, from:2002 at time:1.5786269641177473e+09
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.5786269613877282e+09, from:2002 at time:1.5786269643277488e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.5786269618077312e+09, from:2001 at time:1.5786269645377502e+09
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.5786269613877282e+09, from:2002 at time:1.5786269645377502e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoStompHarm CD time OK, skill_idx:2, old_skill_use_time:0, from:2001 at time:1.5786269647477517e+09
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.5786269613877282e+09, from:2002 at time:1.5786269647477517e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.5786269618077312e+09, from:2001 at time:1.5786269649577532e+09
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.5786269613877282e+09, from:2002 at time:1.5786269649577532e+09
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.5786269613877282e+09, from:2002 at time:1.578626965377756e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.5786269618077312e+09, from:2001 at time:1.5786269655877576e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.5786269618077312e+09, from:2001 at time:1.578626965797759e+09
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.5786269613877282e+09, from:2002 at time:1.578626965797759e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoStompHarm CD time not come, skill_idx:2, old_skill_use_time:1.5786269647477517e+09, from:2001 at time:1.5786269660077605e+09
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+BloodSucker CD time OK, skill_idx:3, old_skill_use_time:0, from:2002 at time:1.5786269660077605e+09
+SlowDirection reset is called, buff_id:0, speed_before_change:4, after:40
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+BloodSucker CD time not come, skill_idx:3, old_skill_use_time:1.5786269660077605e+09, from:2002 at time:1.578626966217762e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.5786269618077312e+09, from:2001 at time:1.5786269664277635e+09
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time OK, skill_idx:0, old_skill_use_time:1.5786269613877282e+09, from:2002 at time:1.578626966637765e+09
+DoBigHarm is called, has_more_params:true, now_seconds:1.578626966637765e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time OK, skill_idx:0, old_skill_use_time:1.5786269618077312e+09, from:2001 at time:1.5786269668477664e+09
+DoBigHarm is called, has_more_params:true, now_seconds:1.5786269668477664e+09
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.578626966637765e+09, from:2002 at time:1.5786269670577679e+09
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+BloodSucker CD time not come, skill_idx:3, old_skill_use_time:1.5786269660077605e+09, from:2002 at time:1.5786269672677693e+09
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.578626966637765e+09, from:2002 at time:1.5786269674777708e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.5786269668477664e+09, from:2001 at time:1.5786269676877723e+09
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.578626966637765e+09, from:2002 at time:1.5786269676877723e+09
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.578626966637765e+09, from:2002 at time:1.5786269678977737e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+SlowDirEnemy CD time not come, skill_idx:1, old_skill_use_time:1.5786269611777267e+09, from:2001 at time:1.5786269683177767e+09
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.578626966637765e+09, from:2002 at time:1.5786269685277781e+09
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.578626966637765e+09, from:2002 at time:1.5786269687377796e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+SlowDirEnemy CD time not come, skill_idx:1, old_skill_use_time:1.5786269611777267e+09, from:2001 at time:1.578626968947781e+09
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.578626966637765e+09, from:2002 at time:1.578626968947781e+09
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+BloodSucker CD time not come, skill_idx:3, old_skill_use_time:1.5786269660077605e+09, from:2002 at time:1.5786269691577826e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.5786269668477664e+09, from:2001 at time:1.5786269695777855e+09
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+BloodSucker CD time not come, skill_idx:3, old_skill_use_time:1.5786269660077605e+09, from:2002 at time:1.5786269695777855e+09
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+SlowDirEnemy CD time not come, skill_idx:1, old_skill_use_time:1.5786269624377356e+09, from:2002 at time:1.5786269699977884e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+SlowDirEnemy CD time not come, skill_idx:1, old_skill_use_time:1.5786269611777267e+09, from:2001 at time:1.57862697020779e+09
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+SlowDirEnemy CD time not come, skill_idx:1, old_skill_use_time:1.5786269624377356e+09, from:2002 at time:1.5786269704177914e+09
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.578626966637765e+09, from:2002 at time:1.5786269706277928e+09
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.578626966637765e+09, from:2002 at time:1.5786269708377943e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.5786269668477664e+09, from:2001 at time:1.5786269710477958e+09
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.578626966637765e+09, from:2002 at time:1.5786269710477958e+09
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+BloodSucker CD time OK, skill_idx:3, old_skill_use_time:1.5786269660077605e+09, from:2002 at time:1.5786269712577972e+09
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+SlowDirEnemy CD time not come, skill_idx:1, old_skill_use_time:1.5786269624377356e+09, from:2002 at time:1.5786269714677987e+09
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time OK, skill_idx:0, old_skill_use_time:1.578626966637765e+09, from:2002 at time:1.5786269716778002e+09
+DoBigHarm is called, has_more_params:true, now_seconds:1.5786269716778002e+09
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.5786269716778002e+09, from:2002 at time:1.5786269718878016e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time OK, skill_idx:0, old_skill_use_time:1.5786269668477664e+09, from:2001 at time:1.578626972097803e+09
+DoBigHarm is called, has_more_params:true, now_seconds:1.578626972097803e+09
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+SlowDirEnemy CD time not come, skill_idx:1, old_skill_use_time:1.5786269624377356e+09, from:2002 at time:1.578626972097803e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoStompHarm CD time OK, skill_idx:2, old_skill_use_time:1.5786269647477517e+09, from:2001 at time:1.578626972517806e+09
+AoEDamage toward enemy:1007, attack range:20, dist:7.6434283, radius:20, time:1.578626972517806e+09
+DoStompHarm emit real harm.from:2001 to:1007, at time:1.578626972517806e+09
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.5786269716778002e+09, from:2002 at time:1.578626972517806e+09
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+SlowDirEnemy CD time OK, skill_idx:1, old_skill_use_time:1.5786269624377356e+09, from:2002 at time:1.5786269727278075e+09
+SlowDirEnemy is called, has_more_params:true
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+SlowDirEnemy CD time OK, skill_idx:1, old_skill_use_time:1.5786269611777267e+09, from:2001 at time:1.578626972937809e+09
+SlowDirEnemy is called, has_more_params:true
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+BloodSucker CD time not come, skill_idx:3, old_skill_use_time:1.5786269712577972e+09, from:2002 at time:1.578626972937809e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.578626972097803e+09, from:2001 at time:1.5786269739878163e+09
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoStompHarm CD time OK, skill_idx:2, old_skill_use_time:1.578626962647737e+09, from:2002 at time:1.5786269739878163e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+SlowDirEnemy CD time not come, skill_idx:1, old_skill_use_time:1.578626972937809e+09, from:2001 at time:1.5786269741978178e+09
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+BloodSucker CD time not come, skill_idx:3, old_skill_use_time:1.5786269712577972e+09, from:2002 at time:1.5786269744078193e+09
+Game Inited.
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+SlowDirEnemy CD time OK, skill_idx:1, old_skill_use_time:0, from:2001 at time:1.5786269675593529e+09
+SlowDirEnemy is called, has_more_params:true
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoStompHarm CD time OK, skill_idx:2, old_skill_use_time:0, from:2002 at time:1.5786269677693543e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+SlowDirEnemy CD time not come, skill_idx:1, old_skill_use_time:1.5786269675593529e+09, from:2001 at time:1.5786269679793558e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+BloodSucker CD time OK, skill_idx:3, old_skill_use_time:0, from:2001 at time:1.5786269681893573e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoStompHarm CD time OK, skill_idx:2, old_skill_use_time:0, from:2001 at time:1.5786269683993587e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoStompHarm CD time not come, skill_idx:2, old_skill_use_time:1.5786269683993587e+09, from:2001 at time:1.5786269688193617e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time OK, skill_idx:0, old_skill_use_time:0, from:2001 at time:1.5786269690293632e+09
+DoBigHarm is called, has_more_params:true, now_seconds:1.5786269690293632e+09
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+BloodSucker CD time OK, skill_idx:3, old_skill_use_time:0, from:2002 at time:1.5786269690293632e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.5786269690293632e+09, from:2001 at time:1.5786269692393646e+09
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+SlowDirEnemy CD time OK, skill_idx:1, old_skill_use_time:0, from:2002 at time:1.5786269692393646e+09
+SlowDirEnemy is called, has_more_params:true
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+SlowDirEnemy CD time not come, skill_idx:1, old_skill_use_time:1.5786269692393646e+09, from:2002 at time:1.578626969449366e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+BloodSucker CD time not come, skill_idx:3, old_skill_use_time:1.5786269681893573e+09, from:2001 at time:1.578626969869369e+09
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+SlowDirEnemy CD time not come, skill_idx:1, old_skill_use_time:1.5786269692393646e+09, from:2002 at time:1.5786269700793705e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+BloodSucker CD time not come, skill_idx:3, old_skill_use_time:1.5786269681893573e+09, from:2001 at time:1.578626970289372e+09
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time OK, skill_idx:0, old_skill_use_time:0, from:2002 at time:1.578626970289372e+09
+DoBigHarm is called, has_more_params:true, now_seconds:1.578626970289372e+09
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+BloodSucker CD time not come, skill_idx:3, old_skill_use_time:1.5786269690293632e+09, from:2002 at time:1.5786269704993734e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+BloodSucker CD time not come, skill_idx:3, old_skill_use_time:1.5786269681893573e+09, from:2001 at time:1.578626970709375e+09
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+SlowDirEnemy CD time not come, skill_idx:1, old_skill_use_time:1.5786269692393646e+09, from:2002 at time:1.578626970709375e+09
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.578626970289372e+09, from:2002 at time:1.5786269709193764e+09
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.578626970289372e+09, from:2002 at time:1.5786269711293778e+09
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.578626970289372e+09, from:2002 at time:1.5786269713393793e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.5786269690293632e+09, from:2001 at time:1.5786269715493808e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoStompHarm CD time not come, skill_idx:2, old_skill_use_time:1.5786269683993587e+09, from:2001 at time:1.5786269717593822e+09
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.578626970289372e+09, from:2002 at time:1.5786269717593822e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.5786269690293632e+09, from:2001 at time:1.5786269719693837e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoStompHarm CD time not come, skill_idx:2, old_skill_use_time:1.5786269683993587e+09, from:2001 at time:1.5786269721793852e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+SlowDirEnemy CD time not come, skill_idx:1, old_skill_use_time:1.5786269675593529e+09, from:2001 at time:1.5786269723893867e+09
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+SlowDirEnemy CD time not come, skill_idx:1, old_skill_use_time:1.5786269692393646e+09, from:2002 at time:1.5786269725993881e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoStompHarm CD time not come, skill_idx:2, old_skill_use_time:1.5786269683993587e+09, from:2001 at time:1.5786269728093896e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.5786269690293632e+09, from:2001 at time:1.578626973019391e+09
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.578626970289372e+09, from:2002 at time:1.5786269732293925e+09
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+SlowDirEnemy CD time not come, skill_idx:1, old_skill_use_time:1.5786269692393646e+09, from:2002 at time:1.5786269736493955e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.5786269690293632e+09, from:2001 at time:1.578626973859397e+09
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.578626970289372e+09, from:2002 at time:1.578626973859397e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+SlowDirEnemy CD time not come, skill_idx:1, old_skill_use_time:1.5786269675593529e+09, from:2001 at time:1.5786269742793999e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+SlowDirEnemy CD time not come, skill_idx:1, old_skill_use_time:1.5786269675593529e+09, from:2001 at time:1.5786269744894013e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time OK, skill_idx:0, old_skill_use_time:1.5786269690293632e+09, from:2001 at time:1.5786269746994028e+09
+DoBigHarm is called, has_more_params:true, now_seconds:1.5786269746994028e+09
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoStompHarm CD time OK, skill_idx:2, old_skill_use_time:1.5786269677693543e+09, from:2002 at time:1.5786269746994028e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.5786269746994028e+09, from:2001 at time:1.5786269751194057e+09
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+SlowDirEnemy CD time not come, skill_idx:1, old_skill_use_time:1.5786269692393646e+09, from:2002 at time:1.5786269753294072e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+SlowDirEnemy CD time not come, skill_idx:1, old_skill_use_time:1.5786269675593529e+09, from:2001 at time:1.5786269755394087e+09
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time OK, skill_idx:0, old_skill_use_time:1.578626970289372e+09, from:2002 at time:1.5786269755394087e+09
+DoBigHarm is called, has_more_params:true, now_seconds:1.5786269755394087e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.5786269746994028e+09, from:2001 at time:1.5786269757494102e+09
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+BloodSucker CD time OK, skill_idx:3, old_skill_use_time:1.5786269690293632e+09, from:2002 at time:1.5786269757494102e+09
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.5786269755394087e+09, from:2002 at time:1.5786269759594116e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+BloodSucker CD time OK, skill_idx:3, old_skill_use_time:1.5786269681893573e+09, from:2001 at time:1.578626976169413e+09
+AoEDamage toward enemy:1007, attack range:20, dist:19.67567, radius:20, time:1.578626976169413e+09
+BloodSucker emit real harm.from:2001 to:1007, at time:1.578626976169413e+09
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.5786269755394087e+09, from:2002 at time:1.578626976169413e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+SlowDirEnemy CD time not come, skill_idx:1, old_skill_use_time:1.5786269675593529e+09, from:2001 at time:1.578626976589416e+09
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.5786269755394087e+09, from:2002 at time:1.5786269767994175e+09
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+SlowDirEnemy CD time not come, skill_idx:1, old_skill_use_time:1.5786269692393646e+09, from:2002 at time:1.578626977009419e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.5786269746994028e+09, from:2001 at time:1.5786269772194204e+09
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.5786269755394087e+09, from:2002 at time:1.5786269772194204e+09
+hero name is:vayne, hero id:2001
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+SlowDirEnemy CD time not come, skill_idx:1, old_skill_use_time:1.5786269675593529e+09, from:2001 at time:1.578626977429422e+09
+hero name is:vi, hero id:2002
+skill_idx:0, name is:DoDirHarm, call back is:0x5244b0
+skill_idx:1, name is:SlowDirEnemy, call back is:0x5247d0
+skill_idx:2, name is:DoStompHarm, call back is:0x523f70
+skill_idx:3, name is:BloodSucker, call back is:0x524210
+DoDirHarm CD time not come, skill_idx:0, old_skill_use_time:1.5786269755394087e+09, from:2002 at time:1.578626977429422e+09

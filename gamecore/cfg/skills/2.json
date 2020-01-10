@@ -3,6 +3,6 @@
     "desc" : "dashes forward to the target location",
     "life" : 5,
     "type" : 1,
-    "cd" : 10,
+    "cd" : 0.1,
     "val1" : 3
 }
