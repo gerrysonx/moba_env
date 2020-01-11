@@ -33,10 +33,10 @@ HERO_COUNT = 2
 g_dir_skill_mask = []
 
 NUM_FRAME_PER_ACTION = 4
-BATCH_SIZE = 64
+BATCH_SIZE = 64 * 8
 EPOCH_NUM = 4
-LEARNING_RATE = 1e-3
-TIMESTEPS_PER_ACTOR_BATCH = 64*2*16
+LEARNING_RATE = 3e-3
+TIMESTEPS_PER_ACTOR_BATCH = 2048 * 8
 GAMMA = 0.99
 LAMBDA = 0.95
 NUM_STEPS = 5000
@@ -732,6 +732,7 @@ def GetSkillTypes(skill_cfg_file_path, hero_skills):
 
 
 if __name__=='__main__':
+    scene_id = 1
     bb = {1:'a', 2:'b', 3:'c'}
     #print(list(bb))
     a = list(map(lambda x: math.pow(x, -2), range(1, 10)))
@@ -745,7 +746,7 @@ if __name__=='__main__':
         g_dir_skill_mask = []
         
         cfg_file_path = '{}/gamecore/cfg'.format(root_folder)
-        training_map_file = '{}/maps/0.json'.format(cfg_file_path)
+        training_map_file = '{}/maps/{}.json'.format(cfg_file_path, scene_id)
         hero_cfg_file_path = '{}/heroes'.format(cfg_file_path)
         skill_cfg_file_path = '{}/skills'.format(cfg_file_path)
         map_dict = None
@@ -766,7 +767,8 @@ if __name__=='__main__':
             file_handle.write('1')
         else:
             file_handle.write('0')
-
+        file_handle.write(' ')
+        file_handle.write('{}'.format(scene_id))
         file_handle.close()
     except Exception as ex:
         pass	  

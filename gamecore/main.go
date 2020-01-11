@@ -49,7 +49,7 @@ func main() {
 	_input_gap_time := flag.Float64("input_gap", 0.2, "")
 	_manual_enemy := flag.Bool("manual_enemy", false, "a bool")
 	_gym_mode := flag.Bool("gym_mode", false, "a bool")
-	_debug_log := flag.Bool("debug_log", true, "a bool")
+	_debug_log := flag.Bool("debug_log", false, "a bool")
 	_slow_tick := flag.Bool("slow_tick", false, "a bool")
 	_multi_player := flag.Bool("multi_player", true, "a bool")
 	_scene_id := flag.Int("scene", 0, "a bool")

@@ -16,6 +16,7 @@ import random, cv2
 import time
 import math
 import pickle
+import json
 
 
 EPSILON = 0.2
@@ -664,12 +665,32 @@ def learn(num_steps=NUM_STEPS):
         dump_generated_data_2_file(data_file_name, seg)
         print('Timestep:{}, generated data:{}.'.format(g_step, data_file_name))
 
-
+def FindHeroSkills(hero_cfg_file_path, hero_id):
+    hero_cfg_file = '{}/{}.json'.format(hero_cfg_file_path, hero_id)
+    hero_skills = []
+    with open(hero_cfg_file, 'r') as file_handle:
+        hero_cfg = json.load(file_handle)
+        hero_skills = hero_cfg['skills']
+        return hero_skills
+    
+def GetSkillTypes(skill_cfg_file_path, hero_skills):
+    skill_dir_type_check = []
+    for skill_id in hero_skills:
+        skill_dir_type = False
+        skill_id = int(skill_id)
+        if -1 != skill_id:
+            skill_cfg_file = '{}/{}.json'.format(skill_cfg_file_path, skill_id)
+            with open(skill_cfg_file, 'r') as file_handle:
+                skill_cfg = json.load(file_handle)
+                if 0 == skill_cfg['type']:
+                    skill_dir_type = True
+        skill_dir_type_check.append(skill_dir_type)
+    return skill_dir_type_check
 
 if __name__=='__main__':
     global g_step
     g_step = 0
-    
+    scene_id = 0
     if len(sys.argv) > 1:
         TIMESTEPS_PER_ACTOR_BATCH = int(sys.argv[1])
         
@@ -678,29 +699,42 @@ if __name__=='__main__':
         
     if len(sys.argv) > 3:    
         g_step = int(sys.argv[3])
-        
-    bb = {1:'a', 2:'b', 3:'c'}
-    #print(list(bb))
-    a = list(map(lambda x: math.pow(x, -2), range(1, 10)))
-    for val in a:
-        print(val)
-    print(a)
+
+    if len(sys.argv) > 4:    
+        scene_id = int(sys.argv[4])
 
     try:
-        # Write control file
+        # Load train self heroes skill masks
         root_folder = os.path.split(os.path.abspath(__file__))[0]
+        g_dir_skill_mask = []
+        
+        cfg_file_path = '{}/gamecore/cfg'.format(root_folder)
+        training_map_file = '{}/maps/{}.json'.format(cfg_file_path, scene_id)
+        hero_cfg_file_path = '{}/heroes'.format(cfg_file_path)
+        skill_cfg_file_path = '{}/skills'.format(cfg_file_path)
+        map_dict = None
+        with open(training_map_file, 'r') as file_handle:
+            map_dict = json.load(file_handle)
+
+        for hero_id in map_dict['SelfHeroes']:
+            hero_skills = FindHeroSkills(hero_cfg_file_path, hero_id)
+            hero_skill_types = GetSkillTypes(skill_cfg_file_path, hero_skills)
+            g_dir_skill_mask.append(hero_skill_types)
+            
+        HERO_COUNT = len(g_dir_skill_mask)
+
+        # Write control file
         ctrl_file_path = '{}/ctrl.txt'.format(root_folder)
         file_handle = open(ctrl_file_path, 'w')
         if g_is_train:
             file_handle.write('1')
         else:
             file_handle.write('0')
-
+        file_handle.write(' ')
+        file_handle.write('{}'.format(scene_id))
         file_handle.close()
-    except:
-        pass	  
+    except Exception as ex:
+        pass
 
     if g_is_train:
-        learn(num_steps=5000)
-    else:
-        play_game()
+        learn(num_steps=500)

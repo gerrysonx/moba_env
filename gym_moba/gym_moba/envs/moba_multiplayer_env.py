@@ -30,16 +30,21 @@ class MobaMultiPlayerEnv(gym.Env):
 		# Create process, and communicate with std
 		is_train = True
 		root_folder = os.path.split(os.path.abspath(__file__))[0]
+
+		scene_id = 0
 		try:
 			# Read control file			
 			ctrl_file_path = '{}/../../../ctrl.txt'.format(root_folder)
 			file_handle = open(ctrl_file_path, 'r')
 			ctrl_str = file_handle.read()
+			segs = ctrl_str.split(' ')
 			file_handle.close()		
-			if int(ctrl_str) == 1:
+			if int(segs[0]) == 1:
 				is_train = True
 			else:
 				is_train = False
+
+			scene_id = int(segs[1])
 
 		except:
 			pass		
@@ -51,12 +56,11 @@ class MobaMultiPlayerEnv(gym.Env):
 		my_env['TF_CPP_MIN_LOG_LEVEL'] = '3'
 		gamecore_file_path = '{}/../../../gamecore/gamecore'.format(root_folder)
 		self.proc = subprocess.Popen([gamecore_file_path, 
-								'-render=true', '-gym_mode=true', '-debug_log=true', '-slow_tick=true', '-multi_player=true', '-scene=0', manual_str],
+								'-render=true', '-gym_mode=true', '-debug_log=true', '-slow_tick=false', 
+								'-multi_player=true', '-scene={}'.format(scene_id), manual_str],
 								stdin=subprocess.PIPE,
 								stdout=subprocess.PIPE,
 								stderr=subprocess.PIPE, env=my_env)
-
-
 
 		self.restart_proc()
 		print('moba_env initialized.')
