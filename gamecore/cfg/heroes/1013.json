@@ -1,9 +1,9 @@
 {
-	"name" : "vayne",
+	"name" : "lusian",
 	"attackFreq" : 1,
 	"attackRange" : 20,
 	"viewRange" : 2000,
-	"health" : 1000,
+	"health" : 530,
 	"damage" : 100,
 	"speed" : 40,
 	"skills" : [-1, -1, -1, -1]
