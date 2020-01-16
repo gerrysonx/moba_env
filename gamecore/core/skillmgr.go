@@ -73,7 +73,7 @@ func (skillmgr *SkillMgr) LoadCfgFolder(config_file_folder string) {
 		segs := strings.Split(cfg_file_name, ".")
 		id, _ := strconv.Atoi(segs[0])
 		id32 := int32(id)
-		fmt.Println(cfg_file_name)
+		// fmt.Println(cfg_file_name)
 		cfg_full_file_name := fmt.Sprintf("%s/%s", config_file_folder, cfg_file_name)
 		skillmgr.LoadCfg(id32, cfg_full_file_name)
 	}

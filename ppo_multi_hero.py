@@ -57,7 +57,7 @@ g_out_tb = True
 # Control if train or play
 g_is_train = True
 # True means start a new train task without loading previous model.
-g_start_anew = True
+g_start_anew = False
 
 # Control if use priority sampling
 g_enable_per = False
