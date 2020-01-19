@@ -10,6 +10,14 @@ func GetHeroByName(name string) BaseFunc {
 		return new(Vayne)
 	case "bullet":
 		return new(Bullet)
+	case "tower":
+		return new(Tower)
+	case "meleecreep":
+		return new(MeleeCreep)
+	case "rangecreep":
+		return new(RangeCreep)
+	case "siegecreep":
+		return new(SiegeCreep)
 	}
 
 	return nil

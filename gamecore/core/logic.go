@@ -8,6 +8,8 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/ungerik/go3d/vec3"
 )
 
 type GameTrainState struct {
@@ -141,7 +143,7 @@ func (game *Game) LoadTestCase(test_cfg_name string) {
 		oppo_tower_count := len(testconfig.OppoTowers) / tower_attributes_count
 		for idx := 0; idx < self_tower_count; idx += 1 {
 			tower_x := testconfig.SelfTowers[idx*tower_attributes_count+0] * battle_field_width
-			tower_y := testconfig.SelfTowers[idx*tower_attributes_count+1] * battle_field_width
+			tower_y := testconfig.SelfTowers[idx*tower_attributes_count+1] * battle_field_height
 			tower_id := int(testconfig.SelfTowers[idx*tower_attributes_count+2])
 
 			self_hero := HeroMgrInst.Spawn(tower_id, int32(0), float32(tower_x), float32(tower_y))
@@ -150,15 +152,49 @@ func (game *Game) LoadTestCase(test_cfg_name string) {
 
 		for idx := 0; idx < oppo_tower_count; idx += 1 {
 			tower_x := testconfig.OppoTowers[idx*tower_attributes_count+0] * battle_field_width
-			tower_y := testconfig.OppoTowers[idx*tower_attributes_count+1] * battle_field_width
+			tower_y := testconfig.OppoTowers[idx*tower_attributes_count+1] * battle_field_height
 			tower_id := int(testconfig.OppoTowers[idx*tower_attributes_count+2])
 
 			self_hero := HeroMgrInst.Spawn(tower_id, int32(1), float32(tower_x), float32(tower_y))
 			game.BattleUnits = append(game.BattleUnits, self_hero)
 		}
 
-		//	self_creep_count := len(testconfig.SelfCreeps) / 6
-		//	oppo_creep_count := len(testconfig.OppoCreeps) / 6
+		const creep_attributes_count = 6
+		self_creep_count := len(testconfig.SelfCreeps) / creep_attributes_count
+		for idx := 0; idx < self_creep_count; idx += 1 {
+			creep_spawn_x := testconfig.SelfCreeps[idx*creep_attributes_count+0] * battle_field_width
+			creep_spawn_y := testconfig.SelfCreeps[idx*creep_attributes_count+1] * battle_field_height
+			creep_target_x := testconfig.SelfCreeps[idx*creep_attributes_count+2] * battle_field_width
+			creep_target_y := testconfig.SelfCreeps[idx*creep_attributes_count+3] * battle_field_height
+			creep_spawn_freq := float64(testconfig.SelfCreeps[idx*creep_attributes_count+4])
+			creep_id := int32(testconfig.SelfCreeps[idx*creep_attributes_count+5])
+
+			creep_spawn_mgr := new(CreepMgr)
+			creep_spawn_mgr.SetAttackFreq(creep_spawn_freq)
+			creep_spawn_mgr.SetPosition(vec3.T{creep_spawn_x, creep_spawn_y})
+			creep_spawn_mgr.SetDirection(vec3.T{creep_target_x, creep_target_y})
+			creep_spawn_mgr.SetCamp(int32(0))
+			creep_spawn_mgr.CreepId = creep_id
+			game.BattleUnits = append(game.BattleUnits, creep_spawn_mgr)
+		}
+
+		oppo_creep_count := len(testconfig.OppoCreeps) / creep_attributes_count
+		for idx := 0; idx < oppo_creep_count; idx += 1 {
+			creep_spawn_x := testconfig.OppoCreeps[idx*creep_attributes_count+0] * battle_field_width
+			creep_spawn_y := testconfig.OppoCreeps[idx*creep_attributes_count+1] * battle_field_height
+			creep_target_x := testconfig.OppoCreeps[idx*creep_attributes_count+2] * battle_field_width
+			creep_target_y := testconfig.OppoCreeps[idx*creep_attributes_count+3] * battle_field_height
+			creep_spawn_freq := float64(testconfig.OppoCreeps[idx*creep_attributes_count+4])
+			creep_id := int32(testconfig.OppoCreeps[idx*creep_attributes_count+5])
+
+			creep_spawn_mgr := new(CreepMgr)
+			creep_spawn_mgr.SetAttackFreq(creep_spawn_freq)
+			creep_spawn_mgr.SetPosition(vec3.T{creep_spawn_x, creep_spawn_y})
+			creep_spawn_mgr.SetDirection(vec3.T{creep_target_x, creep_target_y})
+			creep_spawn_mgr.SetCamp(int32(1))
+			creep_spawn_mgr.CreepId = creep_id
+			game.BattleUnits = append(game.BattleUnits, creep_spawn_mgr)
+		}
 
 	} else {
 		fmt.Println("Error is:", err)
