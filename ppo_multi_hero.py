@@ -31,10 +31,10 @@ HERO_COUNT = 2
 g_dir_skill_mask = [[False, False, False, False], [False, False, False, False]]
 
 NUM_FRAME_PER_ACTION = 4
-BATCH_SIZE = 4096
+BATCH_SIZE = 64 * 64#4096
 EPOCH_NUM = 4
-LEARNING_RATE = 8e-3
-TIMESTEPS_PER_ACTOR_BATCH = 8192*16
+LEARNING_RATE = 1e-3
+TIMESTEPS_PER_ACTOR_BATCH = 2048 * 64#8192*16
 GAMMA = 0.99
 LAMBDA = 0.95
 NUM_STEPS = 5000
@@ -366,7 +366,7 @@ class MultiPlayerAgent():
         pass
 
     def _init_single_actor_net(self, scope, input_pl, trainable=True):        
-        my_initializer = tf.contrib.layers.xavier_initializer()
+        my_initializer = None#tf.contrib.layers.xavier_initializer()
         with tf.variable_scope(scope, reuse=tf.AUTO_REUSE):
             flat_output_size = F*C
             flat_output = tf.reshape(input_pl, [-1, flat_output_size], name='flat_output')
@@ -478,7 +478,8 @@ class MultiPlayerAgent():
         value_arr = []
 
         for hero_idx in range(HERO_COUNT):
-            tuple_val = self.session.run([self.value[hero_idx], self.a_policy_new[hero_idx][0], self.a_policy_new[hero_idx][1], self.a_policy_new[hero_idx][2]], feed_dict={self.multi_s: s})
+            tuple_val = self.session.run([self.value[hero_idx], self.a_policy_new[hero_idx][0], self.a_policy_new[hero_idx][1], self.a_policy_new[hero_idx][2]], 
+            feed_dict={self.multi_s: s})
             value = tuple_val[0]
             chosen_policy = tuple_val[1:]
             #chosen_policy = self.session.run(self.a_policy_new, feed_dict={self.s: s})
