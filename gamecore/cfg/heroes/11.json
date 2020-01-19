@@ -1,0 +1,8 @@
+{
+	"name" : "rangecreep",
+	"attackFreq" : 1.5,
+	"attackRange" : 60,
+	"health" : 1000,
+	"damage" : 110,
+	"speed" : 0
+}
