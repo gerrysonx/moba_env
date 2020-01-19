@@ -73,6 +73,10 @@ type TestConfig struct {
 	OppoHeroes     []int32
 	SelfHeroes     []int32
 	SpawnAreaWidth float32
+	SelfTowers     []float32
+	OppoTowers     []float32
+	SelfCreeps     []float32
+	OppoCreeps     []float32
 }
 
 func (game *Game) LoadTestCase(test_cfg_name string) {
@@ -99,6 +103,9 @@ func (game *Game) LoadTestCase(test_cfg_name string) {
 	rand.Seed(now.UnixNano())
 
 	if err = json.Unmarshal(buffer, &testconfig); err == nil {
+		const battle_field_width = 1000
+		const battle_field_height = 1000
+
 		game.BattleField = &BattleField{Restricted_x: testconfig.Restricted_x,
 			Restricted_y: testconfig.Restricted_y,
 			Restricted_w: testconfig.Restricted_w,
@@ -128,6 +135,30 @@ func (game *Game) LoadTestCase(test_cfg_name string) {
 			game.BattleUnits = append(game.BattleUnits, oppo_hero)
 			game.OppoHeroes = append(game.OppoHeroes, oppo_hero.(HeroFunc))
 		}
+
+		const tower_attributes_count = 3
+		self_tower_count := len(testconfig.SelfTowers) / tower_attributes_count
+		oppo_tower_count := len(testconfig.OppoTowers) / tower_attributes_count
+		for idx := 0; idx < self_tower_count; idx += 1 {
+			tower_x := testconfig.SelfTowers[idx*tower_attributes_count+0] * battle_field_width
+			tower_y := testconfig.SelfTowers[idx*tower_attributes_count+1] * battle_field_width
+			tower_id := int(testconfig.SelfTowers[idx*tower_attributes_count+2])
+
+			self_hero := HeroMgrInst.Spawn(tower_id, int32(0), float32(tower_x), float32(tower_y))
+			game.BattleUnits = append(game.BattleUnits, self_hero)
+		}
+
+		for idx := 0; idx < oppo_tower_count; idx += 1 {
+			tower_x := testconfig.OppoTowers[idx*tower_attributes_count+0] * battle_field_width
+			tower_y := testconfig.OppoTowers[idx*tower_attributes_count+1] * battle_field_width
+			tower_id := int(testconfig.OppoTowers[idx*tower_attributes_count+2])
+
+			self_hero := HeroMgrInst.Spawn(tower_id, int32(1), float32(tower_x), float32(tower_y))
+			game.BattleUnits = append(game.BattleUnits, self_hero)
+		}
+
+		//	self_creep_count := len(testconfig.SelfCreeps) / 6
+		//	oppo_creep_count := len(testconfig.OppoCreeps) / 6
 
 	} else {
 		fmt.Println("Error is:", err)
