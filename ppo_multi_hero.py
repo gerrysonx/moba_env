@@ -35,7 +35,7 @@ g_dir_skill_mask = []
 NUM_FRAME_PER_ACTION = 4
 BATCH_SIZE = 64 * 8
 EPOCH_NUM = 4
-LEARNING_RATE = 3e-3
+LEARNING_RATE = 1e-3
 TIMESTEPS_PER_ACTOR_BATCH = 2048 * 8
 GAMMA = 0.99
 LAMBDA = 0.95
@@ -57,7 +57,7 @@ g_out_tb = True
 # Control if train or play
 g_is_train = True
 # True means start a new train task without loading previous model.
-g_start_anew = False
+g_start_anew = True
 
 # Control if use priority sampling
 g_enable_per = False
@@ -732,7 +732,7 @@ def GetSkillTypes(skill_cfg_file_path, hero_skills):
 
 
 if __name__=='__main__':
-    scene_id = 1
+    scene_id = 0
     bb = {1:'a', 2:'b', 3:'c'}
     #print(list(bb))
     a = list(map(lambda x: math.pow(x, -2), range(1, 10)))

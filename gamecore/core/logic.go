@@ -159,7 +159,7 @@ func (game *Game) LoadTestCase(test_cfg_name string) {
 			game.BattleUnits = append(game.BattleUnits, self_hero)
 		}
 
-		const creep_attributes_count = 6
+		const creep_attributes_count = 7
 		self_creep_count := len(testconfig.SelfCreeps) / creep_attributes_count
 		for idx := 0; idx < self_creep_count; idx += 1 {
 			creep_spawn_x := testconfig.SelfCreeps[idx*creep_attributes_count+0] * battle_field_width
@@ -168,6 +168,7 @@ func (game *Game) LoadTestCase(test_cfg_name string) {
 			creep_target_y := testconfig.SelfCreeps[idx*creep_attributes_count+3] * battle_field_height
 			creep_spawn_freq := float64(testconfig.SelfCreeps[idx*creep_attributes_count+4])
 			creep_id := int32(testconfig.SelfCreeps[idx*creep_attributes_count+5])
+			creep_count := int32(testconfig.SelfCreeps[idx*creep_attributes_count+6])
 
 			creep_spawn_mgr := new(CreepMgr)
 			creep_spawn_mgr.SetAttackFreq(creep_spawn_freq)
@@ -175,6 +176,7 @@ func (game *Game) LoadTestCase(test_cfg_name string) {
 			creep_spawn_mgr.SetDirection(vec3.T{creep_target_x, creep_target_y})
 			creep_spawn_mgr.SetCamp(int32(0))
 			creep_spawn_mgr.CreepId = creep_id
+			creep_spawn_mgr.CreepCount = creep_count
 			game.BattleUnits = append(game.BattleUnits, creep_spawn_mgr)
 		}
 
@@ -186,6 +188,7 @@ func (game *Game) LoadTestCase(test_cfg_name string) {
 			creep_target_y := testconfig.OppoCreeps[idx*creep_attributes_count+3] * battle_field_height
 			creep_spawn_freq := float64(testconfig.OppoCreeps[idx*creep_attributes_count+4])
 			creep_id := int32(testconfig.OppoCreeps[idx*creep_attributes_count+5])
+			creep_count := int32(testconfig.OppoCreeps[idx*creep_attributes_count+6])
 
 			creep_spawn_mgr := new(CreepMgr)
 			creep_spawn_mgr.SetAttackFreq(creep_spawn_freq)
@@ -193,6 +196,7 @@ func (game *Game) LoadTestCase(test_cfg_name string) {
 			creep_spawn_mgr.SetDirection(vec3.T{creep_target_x, creep_target_y})
 			creep_spawn_mgr.SetCamp(int32(1))
 			creep_spawn_mgr.CreepId = creep_id
+			creep_spawn_mgr.CreepCount = creep_count
 			game.BattleUnits = append(game.BattleUnits, creep_spawn_mgr)
 		}
 
