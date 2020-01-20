@@ -7,13 +7,6 @@ type MeleeCreep struct {
 }
 
 func (hero *MeleeCreep) Tick(gap_time float64) {
-	game := &GameInst
-
-	if game.ManualCtrlEnemy {
-		hero.ManualCtrl(gap_time)
-		return
-	}
-
 	pos := hero.Position()
 	// Check milestone distance
 	targetPos := hero.TargetPos()
