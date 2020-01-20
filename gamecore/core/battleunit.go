@@ -175,6 +175,14 @@ type BaseFunc interface {
 	SetId(int32)
 
 	Copy(src BaseFunc)
+	Attackable() bool
+}
+
+func (baseinfo *BaseInfo) Attackable() bool {
+	if baseinfo.GetId() == 0 {
+		return false
+	}
+	return true
 }
 
 func (baseinfo *BaseInfo) Velocity() vec3.T {

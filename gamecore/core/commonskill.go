@@ -26,7 +26,7 @@ func SlowDirection(dir vec3.T, src_pos vec3.T, camp int32, distance float32) {
 	game := &GameInst
 	dist := float32(0)
 	for _, v := range game.BattleUnits {
-		if _, ok := v.(*Bullet); ok {
+		if v.Attackable() == false {
 			continue
 		}
 		unit_pos := v.Position()
@@ -51,7 +51,7 @@ func ChainDamage(dir vec3.T, src_pos vec3.T, camp int32, distance float32, damag
 	game := &GameInst
 	dist := float32(0)
 	for _, v := range game.BattleUnits {
-		if _, ok := v.(*Bullet); ok {
+		if v.Attackable() == false {
 			continue
 		}
 		unit_pos := v.Position()
@@ -93,7 +93,7 @@ func AoESucker(src_hero BaseFunc, radius float32, camp int32, damage float32, re
 	game := &GameInst
 	dist := float32(0)
 	for _, v := range game.BattleUnits {
-		if _, ok := v.(*Bullet); ok {
+		if v.Attackable() == false {
 			continue
 		}
 		unit_pos := v.Position()
@@ -123,7 +123,7 @@ func AoEDamage(src_pos vec3.T, radius float32, camp int32, damage float32) (bool
 	game := &GameInst
 	dist := float32(0)
 	for _, v := range game.BattleUnits {
-		if _, ok := v.(*Bullet); ok {
+		if v.Attackable() == false {
 			continue
 		}
 		unit_pos := v.Position()

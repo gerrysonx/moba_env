@@ -144,7 +144,7 @@ func (game *Game) LoadTestCase(test_cfg_name string) {
 		for idx := 0; idx < self_tower_count; idx += 1 {
 			tower_x := testconfig.SelfTowers[idx*tower_attributes_count+0] * battle_field_width
 			tower_y := testconfig.SelfTowers[idx*tower_attributes_count+1] * battle_field_height
-			tower_id := int(testconfig.SelfTowers[idx*tower_attributes_count+2])
+			tower_id := int32(testconfig.SelfTowers[idx*tower_attributes_count+2])
 
 			self_hero := HeroMgrInst.Spawn(tower_id, int32(0), float32(tower_x), float32(tower_y))
 			game.BattleUnits = append(game.BattleUnits, self_hero)
@@ -153,7 +153,7 @@ func (game *Game) LoadTestCase(test_cfg_name string) {
 		for idx := 0; idx < oppo_tower_count; idx += 1 {
 			tower_x := testconfig.OppoTowers[idx*tower_attributes_count+0] * battle_field_width
 			tower_y := testconfig.OppoTowers[idx*tower_attributes_count+1] * battle_field_height
-			tower_id := int(testconfig.OppoTowers[idx*tower_attributes_count+2])
+			tower_id := int32(testconfig.OppoTowers[idx*tower_attributes_count+2])
 
 			self_hero := HeroMgrInst.Spawn(tower_id, int32(1), float32(tower_x), float32(tower_y))
 			game.BattleUnits = append(game.BattleUnits, self_hero)
@@ -175,6 +175,8 @@ func (game *Game) LoadTestCase(test_cfg_name string) {
 			creep_spawn_mgr.SetPosition(vec3.T{creep_spawn_x, creep_spawn_y})
 			creep_spawn_mgr.SetDirection(vec3.T{creep_target_x, creep_target_y})
 			creep_spawn_mgr.SetCamp(int32(0))
+			creep_spawn_mgr.SetHealth(1)
+			creep_spawn_mgr.SetId(0)
 			creep_spawn_mgr.CreepId = creep_id
 			creep_spawn_mgr.CreepCount = creep_count
 			game.BattleUnits = append(game.BattleUnits, creep_spawn_mgr)
@@ -195,6 +197,8 @@ func (game *Game) LoadTestCase(test_cfg_name string) {
 			creep_spawn_mgr.SetPosition(vec3.T{creep_spawn_x, creep_spawn_y})
 			creep_spawn_mgr.SetDirection(vec3.T{creep_target_x, creep_target_y})
 			creep_spawn_mgr.SetCamp(int32(1))
+			creep_spawn_mgr.SetHealth(1)
+			creep_spawn_mgr.SetId(0)
 			creep_spawn_mgr.CreepId = creep_id
 			creep_spawn_mgr.CreepCount = creep_count
 			game.BattleUnits = append(game.BattleUnits, creep_spawn_mgr)

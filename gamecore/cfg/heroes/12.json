@@ -2,7 +2,7 @@
 	"name" : "siegecreep",
 	"attackFreq" : 1.5,
 	"attackRange" : 60,
-	"health" : 1000,
-	"damage" : 110,
-	"speed" : 0
+	"health" : 200,
+	"damage" : 15,
+	"speed" : 10
 }

@@ -18,7 +18,7 @@ func (hero *MeleeCreep) Tick(gap_time float64) {
 	}
 
 	isEnemyNearby, enemy := CheckEnemyNearby(hero.Camp(), hero.AttackRange(), &pos)
-	if isEnemyNearby && pos_ready {
+	if isEnemyNearby {
 		// Check if time to make hurt
 		NormalAttackEnemy(hero, enemy)
 	} else {
@@ -54,7 +54,7 @@ func (creepmgr *CreepMgr) Tick(gap_time float64) {
 	game := &GameInst
 
 	now_seconds := game.LogicTime
-	if (creepmgr.LastAttackTime() + creepmgr.AttackFreq()) < float64(now_seconds) {
+	if (creepmgr.LastAttackTime() + creepmgr.AttackFreq()) > float64(now_seconds) {
 		return
 	}
 
