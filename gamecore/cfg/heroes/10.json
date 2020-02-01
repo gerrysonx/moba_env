@@ -1,8 +1,8 @@
 {
 	"name" : "meleecreep",
 	"attackFreq" : 1.5,
-	"attackRange" : 60,
-	"health" : 100,
+	"attackRange" : 5,
+	"health" : 70,
 	"damage" : 15,
-	"speed" : 20
+	"speed" : 30
 }

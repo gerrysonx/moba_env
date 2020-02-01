@@ -52,7 +52,7 @@ func main() {
 	_debug_log := flag.Bool("debug_log", false, "a bool")
 	_slow_tick := flag.Bool("slow_tick", false, "a bool")
 	_multi_player := flag.Bool("multi_player", true, "a bool")
-	_scene_id := flag.Int("scene", 0, "a bool")
+	_scene_id := flag.Int("scene", 10, "a bool")
 
 	file_handle, _err := os.Create(fmt.Sprintf("%s/../mobacore.log", root_dir))
 	if _err != nil {

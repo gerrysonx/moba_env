@@ -732,7 +732,7 @@ def GetSkillTypes(skill_cfg_file_path, hero_skills):
 
 
 if __name__=='__main__':
-    scene_id = 0
+    scene_id = 10
     bb = {1:'a', 2:'b', 3:'c'}
     #print(list(bb))
     a = list(map(lambda x: math.pow(x, -2), range(1, 10)))
