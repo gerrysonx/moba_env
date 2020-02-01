@@ -2,7 +2,7 @@
 	"name" : "rangecreep",
 	"attackFreq" : 2,
 	"attackRange" : 30,
-	"health" : 90,
+	"health" : 490,
 	"damage" : 15,
 	"speed" : 30
 }

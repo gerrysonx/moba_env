@@ -75,7 +75,7 @@ func (creepmgr *CreepMgr) Tick(gap_time float64) {
 
 func IsCreep(unit BaseFunc) bool {
 	unit_id := unit.GetId()
-	if unit_id < 10 && unit_id > 0 {
+	if unit_id < 100 && unit_id > 9 {
 		return true
 	}
 

@@ -2,7 +2,7 @@
 	"name" : "meleecreep",
 	"attackFreq" : 1.5,
 	"attackRange" : 5,
-	"health" : 70,
+	"health" : 470,
 	"damage" : 15,
 	"speed" : 30
 }
