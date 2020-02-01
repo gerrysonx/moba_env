@@ -525,6 +525,39 @@ func update_dir_vert(vertice []float32, x_dir float32, y_dir float32, x_src floa
 	vertice[11] = y_src + x_dir*scale_val
 }
 
+func (renderer *Renderer) DrawHealthBar(colorUniform int32, f0 core.BaseFunc) {
+	gl.Uniform3f(colorUniform, 0, 0, 1)
+	// Draw hero full health
+	update_health_bar_pos(renderer.vert_bullet, f0.Position()[0], f0.Position()[1], 25)
+	// 完成够别忘了告诉OpenGL我们不再需要它了
+	gl.BindBuffer(gl.ARRAY_BUFFER, renderer.vbo_bullet)
+	gl.BufferData(gl.ARRAY_BUFFER, len(renderer.vert_bullet)*4, gl.Ptr(renderer.vert_bullet), gl.STATIC_DRAW)
+
+	gl.BindVertexArray(renderer.vao_bullet)
+
+	gl.ActiveTexture(gl.TEXTURE0)
+	gl.BindTexture(gl.TEXTURE_2D, renderer.tex_footman)
+
+	gl.DrawArrays(gl.TRIANGLES, 0, 1*2*3)
+
+	// Draw hero health
+	gl.Uniform3f(colorUniform, 1, 0, 1)
+	// Draw hero full health
+	health_ratio := f0.Health() / f0.MaxHealth()
+	half_bar_width := float32(25)
+	update_health_bar_pos(renderer.vert_bullet, f0.Position()[0]-(1-health_ratio)*half_bar_width, f0.Position()[1], half_bar_width*health_ratio)
+	// 完成够别忘了告诉OpenGL我们不再需要它了
+	gl.BindBuffer(gl.ARRAY_BUFFER, renderer.vbo_bullet)
+	gl.BufferData(gl.ARRAY_BUFFER, len(renderer.vert_bullet)*4, gl.Ptr(renderer.vert_bullet), gl.STATIC_DRAW)
+
+	gl.BindVertexArray(renderer.vao_bullet)
+
+	gl.ActiveTexture(gl.TEXTURE0)
+	gl.BindTexture(gl.TEXTURE_2D, renderer.tex_footman)
+
+	gl.DrawArrays(gl.TRIANGLES, 0, 1*2*3)
+}
+
 func (renderer *Renderer) Render() {
 
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
@@ -646,36 +679,7 @@ func (renderer *Renderer) Render() {
 
 				gl.DrawArrays(gl.TRIANGLES, 0, 1*2*3)
 
-				gl.Uniform3f(colorUniform, 0, 0, 1)
-				// Draw hero full health
-				update_health_bar_pos(renderer.vert_bullet, f0.Position()[0], f0.Position()[1], 25)
-				// 完成够别忘了告诉OpenGL我们不再需要它了
-				gl.BindBuffer(gl.ARRAY_BUFFER, renderer.vbo_bullet)
-				gl.BufferData(gl.ARRAY_BUFFER, len(renderer.vert_bullet)*4, gl.Ptr(renderer.vert_bullet), gl.STATIC_DRAW)
-
-				gl.BindVertexArray(renderer.vao_bullet)
-
-				gl.ActiveTexture(gl.TEXTURE0)
-				gl.BindTexture(gl.TEXTURE_2D, renderer.tex_footman)
-
-				gl.DrawArrays(gl.TRIANGLES, 0, 1*2*3)
-
-				// Draw hero health
-				gl.Uniform3f(colorUniform, 1, 0, 1)
-				// Draw hero full health
-				health_ratio := f0.Health() / f0.MaxHealth()
-				half_bar_width := float32(25)
-				update_health_bar_pos(renderer.vert_bullet, f0.Position()[0]-(1-health_ratio)*half_bar_width, f0.Position()[1], half_bar_width*health_ratio)
-				// 完成够别忘了告诉OpenGL我们不再需要它了
-				gl.BindBuffer(gl.ARRAY_BUFFER, renderer.vbo_bullet)
-				gl.BufferData(gl.ARRAY_BUFFER, len(renderer.vert_bullet)*4, gl.Ptr(renderer.vert_bullet), gl.STATIC_DRAW)
-
-				gl.BindVertexArray(renderer.vao_bullet)
-
-				gl.ActiveTexture(gl.TEXTURE0)
-				gl.BindTexture(gl.TEXTURE_2D, renderer.tex_footman)
-
-				gl.DrawArrays(gl.TRIANGLES, 0, 1*2*3)
+				renderer.DrawHealthBar(colorUniform, f0)
 
 				continue
 			}
@@ -701,6 +705,8 @@ func (renderer *Renderer) Render() {
 				gl.BindTexture(gl.TEXTURE_2D, renderer.tex_hero)
 
 				gl.DrawArrays(gl.TRIANGLES, 0, 1*2*3)
+
+				renderer.DrawHealthBar(colorUniform, f)
 				continue
 			}
 		}
