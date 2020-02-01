@@ -2,11 +2,15 @@ package core
 
 import "github.com/ungerik/go3d/vec3"
 
-type MeleeCreep struct {
+type Creep struct {
 	Hero
 }
 
-func (hero *MeleeCreep) Tick(gap_time float64) {
+type MeleeCreep struct {
+	Creep
+}
+
+func (hero *Creep) Tick(gap_time float64) {
 	pos := hero.Position()
 	// Check milestone distance
 	targetPos := hero.TargetPos()
@@ -31,14 +35,14 @@ func (hero *MeleeCreep) Tick(gap_time float64) {
 }
 
 type RangeCreep struct {
-	MeleeCreep
+	Creep
 }
 
 //func (hero *RangeCreep) Tick(gap_time float64) {
 //}
 
 type SiegeCreep struct {
-	MeleeCreep
+	Creep
 }
 
 //func (hero *SiegeCreep) Tick(gap_time float64) {
@@ -67,4 +71,13 @@ func (creepmgr *CreepMgr) Tick(gap_time float64) {
 
 	creepmgr.SetLastAttackTime(now_seconds)
 
+}
+
+func IsCreep(unit BaseFunc) bool {
+	unit_id := unit.GetId()
+	if unit_id < 10 && unit_id > 0 {
+		return true
+	}
+
+	return false
 }

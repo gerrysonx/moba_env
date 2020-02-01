@@ -170,6 +170,34 @@ func CheckEnemyNearby(camp int32, radius float32, position *vec3.T) (bool, BaseF
 	return false, nil
 }
 
+func SelectFirstNonHeroEnemy(camp int32, radius float32, position *vec3.T) (bool, BaseFunc) {
+	game := &GameInst
+	dist := float32(0)
+	var fall_back_hero_enemy BaseFunc
+	fall_back_hero_enemy = nil
+
+	for _, v := range game.BattleUnits {
+		if v.Attackable() == false {
+			continue
+		}
+
+		unit_pos := v.Position()
+		dist = vec3.Distance(position, &unit_pos)
+		if (dist < radius) && (v.Camp() != camp) && (v.Health() > 0) {
+			if IsCreep(v) {
+				return true, v
+			}
+
+			if fall_back_hero_enemy == nil {
+				fall_back_hero_enemy = v
+			}
+		}
+	}
+
+	// fmt.Println("->CheckEnemyNearby")
+	return fall_back_hero_enemy != nil, fall_back_hero_enemy
+}
+
 func InitWithCamp(battle_unit BaseFunc, camp int32) {
 	const_num := float32(0.707106781)
 	if camp == 0 {
