@@ -33,9 +33,9 @@ HERO_COUNT = 2
 g_dir_skill_mask = [[False, False, False, False], [False, False, False, False]]
 
 NUM_FRAME_PER_ACTION = 4
-BATCH_SIZE = 4096*8
+BATCH_SIZE = 512
 EPOCH_NUM = 4
-LEARNING_RATE = 2e-2
+LEARNING_RATE = 8e-4
 TIMESTEPS_PER_ACTOR_BATCH = 256*512
 GAMMA = 0.99
 LAMBDA = 0.95

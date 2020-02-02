@@ -1,10 +1,10 @@
 {
 	"name" : "vi",
 	"attackFreq" : 1,
-	"attackRange" : 20,
+	"attackRange" : 60,
 	"viewRange" : 2000,
-	"health" : 50,
-	"damage" : 1,
-	"speed" : 10,
+	"health" : 1500,
+	"damage" : 50,
+	"speed" : 40,
 	"skills" : [-1, -1, -1, -1]
 }

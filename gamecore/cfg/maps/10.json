@@ -1,13 +1,13 @@
 {
-	"Restricted_x" : 100,
-	"Restricted_y" : 100,
-	"Restricted_w" : 800,
-	"Restricted_h" : 800,
-	"SelfHeroes" : [2003, 2002],
-	"OppoHeroes" : [2002],
-	"SpawnAreaWidth" : 200,
-	"SelfTowers" : [0.4, 0.4, 1, 0.4, 0.5, 2, 0.4, 0.6, 3],
-	"OppoTowers" : [0.6, 0.4, 1, 0.6, 0.5, 1, 0.6, 0.6, 1],
-	"SelfCreeps" : [0.3, 0.4, 0.7, 0.4, 20, 10, 1, 0.3, 0.6, 0.7, 0.6, 20, 11, 1, 0.3, 0.5, 0.7, 0.5, 20, 12, 1],
+	"Restricted_x" : 400,
+	"Restricted_y" : 400,
+	"Restricted_w" : 200,
+	"Restricted_h" : 200,
+	"SelfHeroes" : [2002, 2003],
+	"OppoHeroes" : [2004],
+	"SpawnAreaWidth" : 100,
+	"SelfTowers" : [],
+	"OppoTowers" : [],
+	"SelfCreeps" : [],
 	"OppoCreeps" : []
 }
