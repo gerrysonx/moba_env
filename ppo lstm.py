@@ -26,15 +26,17 @@ NUM_FRAME_PER_ACTION = 4
 BATCH_SIZE = 64
 EPOCH_NUM = 4
 LEARNING_RATE = 1e-3
-TIMESTEPS_PER_ACTOR_BATCH = 256*8
+TIMESTEPS_PER_ACTOR_BATCH = 2048
 GAMMA = 0.99
 LAMBDA = 0.95
 NUM_STEPS = 5000
 ENV_NAME = 'Breakout-v0'
 RANDOM_START_STEPS = 4
 ACTION_COUNT = 4
-INPUT_DIMENS = (210, 160, C)
+F = (84, 84)
+INPUT_DIMENS = (*F, C)
 INPUT_DIMENS_FLAT = INPUT_DIMENS[0]*INPUT_DIMENS[1]*INPUT_DIMENS[2]
+USE_CNN = True
 
 global g_step
 
@@ -73,14 +75,15 @@ class Environment(object):
     self.obs_w = self.env.observation_space.shape[0]
     self.obs_h = self.env.observation_space.shape[1]
     ACTION_COUNT = self.env.action_space.n
-    self.obs = np.zeros(shape=(self.obs_w, self.obs_h, C), dtype=np.float)
+    self.obs = np.zeros(shape=(*F, C), dtype=np.float)
 
   def get_action_number(self):
     return 9
 
   def step(self, action):
     self._screen, self.reward, self.terminal, info = self.env.step(action)
-    self._screen = np.sum(self._screen, axis = 2) / 3.0
+    self._screen = cv2.resize(self._screen, F)
+    self._screen = np.sum(self._screen, axis = 2) / 3.0 / 255.0
     self.obs[..., :-1] = self.obs[..., 1:]
     self.obs[..., -1] = self._screen
     return self.obs, self.reward, self.terminal, info
@@ -105,7 +108,7 @@ class Data_Generator():
         horizon: int timesteps_per_actor_batch
         '''
         t = 0
-        ac = [0, 0, 0]
+        batch_actions = [0]
 
         new = True # marks if we're on first timestep of an episode
         ob = self.env.reset()
@@ -118,17 +121,18 @@ class Data_Generator():
         ep_lens = [] # lengths of ...
 
         # Initialize history arrays
-        obs = np.array([np.zeros(shape=(self.env.obs_w, self.env.obs_h, C), dtype=np.float32) for _ in range(horizon)])
+        obs = np.array([np.zeros(shape=(*F, C), dtype=np.float32) for _ in range(horizon)])
         rews = np.zeros(horizon, 'float32')
         unclipped_rews = np.zeros(horizon, 'float32')
         vpreds = np.zeros(horizon, 'float32')
         news = np.zeros(horizon, 'int32')
-        acs = np.array([ac for _ in range(horizon)])
+        acs = np.array([batch_actions for _ in range(horizon)])
         prevacs = acs.copy()
 
         while True:
-            prevac = ac
-            ac, vpred = self.agent.predict(ob[np.newaxis, ...])
+            prevac = batch_actions
+            batch_actions, vpred = self.agent.predict(ob[np.newaxis, ...])
+            ac = batch_actions[0]
             #print('Action:', ac, 'Value:', vpred)
             # Slight weirdness here because we need value function at time T
             # before returning segment [0, T-1] so we get the correct
@@ -147,10 +151,10 @@ class Data_Generator():
             obs[i] = ob
             vpreds[i] = vpred
             news[i] = new
-            acs[i] = ac
+            acs[i] = batch_actions
             prevacs[i] = prevac
 
-            ob, unclipped_rew, new, step_info = self.env.step(ac[0])
+            ob, unclipped_rew, new, step_info = self.env.step(ac)
             rew = unclipped_rew
             # rew = float(np.sign(unclipped_rew))
             rews[i] = rew
@@ -235,7 +239,7 @@ class Agent():
         self.restrict_y_max = 0.5
 
         # Full connection layer node size
-        self.layer_size = 128
+        self.layer_size = 32
 
         self._init_input()
         self._init_nn()
@@ -344,6 +348,7 @@ class Agent():
             learning_rate = self.learning_rate * self.lrmult
             # Passing global_step to minimize() will increment it at each step.
             self.optimizer = tf.train.AdamOptimizer(learning_rate).minimize(self.total_loss)
+        #     self.optimizer = tf.train.GradientDescentOptimizer(learning_rate).minimize(self.total_loss)
             #self.optimizer = tf.train.AdamOptimizer(self.learning_rate).minimize(self.total_loss)
 
 
@@ -351,39 +356,62 @@ class Agent():
     def _init_actor_net(self, scope, trainable=True):        
         my_initializer = tf.contrib.layers.xavier_initializer()
         with tf.variable_scope(scope):
-            flat_output_size = INPUT_DIMENS_FLAT
-            flat_output = tf.reshape(self.s, [-1, flat_output_size], name='flat_output')
 
-            fc_W_1 = tf.get_variable(shape=[flat_output_size, self.layer_size], name='fc_W_1',
-                trainable=trainable, initializer=my_initializer)
-            fc_b_1 = tf.Variable(tf.zeros([self.layer_size], dtype=tf.float32), name='fc_b_1',
-                trainable=trainable)
+            last_output_dims = 0
+            last_output = None
+            if USE_CNN:
+                cnn_w_1 = tf.get_variable("cnn_w_1", [8, 8, 4, 32], initializer=my_initializer)
+                cnn_b_1 = tf.get_variable("cnn_b_1", [32], initializer=tf.constant_initializer(0.0))
 
-            tf.summary.histogram("fc_W_1", fc_W_1)
-            tf.summary.histogram("fc_b_1", fc_b_1)
+                output1 = tf.nn.relu(tf.nn.bias_add(tf.nn.conv2d(self.s, cnn_w_1, strides=[1, 4, 4, 1], padding='SAME'), cnn_b_1))
+                cnn_w_2 = tf.get_variable("cnn_w_2", [4, 4, 32, 64], initializer=my_initializer)
+                cnn_b_2 = tf.get_variable("cnn_b_2", [64], initializer=tf.constant_initializer(0.0))
 
-            output1 = tf.nn.relu(tf.matmul(flat_output, fc_W_1) + fc_b_1)
+                output2 = tf.nn.relu(tf.nn.bias_add(tf.nn.conv2d(output1, cnn_w_2, strides=[1, 2, 2, 1], padding='SAME'), cnn_b_2))
+                cnn_w_3 = tf.get_variable("cnn_w_3", [3, 3, 64, 64], initializer=my_initializer)
+                cnn_b_3 = tf.get_variable("cnn_b_3", [64], initializer=tf.constant_initializer(0.0))
 
-            fc_W_2 = tf.get_variable(shape=[self.layer_size, self.layer_size], name='fc_W_2',
-                trainable=trainable, initializer=my_initializer)
-            fc_b_2 = tf.Variable(tf.zeros([self.layer_size], dtype=tf.float32), name='fc_b_2',
-                trainable=trainable)
+                output3 = tf.nn.relu(tf.nn.bias_add(tf.nn.conv2d(output2, cnn_w_3, strides=[1, 1, 1, 1], padding='SAME'), cnn_b_3))                
+                last_output_dims = np.prod([v.value for v in output3.get_shape()[1:]])
+                last_output = tf.reshape(output3, [-1, last_output_dims])
+            else:           
+                flat_output_size = INPUT_DIMENS_FLAT
+                flat_output = tf.reshape(self.s, [-1, flat_output_size], name='flat_output')
 
-            tf.summary.histogram("fc_W_2", fc_W_2)
-            tf.summary.histogram("fc_b_2", fc_b_2)
+                fc_W_1 = tf.get_variable(shape=[flat_output_size, self.layer_size], name='fc_W_1',
+                    trainable=trainable, initializer=my_initializer)
+                fc_b_1 = tf.Variable(tf.zeros([self.layer_size], dtype=tf.float32), name='fc_b_1',
+                    trainable=trainable)
 
-            output2 = tf.nn.relu(tf.matmul(output1, fc_W_2) + fc_b_2)
+                tf.summary.histogram("fc_W_1", fc_W_1)
+                tf.summary.histogram("fc_b_1", fc_b_1)
+
+                output1 = tf.nn.relu(tf.matmul(flat_output, fc_W_1) + fc_b_1)
+
+                fc_W_2 = tf.get_variable(shape=[self.layer_size, self.layer_size], name='fc_W_2',
+                    trainable=trainable, initializer=my_initializer)
+                fc_b_2 = tf.Variable(tf.zeros([self.layer_size], dtype=tf.float32), name='fc_b_2',
+                    trainable=trainable)
+
+                tf.summary.histogram("fc_W_2", fc_W_2)
+                tf.summary.histogram("fc_b_2", fc_b_2)
+
+                output2 = tf.nn.relu(tf.matmul(output1, fc_W_2) + fc_b_2)
 
 
-            fc_W_3 = tf.get_variable(shape=[self.layer_size, self.layer_size], name='fc_W_3',
-                trainable=trainable, initializer=my_initializer)
-            fc_b_3 = tf.Variable(tf.zeros([self.layer_size], dtype=tf.float32), name='fc_b_3',
-                trainable=trainable)
+                fc_W_3 = tf.get_variable(shape=[self.layer_size, self.layer_size], name='fc_W_3',
+                    trainable=trainable, initializer=my_initializer)
+                fc_b_3 = tf.Variable(tf.zeros([self.layer_size], dtype=tf.float32), name='fc_b_3',
+                    trainable=trainable)
 
-            tf.summary.histogram("fc_W_3", fc_W_3)
-            tf.summary.histogram("fc_b_3", fc_b_3)
+                tf.summary.histogram("fc_W_3", fc_W_3)
+                tf.summary.histogram("fc_b_3", fc_b_3)
 
-            output3 = tf.nn.relu(tf.matmul(output2, fc_W_3) + fc_b_3)
+                output3 = tf.nn.relu(tf.matmul(output2, fc_W_3) + fc_b_3)
+
+                last_output_dims = self.layer_size
+                last_output = output3 
+
             a_logits_arr = []
             a_prob_arr = []
             #self.a_space_keys
@@ -395,7 +423,7 @@ class Agent():
                 logit_layer_name = '{}_logits'.format(k)
                 head_layer_name = '{}_head'.format(k)
 
-                fc_W_a = tf.get_variable(shape=[self.layer_size, output_num], name=weight_layer_name,
+                fc_W_a = tf.get_variable(shape=[last_output_dims, output_num], name=weight_layer_name,
                     trainable=trainable, initializer=my_initializer)
                 fc_b_a = tf.Variable(tf.zeros([output_num], dtype=tf.float32), name=bias_layer_name,
                     trainable=trainable)
@@ -403,7 +431,7 @@ class Agent():
                 tf.summary.histogram(weight_layer_name, fc_W_a)
                 tf.summary.histogram(bias_layer_name, fc_b_a)            
 
-                a_logits = tf.matmul(output3, fc_W_a) + fc_b_a
+                a_logits = tf.matmul(last_output, fc_W_a) + fc_b_a
                 a_logits_arr.append(a_logits)                
                 tf.summary.histogram(logit_layer_name, a_logits)
 
@@ -412,7 +440,7 @@ class Agent():
                 tf.summary.histogram(head_layer_name, a_prob)
 
             # value network
-            fc1_W_v = tf.get_variable(shape=[self.layer_size, 1], name='fc1_W_v',
+            fc1_W_v = tf.get_variable(shape=[last_output_dims, 1], name='fc1_W_v',
                 trainable=trainable, initializer=my_initializer)
             fc1_b_v = tf.Variable(tf.zeros([1], dtype=tf.float32), name='fc1_b_v',
                 trainable=trainable)
@@ -420,7 +448,7 @@ class Agent():
             tf.summary.histogram("fc1_W_v", fc1_W_v)
             tf.summary.histogram("fc1_b_v", fc1_b_v)
 
-            value = tf.matmul(output3, fc1_W_v) + fc1_b_v
+            value = tf.matmul(last_output, fc1_W_v) + fc1_b_v
             value = tf.reshape(value, [-1, ], name = "value_output")
             tf.summary.histogram("value_head", value)
             merged_summary = tf.summary.merge_all()
