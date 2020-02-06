@@ -31,7 +31,7 @@ GAMMA = 0.99
 LAMBDA = 0.95
 NUM_STEPS = 5000
 ENV_NAME = 'Breakout-v0'
-RANDOM_START_STEPS = 4
+RANDOM_START_STEPS = 10
 ACTION_COUNT = 4
 F = (84, 84)
 INPUT_DIMENS = (*F, C)
@@ -76,9 +76,9 @@ class Environment(object):
     self.obs_h = self.env.observation_space.shape[1]
     ACTION_COUNT = self.env.action_space.n
     self.obs = np.zeros(shape=(*F, C), dtype=np.float)
-
-  def get_action_number(self):
-    return 9
+#  @staticmethod
+  def get_action_number():
+    return 4
 
   def step(self, action):
     self._screen, self.reward, self.terminal, info = self.env.step(action)
@@ -90,6 +90,9 @@ class Environment(object):
 
   def reset(self):
     self._screen = self.env.reset()
+    for _ in range(random.randint(3, self.random_start - 1)):
+      step_idx = np.random.choice(range(Environment.get_action_number()))
+      ob, _1, _2, _3 = self.step(step_idx)   
     return self.obs
 
   def render(self):
