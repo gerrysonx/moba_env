@@ -203,6 +203,7 @@ class Data_Generator():
         if atarg.std() < 1e-5:
             print('atarg std too small')
         atarg = (atarg - atarg.mean()) / atarg.std() # standardized advantage function estimate
+        seg['std_atvtg'] = atarg
         return ob, ac, atarg, tdlamret, seg
 
 class Agent():
@@ -594,7 +595,7 @@ class Agent():
 
         return np.mean(Entropy_list), np.mean(KL_distance_list)
 
-    def learn_one_traj(self, timestep, ob, ac, atarg, tdlamret, seg, train_writer):
+    def learn_one_traj(self, timestep, ob, ac, atarg, tdlamret, lens, rets, unclipped_rets, train_writer):
         global g_step
         self.session.run(self.update_policy_net_op)
 
@@ -625,23 +626,25 @@ class Agent():
                 Entropy_list.append(entropy)
                 KL_distance_list.append(kl_distance)
 
-        self.lenbuffer.extend(seg["ep_lens"])
-        self.rewbuffer.extend(seg["ep_rets"])
-        self.unclipped_rewbuffer.extend(seg["ep_unclipped_rets"])
+        self.lenbuffer.extend(lens)
+        self.rewbuffer.extend(rets)
+        self.unclipped_rewbuffer.extend(unclipped_rets)
         return np.mean(Entropy_list), np.mean(KL_distance_list)
 
-
-
-def learn(num_steps=NUM_STEPS):
-    global g_step
-    g_step = 0
+def GetDataGeneratorAndTrainer():   
     session = tf.Session()
-
     action_space_map = {'action':ACTION_COUNT}
     a_space_keys = ['action']
     agent = Agent(session, action_space_map, a_space_keys)
-
     data_generator = Data_Generator(agent)
+    return agent, data_generator, session
+    
+
+def learn(num_steps=NUM_STEPS):
+    global g_step
+    g_step = 0    
+    agent, data_generator, session = GetDataGeneratorAndTrainer()
+    
     train_writer = tf.summary.FileWriter('summary_log_gerry', graph=tf.get_default_graph()) 
 
     saver = tf.train.Saver(max_to_keep=1)
@@ -654,11 +657,12 @@ def learn(num_steps=NUM_STEPS):
     max_rew = -1000000
     for timestep in range(num_steps):
         ob, ac, atarg, tdlamret, seg = data_generator.get_one_step_data()
+        lens, rets, unclipped_rets = seg["ep_lens"], seg["ep_rets"], seg["ep_unclipped_rets"]
         if g_enable_per:
             is_beta = g_is_beta_start + (timestep / num_steps) * (g_is_beta_end - g_is_beta_start)
             entropy, kl_distance = agent.learn_one_traj_per(timestep, ob, ac, atarg, tdlamret, seg, train_writer, is_beta)
         else:
-            entropy, kl_distance = agent.learn_one_traj(timestep, ob, ac, atarg, tdlamret, seg, train_writer)
+            entropy, kl_distance = agent.learn_one_traj(timestep, ob, ac, atarg, tdlamret, lens, rets, unclipped_rets, train_writer)
 
         max_rew = max(max_rew, np.max(agent.unclipped_rewbuffer))
         if (timestep+1) % _save_frequency == 0:

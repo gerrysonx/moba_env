@@ -11,8 +11,8 @@ if __name__=='__main__':
     
     root_folder = os.path.split(os.path.abspath(__file__))[0]
 
-    horizon_total = 8192 * 320
-    horizon_per_worker = 8192 * 8
+    horizon_total = 2048*4
+    horizon_per_worker = 2048
     worker_count = horizon_total // horizon_per_worker
 
     train_full_path = '{}/ppo_distribute_train.py'.format(root_folder)
@@ -24,7 +24,7 @@ if __name__=='__main__':
     time_stamp = int(time.time()*1000)
     train_log_full_path = '{}/../log/train_{}.log'.format(root_folder, time_stamp)
     file_handle = open(train_log_full_path, 'wb')
-    subprocess.Popen(['python', train_full_path, 
+    subprocess.Popen(['python3', train_full_path, 
     '{}'.format(worker_count), 
     '{}'.format(global_step), 
     '{}'.format(scene_id)], env=my_env)
@@ -32,7 +32,7 @@ if __name__=='__main__':
     for i in range(worker_count):
         worker_log_full_path = '{}/../log/worker_{}_{}.log'.format(root_folder, time_stamp, i)
         file_handle = open(worker_log_full_path, 'wb')        
-        subprocess.Popen(['python', generate_full_path, 
+        subprocess.Popen(['python3', generate_full_path, 
         '{}'.format(horizon_per_worker), 
         '{}'.format(i), 
         '{}'.format(global_step),
