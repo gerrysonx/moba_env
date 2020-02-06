@@ -98,7 +98,7 @@ def get_one_step_data(timestep, work_thread_count):
             break        
         time.sleep(10)
     print('Successfully collected {} files, data size:{} from {}.'.format(len(files), len(ob), timestep))
-    return ob, ac, std_atvtg, tdlamret, lens, rets, unclipped_rets
+    return np.array(ob), np.array(ac), np.array(std_atvtg), np.array(tdlamret), np.array(lens), np.array(rets), np.array(unclipped_rets)
 
 
 def learn(num_steps=NUM_STEPS):

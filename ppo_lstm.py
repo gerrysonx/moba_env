@@ -596,7 +596,6 @@ class Agent():
         return np.mean(Entropy_list), np.mean(KL_distance_list)
 
     def learn_one_traj(self, timestep, ob, ac, atarg, tdlamret, lens, rets, unclipped_rets, train_writer):
-        global g_step
         self.session.run(self.update_policy_net_op)
 
         lrmult = max(1.0 - float(timestep) / self.num_total_steps, .0)
@@ -617,11 +616,6 @@ class Agent():
                     self.a: ac[temp_indices],
                     self.cumulative_r: tdlamret[temp_indices],
                 })
-                
-                if g_out_tb and i == (inner_loop_count - 1) and _idx == (EPOCH_NUM -1):
-                    g_step += 1
-                    train_writer.add_summary(summary_new_val, g_step)
-                    train_writer.add_summary(summary_old_val, g_step)
 
                 Entropy_list.append(entropy)
                 KL_distance_list.append(kl_distance)
@@ -638,8 +632,27 @@ def GetDataGeneratorAndTrainer():
     agent = Agent(session, action_space_map, a_space_keys)
     data_generator = Data_Generator(agent)
     return agent, data_generator, session
-    
-def LoadModel(step):
+
+def restore_from_ckpt(saver, session, ckpt_no):
+    root_folder = os.path.split(os.path.abspath(__file__))[0] 
+
+    if 0 == ckpt_no:
+        return
+
+    while True:
+        model_file = '{}/../ckpt/mnist.ckpt-{}'.format(root_folder, ckpt_no)
+        try:            
+            saver.restore(session, model_file)
+            print('restore file success:{}'.format(model_file))
+            break
+        except:
+            print('restore file failed:{}, continue to try...'.format(model_file))
+            time.sleep(30)
+            continue
+
+def LoadModel(session, step):
+    saver = tf.train.Saver()
+    restore_from_ckpt(saver, session, step)
     pass
 
 def learn(num_steps=NUM_STEPS):

@@ -29,14 +29,11 @@ def dump_generated_data_2_file(file_name, seg):
 def generate_data():
 
     root_folder = os.path.split(os.path.abspath(__file__))[0]   
-    _, data_generator, _ = GetDataGeneratorAndTrainer()
-    _step = g_step
-    while True:
-        load_succ = LoadModel(_step)
-        if load_succ:
-            break
+    _, data_generator, session = GetDataGeneratorAndTrainer()
+    _step = g_step    
 
     while True:
+        LoadModel(session, _step)
         ob, ac, atarg, tdlamret, seg = data_generator.get_one_step_data()
 
         data_folder_path = '{}/../distribute_collected_train_data/{}'.format(root_folder, _step)
