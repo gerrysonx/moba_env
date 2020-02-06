@@ -639,6 +639,8 @@ def GetDataGeneratorAndTrainer():
     data_generator = Data_Generator(agent)
     return agent, data_generator, session
     
+def LoadModel(step):
+    pass
 
 def learn(num_steps=NUM_STEPS):
     global g_step

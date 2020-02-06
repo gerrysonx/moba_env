@@ -18,6 +18,7 @@ import math
 import pickle
 import json
 from ppo_lstm import GetDataGeneratorAndTrainer
+from ppo_lstm import LoadModel
 
 def dump_generated_data_2_file(file_name, seg):
     with open(file_name, 'wb') as file_handle:
@@ -30,6 +31,11 @@ def generate_data():
     root_folder = os.path.split(os.path.abspath(__file__))[0]   
     _, data_generator, _ = GetDataGeneratorAndTrainer()
     _step = g_step
+    while True:
+        load_succ = LoadModel(_step)
+        if load_succ:
+            break
+
     while True:
         ob, ac, atarg, tdlamret, seg = data_generator.get_one_step_data()
 
