@@ -662,8 +662,9 @@ def LoadModel(session, step):
 def learn(num_steps=NUM_STEPS):
     global g_step
     g_step = 0    
-    agent, data_generator, session = GetDataGeneratorAndTrainer()
-    
+    scene_id = 0
+    agent, data_generator, session = GetDataGeneratorAndTrainer(scene_id)
+
     root_folder = os.path.split(os.path.abspath(__file__))[0]
     train_writer = tf.summary.FileWriter('{}/../summary_log_gerry'.format(root_folder), graph=tf.get_default_graph()) 
 
