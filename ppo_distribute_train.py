@@ -22,6 +22,21 @@ from ppo_lstm import GetDataGeneratorAndTrainer
 
 g_step = 0
 
+g_log_file_name = None
+
+def log_out(str_log):
+    global g_log_file_name
+    if g_log_file_name == None:
+        root_folder = os.path.split(os.path.abspath(__file__))[0]
+        g_log_file_name = '{}/../log/train.log'.format(root_folder)
+
+    _handle = open(g_log_file_name, 'a')
+    _handle.write(str_log)
+    _handle.write('\n')
+    _handle.close()
+
+    pass
+
 
 def get_one_step_data(timestep, work_thread_count):
     root_folder = os.path.split(os.path.abspath(__file__))[0]
@@ -72,23 +87,16 @@ def learn(scene_id, num_steps):
         max_rew = max(max_rew, np.max(agent.unclipped_rewbuffer))
 
         saver.save(session, '{}/../ckpt/mnist.ckpt'.format(root_folder), global_step=g_step + 1)
+        str_log = 'Timestep:{}\tEpLenMean:{}\tEpRewMean:{}\tUnClippedEpRewMean:{}\tMaxUnClippedRew:{}\tEntropy:{}\tKL_distance:{}'.format(timestep, 
+        '%.3f'%np.mean(agent.lenbuffer), 
+        '%.3f'%np.mean(agent.rewbuffer), 
+        '%.3f'%np.mean(agent.unclipped_rewbuffer),
+        max_rew,
+        '%.3f'%entropy,
+        '%.8f'%kl_distance)
+        log_out(str_log)
 
-        '''
-        summary0 = tf.Summary()
-        summary0.value.add(tag='EpLenMean', simple_value=np.mean(agent.lenbuffer))
-        train_writer.add_summary(summary0, g_step)
-
-        summary1 = tf.Summary()
-        summary1.value.add(tag='UnClippedEpRewMean', simple_value=np.mean(agent.unclipped_rewbuffer))
-        train_writer.add_summary(summary1, g_step)
-        '''
-        print('Timestep:', timestep,
-            "\tEpLenMean:", '%.3f'%np.mean(agent.lenbuffer),
-            "\tEpRewMean:", '%.3f'%np.mean(agent.rewbuffer),
-            "\tUnClippedEpRewMean:", '%.3f'%np.mean(agent.unclipped_rewbuffer),
-            "\tMaxUnClippedRew:", max_rew,
-            "\tEntropy:", '%.3f'%entropy,
-            "\tKL_distance:", '%.8f'%kl_distance)
+        print(str_log)
 
 if __name__=='__main__':
     scene_id = 10
