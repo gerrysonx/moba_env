@@ -91,8 +91,6 @@ def learn(scene_id, num_steps):
             "\tKL_distance:", '%.8f'%kl_distance)
 
 if __name__=='__main__':
-    global g_step
-    g_step = 0
     scene_id = 10
 
     if len(sys.argv) > 1:
