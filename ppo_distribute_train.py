@@ -101,10 +101,10 @@ def get_one_step_data(timestep, work_thread_count):
     return np.array(ob), np.array(ac), np.array(std_atvtg), np.array(tdlamret), np.array(lens), np.array(rets), np.array(unclipped_rets)
 
 
-def learn(num_steps=NUM_STEPS):
+def learn(scene_id, num_steps=NUM_STEPS):
     root_folder = os.path.split(os.path.abspath(__file__))[0]
     global g_step
-    agent, _, session = GetDataGeneratorAndTrainer()
+    agent, _, session = GetDataGeneratorAndTrainer(scene_id)
 
     train_writer = tf.summary.FileWriter('summary_log_gerry', graph=tf.get_default_graph()) 
     saver = tf.train.Saver(max_to_keep=50)
@@ -137,84 +137,10 @@ def learn(num_steps=NUM_STEPS):
             "\tEntropy:", '%.3f'%entropy,
             "\tKL_distance:", '%.8f'%kl_distance)
 
-def play_game():
-    session = tf.Session()
-    action_space_map = {'action':7, 'move':8, 'skill':8}
-    a_space_keys = ['action', 'move', 'skill']
-    agent = Agent(session, action_space_map, a_space_keys)
-
-    saver = tf.train.Saver(max_to_keep=1)
-    model_file=tf.train.latest_checkpoint('ckpt/')
-    if model_file != None:
-        saver.restore(session, model_file)
-
-    env = Environment()
-    
-    ob = env.reset()
-
-    while True:
-        time.sleep(0.2)
-        ac, _ = agent.greedy_predict(ob[np.newaxis, ...])
-        print('Predict :{}'.format(ac))
-
-        ob, unclipped_rew, new, _ = env.step(ac)
-        if new:
-            print('Game is finishd, reward is:{}'.format(unclipped_rew))
-            ob = env.reset()
-
-    pass
-
-def play_game_with_saved_model():
-    with tf.Session(graph=tf.Graph()) as sess:
-        tf.saved_model.loader.load(sess, ["serve"], "./model/model_{}".format(328704))
-        input_tensor = sess.graph.get_tensor_by_name('input/s:0')
-        policy_tensor = sess.graph.get_tensor_by_name('policy_net_new/soft_logits:0')
-        value_tensor = sess.graph.get_tensor_by_name('policy_net_new/value_output:0')
-
-        env = Environment()        
-        ob = env.reset()
-
-        while True:
-            time.sleep(0.05)
-
-            chosen_policy, _ = sess.run([policy_tensor, value_tensor], feed_dict={input_tensor: ob[np.newaxis, ...]})
-            tac = np.argmax(chosen_policy[0]) 
-
-            #print('Predict :{}, input:{}, output:{}'.format(tac, ob, chosen_policy))
-
-            ob, reward, new, _ = env.step(tac)
-            if new:
-                print('Game is finishd, reward is:{}'.format(reward))
-                ob = env.reset()
-
-    pass
-
-def FindHeroSkills(hero_cfg_file_path, hero_id):
-    hero_cfg_file = '{}/{}.json'.format(hero_cfg_file_path, hero_id)
-    hero_skills = []
-    with open(hero_cfg_file, 'r') as file_handle:
-        hero_cfg = json.load(file_handle)
-        hero_skills = hero_cfg['skills']
-        return hero_skills
-    
-def GetSkillTypes(skill_cfg_file_path, hero_skills):
-    skill_dir_type_check = []
-    for skill_id in hero_skills:
-        skill_dir_type = False
-        skill_id = int(skill_id)
-        if -1 != skill_id:
-            skill_cfg_file = '{}/{}.json'.format(skill_cfg_file_path, skill_id)
-            with open(skill_cfg_file, 'r') as file_handle:
-                skill_cfg = json.load(file_handle)
-                if 0 == skill_cfg['type']:
-                    skill_dir_type = True
-        skill_dir_type_check.append(skill_dir_type)
-    return skill_dir_type_check
-
 if __name__=='__main__':
     global g_step
     g_step = 0
-    scene_id = 0
+    scene_id = 10
 
     if len(sys.argv) > 1:
         g_data_generator_count = int(sys.argv[1])
@@ -223,42 +149,6 @@ if __name__=='__main__':
         g_step = int(sys.argv[2])
 
     if len(sys.argv) > 3:    
-        scene_id = int(sys.argv[3])
+        scene_id = int(sys.argv[3])  
 
-    try:
-        # Load train self heroes skill masks
-        root_folder = os.path.split(os.path.abspath(__file__))[0]
-        g_dir_skill_mask = []
-        
-        cfg_file_path = '{}/gamecore/cfg'.format(root_folder)
-        training_map_file = '{}/maps/{}.json'.format(cfg_file_path, scene_id)
-        hero_cfg_file_path = '{}/heroes'.format(cfg_file_path)
-        skill_cfg_file_path = '{}/skills'.format(cfg_file_path)
-        map_dict = None
-        with open(training_map_file, 'r') as file_handle:
-            map_dict = json.load(file_handle)
-
-        for hero_id in map_dict['SelfHeroes']:
-            hero_skills = FindHeroSkills(hero_cfg_file_path, hero_id)
-            hero_skill_types = GetSkillTypes(skill_cfg_file_path, hero_skills)
-            g_dir_skill_mask.append(hero_skill_types)
-            
-        HERO_COUNT = len(g_dir_skill_mask)
-
-        # Write control file
-        ctrl_file_path = '{}/ctrl.txt'.format(root_folder)
-        file_handle = open(ctrl_file_path, 'w')
-        if g_is_train:
-            file_handle.write('1')
-        else:
-            file_handle.write('0')
-        file_handle.write(' ')
-        file_handle.write('{}'.format(scene_id))
-        file_handle.close()
-    except Exception as ex:
-        pass	  
-
-    if g_is_train:
-        learn(num_steps=500)
-    else:
-        play_game()
+    learn(scene_id, num_steps=500)

@@ -625,7 +625,7 @@ class Agent():
         self.unclipped_rewbuffer.extend(unclipped_rets)
         return np.mean(Entropy_list), np.mean(KL_distance_list)
 
-def GetDataGeneratorAndTrainer():   
+def GetDataGeneratorAndTrainer(scene_id):   
     session = tf.Session()
     action_space_map = {'action':ACTION_COUNT}
     a_space_keys = ['action']

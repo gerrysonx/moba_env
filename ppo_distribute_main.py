@@ -2,7 +2,7 @@
 import sys, os
 import time
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-scene_id = 1
+scene_id = 10
 
 import subprocess
 

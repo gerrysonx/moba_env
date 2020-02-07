@@ -27,10 +27,12 @@ EMBED_SIZE = 5
 LAYER_SIZE = 128
 
 C = 1
-HERO_COUNT = 2
+HERO_COUNT = 0
+
 # Hero skill mask, to indicate if a hero skill is a directional one.
 # Dynamically load src hero skill types
 g_dir_skill_mask = []
+  
 
 NUM_FRAME_PER_ACTION = 4
 BATCH_SIZE = 64 * 8
@@ -43,7 +45,7 @@ NUM_STEPS = 5000
 ENV_NAME = 'gym_moba:moba-multiplayer-v0'
 RANDOM_START_STEPS = 4
 
-global g_step
+g_step = 0
 
 # Use hero id embedding
 g_embed_hero_id = False
@@ -199,6 +201,7 @@ class MultiPlayer_Data_Generator():
         if atarg.std() < 1e-5:
             print('atarg std too small')
         atarg = (atarg - atarg.mean()) / atarg.std() # standardized advantage function estimate
+        seg["std_atvtg"] = atarg
         return ob, ac, atarg, tdlamret, seg
 class MultiPlayerAgent():
 
@@ -567,8 +570,7 @@ class MultiPlayerAgent():
 
         return action_arr, value_arr
 
-    def learn_one_traj(self, timestep, ob, ac, atarg, tdlamret, seg, train_writer):
-        global g_step
+    def learn_one_traj(self, timestep, ob, ac, atarg, tdlamret, lens, rets, unclipped_rets, train_writer):
         self.session.run(self.update_policy_net_op)
 
         lrmult = max(1.0 - float(timestep) / self.num_total_steps, .0)
@@ -589,32 +591,65 @@ class MultiPlayerAgent():
                     self.multi_a: ac[temp_indices],
                     self.cumulative_r: tdlamret[temp_indices],
                 })
-                
-                if g_out_tb and i == (inner_loop_count - 1) and _idx == (EPOCH_NUM -1):
-                    g_step += 1
-                    #train_writer.add_summary(summary_new_val, g_step)
-                    #train_writer.add_summary(summary_old_val, g_step)
 
                 Entropy_list.append(entropy)
                 KL_distance_list.append(kl_distance)
 
-        self.lenbuffer.extend(seg["ep_lens"])
-        self.rewbuffer.extend(seg["ep_rets"])
-        self.unclipped_rewbuffer.extend(seg["ep_unclipped_rets"])
+        self.lenbuffer.extend(lens)
+        self.rewbuffer.extend(rets)
+        self.unclipped_rewbuffer.extend(unclipped_rets)
         return np.mean(Entropy_list), np.mean(KL_distance_list)
 
+def InitMetaConfig(scene_id):
+    global HERO_COUNT
+    global g_dir_skill_mask
+    try:
+        # Load train self heroes skill masks
+        root_folder = os.path.split(os.path.abspath(__file__))[0]
+        g_dir_skill_mask = []
+        
+        cfg_file_path = '{}/gamecore/cfg'.format(root_folder)
+        training_map_file = '{}/maps/{}.json'.format(cfg_file_path, scene_id)
+        hero_cfg_file_path = '{}/heroes'.format(cfg_file_path)
+        skill_cfg_file_path = '{}/skills'.format(cfg_file_path)
+        map_dict = None
+        with open(training_map_file, 'r') as file_handle:
+            map_dict = json.load(file_handle)
 
+        for hero_id in map_dict['SelfHeroes']:
+            hero_skills = FindHeroSkills(hero_cfg_file_path, hero_id)
+            hero_skill_types = GetSkillTypes(skill_cfg_file_path, hero_skills)
+            g_dir_skill_mask.append(hero_skill_types)
+            
+        HERO_COUNT = len(g_dir_skill_mask)
 
-def learn(num_steps=NUM_STEPS):
-    global g_step
-    g_step = 0
+        # Write control file
+        ctrl_file_path = '{}/ctrl.txt'.format(root_folder)
+        file_handle = open(ctrl_file_path, 'w')
+
+        file_handle.write('1')
+
+        file_handle.write(' ')
+        file_handle.write('{}'.format(scene_id))
+        file_handle.close()
+    except Exception as ex:
+        pass	    
+    pass
+
+def GetDataGeneratorAndTrainer(scene_id):   
+    InitMetaConfig(scene_id)
     session = tf.Session()
-
     action_space_map = {'action':7, 'move':8, 'skill':8}
     a_space_keys = ['action', 'move', 'skill']
     agent = MultiPlayerAgent(session, action_space_map, a_space_keys)
-
     data_generator = MultiPlayer_Data_Generator(agent)
+    return agent, data_generator, session
+
+def learn(scene_id, num_steps=NUM_STEPS):
+    global g_step
+    g_step = 0
+
+    agent, data_generator, session = GetDataGeneratorAndTrainer(scene_id)
     train_writer = tf.summary.FileWriter('summary_log_gerry', graph=tf.get_default_graph()) 
 
     saver = tf.train.Saver(max_to_keep=1)
@@ -627,8 +662,9 @@ def learn(num_steps=NUM_STEPS):
     max_rew = -1000000
     for timestep in range(num_steps):
         ob, ac, atarg, tdlamret, seg = data_generator.get_one_step_data()
+        lens, rets, unclipped_rets = np.array(seg["ep_lens"]), np.array(seg["ep_rets"]), np.array(seg["ep_unclipped_rets"])
 
-        entropy, kl_distance = agent.learn_one_traj(timestep, ob, ac, atarg, tdlamret, seg, train_writer)
+        entropy, kl_distance = agent.learn_one_traj(timestep, ob, ac, atarg, tdlamret, lens, rets, unclipped_rets, train_writer)
 
         max_rew = max(max_rew, np.max(agent.unclipped_rewbuffer))
         if (timestep+1) % _save_frequency == 0:
@@ -731,49 +767,10 @@ def GetSkillTypes(skill_cfg_file_path, hero_skills):
     return skill_dir_type_check
 
 
-if __name__=='__main__':
+if __name__=='__main__':    
     scene_id = 10
-    bb = {1:'a', 2:'b', 3:'c'}
-    #print(list(bb))
-    a = list(map(lambda x: math.pow(x, -2), range(1, 10)))
-    for val in a:
-        print(val)
-    print(a)
-
-    try:
-        # Load train self heroes skill masks
-        root_folder = os.path.split(os.path.abspath(__file__))[0]
-        g_dir_skill_mask = []
-        
-        cfg_file_path = '{}/gamecore/cfg'.format(root_folder)
-        training_map_file = '{}/maps/{}.json'.format(cfg_file_path, scene_id)
-        hero_cfg_file_path = '{}/heroes'.format(cfg_file_path)
-        skill_cfg_file_path = '{}/skills'.format(cfg_file_path)
-        map_dict = None
-        with open(training_map_file, 'r') as file_handle:
-            map_dict = json.load(file_handle)
-
-        for hero_id in map_dict['SelfHeroes']:
-            hero_skills = FindHeroSkills(hero_cfg_file_path, hero_id)
-            hero_skill_types = GetSkillTypes(skill_cfg_file_path, hero_skills)
-            g_dir_skill_mask.append(hero_skill_types)
-            
-        HERO_COUNT = len(g_dir_skill_mask)
-
-        # Write control file
-        ctrl_file_path = '{}/ctrl.txt'.format(root_folder)
-        file_handle = open(ctrl_file_path, 'w')
-        if g_is_train:
-            file_handle.write('1')
-        else:
-            file_handle.write('0')
-        file_handle.write(' ')
-        file_handle.write('{}'.format(scene_id))
-        file_handle.close()
-    except Exception as ex:
-        pass	  
 
     if g_is_train:
-        learn(num_steps=5000)
+        learn(scene_id, num_steps=5000)
     else:
         play_game()

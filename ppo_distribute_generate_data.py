@@ -17,8 +17,11 @@ import time
 import math
 import pickle
 import json
-from ppo_lstm import GetDataGeneratorAndTrainer
 from ppo_lstm import LoadModel
+from ppo_lstm import GetDataGeneratorAndTrainer
+
+g_step = 0
+g_worker_id = 0
 
 def dump_generated_data_2_file(file_name, seg):
     with open(file_name, 'wb') as file_handle:
@@ -26,10 +29,10 @@ def dump_generated_data_2_file(file_name, seg):
 
     pass
 
-def generate_data():
+def generate_data(scene_id):
 
     root_folder = os.path.split(os.path.abspath(__file__))[0]   
-    _, data_generator, session = GetDataGeneratorAndTrainer()
+    _, data_generator, session = GetDataGeneratorAndTrainer(scene_id)
     _step = g_step    
 
     while True:
@@ -48,9 +51,8 @@ def generate_data():
         _step += 1
 
 if __name__=='__main__':
-    global g_step
     g_step = 0
-    scene_id = 0
+    scene_id = 10
     if len(sys.argv) > 1:
         TIMESTEPS_PER_ACTOR_BATCH = int(sys.argv[1])
         
@@ -63,4 +65,4 @@ if __name__=='__main__':
     if len(sys.argv) > 4:
         scene_id = int(sys.argv[4])
 
-    generate_data()
+    generate_data(scene_id)
