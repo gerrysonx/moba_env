@@ -28,7 +28,7 @@ def log_out(str_log):
     global g_log_file_name
     if g_log_file_name == None:
         root_folder = os.path.split(os.path.abspath(__file__))[0]
-        g_log_file_name = '{}/../log/train.log'.format(root_folder)
+        g_log_file_name = '{}/../log/train_at_{}.log'.format(root_folder, int(time.time()*100000))
 
     _handle = open(g_log_file_name, 'a')
     _handle.write(str_log)
