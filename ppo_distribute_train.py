@@ -20,54 +20,7 @@ import json
 from ppo_lstm import GetDataGeneratorAndTrainer
 
 
-EPSILON = 0.2
-# 3 * 3 + 2
-ONE_HOT_SIZE = 10
-STATE_SIZE = 11
-F = STATE_SIZE + 1
-EMBED_SIZE = 5
-LAYER_SIZE = 128
-
-C = 1
-HERO_COUNT = 2
-# Hero skill mask, to indicate if a hero skill is a directional one.
-g_dir_skill_mask = [[False, False, False, False], [False, False, False, False]]
-
-NUM_FRAME_PER_ACTION = 4
-BATCH_SIZE = 512
-EPOCH_NUM = 4
-LEARNING_RATE = 8e-4
-TIMESTEPS_PER_ACTOR_BATCH = 256*512
-GAMMA = 0.99
-LAMBDA = 0.95
-NUM_STEPS = 5000
-ENV_NAME = 'gym_moba:moba-multiplayer-v0'
-RANDOM_START_STEPS = 4
-
-global g_step
-
-# Generating data worker count
-g_data_generator_count = 3
-
-# Use hero id embedding
-g_embed_hero_id = False
-
-# Save model in pb format
-g_save_pb_model = False
-
-# Control if output to tensorboard
-g_out_tb = True
-
-# Control if train or play
-g_is_train = True
-# True means start a new train task without loading previous model.
-g_start_anew = True
-
-# Control if use priority sampling
-g_enable_per = False
-g_per_alpha = 0.6
-g_is_beta_start = 0.4
-g_is_beta_end = 1
+g_step = 0
 
 
 def get_one_step_data(timestep, work_thread_count):
@@ -101,12 +54,12 @@ def get_one_step_data(timestep, work_thread_count):
     return np.array(ob), np.array(ac), np.array(std_atvtg), np.array(tdlamret), np.array(lens), np.array(rets), np.array(unclipped_rets)
 
 
-def learn(scene_id, num_steps=NUM_STEPS):
+def learn(scene_id, num_steps):
     root_folder = os.path.split(os.path.abspath(__file__))[0]
     global g_step
     agent, _, session = GetDataGeneratorAndTrainer(scene_id)
 
-    train_writer = tf.summary.FileWriter('summary_log_gerry', graph=tf.get_default_graph()) 
+    train_writer = tf.summary.FileWriter('{}/../summary_log_gerry'.format(root_folder), graph=tf.get_default_graph()) 
     saver = tf.train.Saver(max_to_keep=50)
     max_rew = -10000
     base_step = g_step

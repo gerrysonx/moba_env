@@ -650,7 +650,8 @@ def learn(scene_id, num_steps=NUM_STEPS):
     g_step = 0
 
     agent, data_generator, session = GetDataGeneratorAndTrainer(scene_id)
-    train_writer = tf.summary.FileWriter('summary_log_gerry', graph=tf.get_default_graph()) 
+    root_folder = os.path.split(os.path.abspath(__file__))[0]
+    train_writer = tf.summary.FileWriter('{}/../summary_log_gerry'.format(root_folder), graph=tf.get_default_graph()) 
 
     saver = tf.train.Saver(max_to_keep=1)
     if False == g_start_anew:

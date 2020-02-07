@@ -44,7 +44,10 @@ global g_step
 g_save_pb_model = False
 
 # Control if output to tensorboard
-g_out_tb = True
+g_out_tb = False
+
+# Control if display game scene
+g_display_scene = False
 
 # Control if train or play
 g_is_train = True
@@ -178,7 +181,8 @@ class Data_Generator():
                 cur_ep_len = 0
                 ob = self.env.reset()
             t += 1
-            self.env.render()
+            if g_display_scene:
+                self.env.render()
     
     def add_vtarg_and_adv(self, seg, gamma=0.99, lam=0.95):
         """
@@ -660,7 +664,8 @@ def learn(num_steps=NUM_STEPS):
     g_step = 0    
     agent, data_generator, session = GetDataGeneratorAndTrainer()
     
-    train_writer = tf.summary.FileWriter('summary_log_gerry', graph=tf.get_default_graph()) 
+    root_folder = os.path.split(os.path.abspath(__file__))[0]
+    train_writer = tf.summary.FileWriter('{}/../summary_log_gerry'.format(root_folder), graph=tf.get_default_graph()) 
 
     saver = tf.train.Saver(max_to_keep=1)
     if False == g_start_anew:
