@@ -17,6 +17,7 @@ import time
 import math
 import pickle
 import json
+import shutil
 from ppo_lstm import LoadModel
 from ppo_lstm import GetDataGeneratorAndTrainer
 
@@ -27,6 +28,19 @@ def dump_generated_data_2_file(file_name, seg):
     with open(file_name, 'wb') as file_handle:
         pickle.dump(seg, file_handle)
 
+    pass
+
+def delete_outdated_folders(step):
+    # Delete folders within range [0, step)
+    root_folder = os.path.split(os.path.abspath(__file__))[0]   
+    if step < 1:
+        return
+    for idx in range(step):
+        try:
+            data_folder_path = '{}/../distribute_collected_train_data/{}'.format(root_folder, idx)
+            shutil.rmtree(data_folder_path)
+        except:
+            pass
     pass
 
 def generate_data(scene_id):
@@ -40,10 +54,18 @@ def generate_data(scene_id):
         ob, ac, atarg, tdlamret, seg = data_generator.get_one_step_data()
 
         data_folder_path = '{}/../distribute_collected_train_data/{}'.format(root_folder, _step)
-        if os.path.exists(data_folder_path):
-            pass
-        else:
-            os.mkdir(data_folder_path)
+        while True:
+            if os.path.exists(data_folder_path):
+                break
+            else:
+                try:
+                    os.mkdir(data_folder_path)
+                    # Need to delete all previous folders
+                    delete_outdated_folders(_step)
+                    break
+                except:
+                    print('mkdir {} failed, but we caught the exception.'.format(data_folder_path))
+                    continue
 
         data_file_name = '{}/../distribute_collected_train_data/{}/seg_{}_{}.data'.format(root_folder, _step, g_worker_id, int(time.time()*100000))       
         dump_generated_data_2_file(data_file_name, seg)

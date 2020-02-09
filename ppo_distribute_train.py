@@ -108,6 +108,6 @@ if __name__=='__main__':
         g_step = int(sys.argv[2])
 
     if len(sys.argv) > 3:    
-        scene_id = int(sys.argv[3])  
+        scene_id = int(sys.argv[3])
 
     learn(scene_id, num_steps=500)
