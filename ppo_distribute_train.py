@@ -66,7 +66,15 @@ def get_one_step_data(timestep, work_thread_count):
             break        
         time.sleep(10)
     print('Successfully collected {} files, data size:{} from {}.'.format(len(files), len(ob), timestep))
-    return np.array(ob), np.array(ac), np.array(std_atvtg), np.array(tdlamret), np.array(lens), np.array(rets), np.array(unclipped_rets)
+    seg = {}
+    seg["ob"] = np.array(ob)
+    seg["ac"] = np.array(ac)
+    seg["std_atvtg"] = np.array(std_atvtg)
+    seg["tdlamret"] = np.array(tdlamret)
+    seg["ep_lens"] = np.array(lens)
+    seg["ep_rets"] = np.array(rets)
+    seg["ep_unclipped_rets"] = np.array(unclipped_rets)
+    return 
 
 
 def learn(scene_id, num_steps):
@@ -80,9 +88,9 @@ def learn(scene_id, num_steps):
     base_step = g_step
     for timestep in range(num_steps):
         g_step = base_step + timestep
-        ob, ac, atarg, tdlamret, lens, rets, unclipped_rets = get_one_step_data(g_step, g_data_generator_count)
+        seg = get_one_step_data(g_step, g_data_generator_count)
 
-        entropy, kl_distance = agent.learn_one_traj(g_step, ob, ac, atarg, tdlamret, lens, rets, unclipped_rets, train_writer)
+        entropy, kl_distance = agent.learn_one_traj(g_step, seg, train_writer)
 
         max_rew = max(max_rew, np.max(agent.unclipped_rewbuffer))
 

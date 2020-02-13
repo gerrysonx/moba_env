@@ -15,6 +15,7 @@ import tensorflow as tf
 import random, cv2
 import time
 import math
+import utils
 
 
 EPSILON = 0.2
@@ -23,10 +24,10 @@ EPSILON = 0.2
 C = 4
 
 NUM_FRAME_PER_ACTION = 4
-BATCH_SIZE = 64
+BATCH_SIZE = 64 * 4
 EPOCH_NUM = 4
-LEARNING_RATE = 1e-3
-TIMESTEPS_PER_ACTOR_BATCH = 2048
+LEARNING_RATE = 2e-3
+TIMESTEPS_PER_ACTOR_BATCH = 2048 * 4
 GAMMA = 0.99
 LAMBDA = 0.95
 NUM_STEPS = 5000
@@ -37,6 +38,8 @@ F = (84, 84)
 INPUT_DIMENS = (*F, C)
 INPUT_DIMENS_FLAT = INPUT_DIMENS[0]*INPUT_DIMENS[1]*INPUT_DIMENS[2]
 USE_CNN = True
+HIDDEN_STATE_LEN = 64
+LSTM_CELL_COUNT = 1
 
 global g_step
 
@@ -95,7 +98,7 @@ class Environment(object):
     self._screen = self.env.reset()
     for _ in range(random.randint(3, self.random_start - 1)):
       step_idx = np.random.choice(range(Environment.get_action_number()))
-      ob, _1, _2, _3 = self.step(step_idx)   
+      ob, _1, _2, _3 = self.step(step_idx)
     return self.obs
 
   def render(self):
@@ -128,6 +131,8 @@ class Data_Generator():
 
         # Initialize history arrays
         obs = np.array([np.zeros(shape=(*F, C), dtype=np.float32) for _ in range(horizon)])
+        hidden_states = np.array([np.zeros(shape=(HIDDEN_STATE_LEN * 2), dtype=np.float32) for _ in range(horizon)])
+
         rews = np.zeros(horizon, 'float32')
         unclipped_rews = np.zeros(horizon, 'float32')
         vpreds = np.zeros(horizon, 'float32')
@@ -135,9 +140,11 @@ class Data_Generator():
         acs = np.array([batch_actions for _ in range(horizon)])
         prevacs = acs.copy()
 
-        while True:
+        hidden_state_before = np.zeros(shape=(HIDDEN_STATE_LEN * 2), dtype=np.float32)
+        while True:            
+            hidden_state = hidden_state_before
             prevac = batch_actions
-            batch_actions, vpred = self.agent.predict(ob[np.newaxis, ...])
+            batch_actions, vpred, hidden_state = self.agent.predict(ob[np.newaxis, ...], hidden_state_before[np.newaxis, ...])
             ac = batch_actions[0]
             #print('Action:', ac, 'Value:', vpred)
             # Slight weirdness here because we need value function at time T
@@ -147,7 +154,7 @@ class Data_Generator():
                 yield {"ob" : obs, "rew" : rews, "vpred" : vpreds, "new" : news,
                         "ac" : acs, "prevac" : prevacs, "nextvpred": vpred * (1 - new),
                         "ep_rets" : ep_rets, "ep_lens" : ep_lens,
-                        "ep_unclipped_rets": ep_unclipped_rets}
+                        "ep_unclipped_rets": ep_unclipped_rets, "hidden_states": hidden_states}
                 # Be careful!!! if you change the downstream algorithm to aggregate
                 # several of these batches, then be sure to do a deepcopy
                 ep_rets = []
@@ -159,6 +166,7 @@ class Data_Generator():
             news[i] = new
             acs[i] = batch_actions
             prevacs[i] = prevac
+            hidden_states[i] = hidden_state_before
 
             ob, unclipped_rew, new, step_info = self.env.step(ac)
             rew = unclipped_rew
@@ -170,6 +178,8 @@ class Data_Generator():
             cur_ep_unclipped_ret += unclipped_rew
             cur_ep_len += 1
             if new:
+                hidden_state_before = np.zeros(shape=(HIDDEN_STATE_LEN * 2), dtype=np.float32)
+
                 if False:#cur_ep_unclipped_ret == 0:
                     pass
                 else:
@@ -208,7 +218,7 @@ class Data_Generator():
             print('atarg std too small')
         atarg = (atarg - atarg.mean()) / atarg.std() # standardized advantage function estimate
         seg['std_atvtg'] = atarg
-        return ob, ac, atarg, tdlamret, seg
+        return seg
 
 class Agent():
 
@@ -267,16 +277,18 @@ class Agent():
             self.cumulative_r = tf.placeholder(tf.float32, [None, ], name='cumulative_r')
             self.adv = tf.placeholder(tf.float32, [None, ], name='adv')
             self.importance_sample_arr_pl = tf.placeholder(tf.float32, [None, ], name='importance_sample')
+            self.lstm_hidden = tf.placeholder(tf.float32, [None, HIDDEN_STATE_LEN * 2], name='lstm_hidden')
 
             tf.summary.histogram("input_state", self.s)
             tf.summary.histogram("input_action", self.a)
             tf.summary.histogram("input_cumulative_r", self.cumulative_r)
             tf.summary.histogram("input_adv", self.adv)
+            tf.summary.histogram("lstm_hidden", self.lstm_hidden)
 
 
     def _init_nn(self, *args):
-        self.a_policy_new, self.a_policy_logits_new, self.value, self.summary_new = self._init_actor_net('policy_net_new', trainable=True)
-        self.a_policy_old, self.a_policy_logits_old, _, self.summary_old = self._init_actor_net('policy_net_old', trainable=False)
+        self.a_policy_new, self.a_policy_logits_new, self.value, self.hidden_state_new, self.summary_new = self._init_actor_net('policy_net_new', trainable=True)
+        self.a_policy_old, self.a_policy_logits_old, _, self.hidden_state_old, self.summary_old = self._init_actor_net('policy_net_old', trainable=False)
 
     def _init_op(self):
         self.lrmult = tf.placeholder(name='lrmult', dtype=tf.float32, shape=[])
@@ -382,7 +394,7 @@ class Agent():
                 output3 = tf.nn.relu(tf.nn.bias_add(tf.nn.conv2d(output2, cnn_w_3, strides=[1, 1, 1, 1], padding='SAME'), cnn_b_3))                
                 last_output_dims = np.prod([v.value for v in output3.get_shape()[1:]])
                 last_output = tf.reshape(output3, [-1, last_output_dims])
-            else:           
+            else:
                 flat_output_size = INPUT_DIMENS_FLAT
                 flat_output = tf.reshape(self.s, [-1, flat_output_size], name='flat_output')
 
@@ -420,6 +432,10 @@ class Agent():
                 last_output_dims = self.layer_size
                 last_output = output3 
 
+            # Add lstm here, to convert last_output to lstm_output
+            lstm_input = last_output
+            last_output, last_hidden_state = utils.lstm(lstm_input, self.lstm_hidden, 'lstm', HIDDEN_STATE_LEN, LSTM_CELL_COUNT, my_initializer)
+            last_output_dims = HIDDEN_STATE_LEN
             a_logits_arr = []
             a_prob_arr = []
             #self.a_space_keys
@@ -460,7 +476,7 @@ class Agent():
             value = tf.reshape(value, [-1, ], name = "value_output")
             tf.summary.histogram("value_head", value)
             merged_summary = tf.summary.merge_all()
-            return a_prob_arr, a_logits_arr, value, merged_summary
+            return a_prob_arr, a_logits_arr, value, last_hidden_state, merged_summary
 
     def mask_invalid_action(self, s, distrib):
         new_distrib = distrib
@@ -484,10 +500,12 @@ class Agent():
 
         return new_distrib
 
-    def predict(self, s):
+    def predict(self, s, hidden_state_val):
         # Calculate a eval prob.
-        tuple_val = self.session.run([self.value, self.a_policy_new[0]], feed_dict={self.s: s})
+        tuple_val = self.session.run([self.value, self.a_policy_new[0], self.hidden_state_new], 
+        feed_dict={self.s: s, self.lstm_hidden: hidden_state_val})
         value = tuple_val[0]
+        hidden_state_val  = tuple_val[-1]
         chosen_policy = tuple_val[1:] 
         #chosen_policy = self.session.run(self.a_policy_new, feed_dict={self.s: s})
         actions = []
@@ -495,7 +513,7 @@ class Agent():
             ac = np.random.choice(range(chosen_policy[idx].shape[1]), p=chosen_policy[idx][0])
             actions.append(ac)
 
-        return actions, value
+        return actions, value, hidden_state_val[0]
 
     def greedy_predict(self, s):
         # Calculate a eval prob.
@@ -599,7 +617,11 @@ class Agent():
 
         return np.mean(Entropy_list), np.mean(KL_distance_list)
 
-    def learn_one_traj(self, timestep, ob, ac, atarg, tdlamret, lens, rets, unclipped_rets, train_writer):
+    def learn_one_traj(self, timestep, seg, train_writer):
+        ob, ac, atarg, tdlamret = seg["ob"], seg["ac"], seg["adv"], seg["tdlamret"]
+        lens, rets, unclipped_rets = seg["ep_lens"], seg["ep_rets"], seg["ep_unclipped_rets"]
+        hidden_states = seg["hidden_states"]
+
         self.session.run(self.update_policy_net_op)
 
         lrmult = max(1.0 - float(timestep) / self.num_total_steps, .0)
@@ -619,6 +641,7 @@ class Agent():
                     self.s: ob[temp_indices],
                     self.a: ac[temp_indices],
                     self.cumulative_r: tdlamret[temp_indices],
+                    self.lstm_hidden: hidden_states[temp_indices],
                 })
 
                 Entropy_list.append(entropy)
@@ -677,13 +700,13 @@ def learn(num_steps=NUM_STEPS):
     _save_frequency = 50
     max_rew = -1000000
     for timestep in range(num_steps):
-        ob, ac, atarg, tdlamret, seg = data_generator.get_one_step_data()
-        lens, rets, unclipped_rets = seg["ep_lens"], seg["ep_rets"], seg["ep_unclipped_rets"]
+        seg = data_generator.get_one_step_data()
+        
         if g_enable_per:
             is_beta = g_is_beta_start + (timestep / num_steps) * (g_is_beta_end - g_is_beta_start)
             entropy, kl_distance = agent.learn_one_traj_per(timestep, ob, ac, atarg, tdlamret, seg, train_writer, is_beta)
         else:
-            entropy, kl_distance = agent.learn_one_traj(timestep, ob, ac, atarg, tdlamret, lens, rets, unclipped_rets, train_writer)
+            entropy, kl_distance = agent.learn_one_traj(timestep, seg, train_writer)
 
         max_rew = max(max_rew, np.max(agent.unclipped_rewbuffer))
         if (timestep+1) % _save_frequency == 0:
