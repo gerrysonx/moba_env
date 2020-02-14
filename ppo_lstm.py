@@ -21,7 +21,7 @@ import utils
 EPSILON = 0.2
 
 
-C = 4
+C = 1
 
 NUM_FRAME_PER_ACTION = 4
 BATCH_SIZE = 64 * 4
@@ -380,7 +380,7 @@ class Agent():
             last_output_dims = 0
             last_output = None
             if USE_CNN:
-                cnn_w_1 = tf.get_variable("cnn_w_1", [8, 8, 4, 32], initializer=my_initializer)
+                cnn_w_1 = tf.get_variable("cnn_w_1", [8, 8, C, 32], initializer=my_initializer)
                 cnn_b_1 = tf.get_variable("cnn_b_1", [32], initializer=tf.constant_initializer(0.0))
 
                 output1 = tf.nn.relu(tf.nn.bias_add(tf.nn.conv2d(self.s, cnn_w_1, strides=[1, 4, 4, 1], padding='SAME'), cnn_b_1))
