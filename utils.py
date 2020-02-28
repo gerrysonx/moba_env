@@ -36,25 +36,66 @@ def seq_to_batch(h, flat = False):
     else:
         return tf.reshape(tf.stack(values=h, axis=1), [-1])
 
-def lstm(xs, hidden_s, scope, nh, cell_count, my_initializer, init_scale=1.0):
+def lstm(xs, is_inference, hidden_s, mask_s, scope, nh, cell_count, my_initializer, init_scale=1.0):
     nbatch, nin = [v.value for v in xs.get_shape()]
-    with tf.variable_scope(scope):
+    with tf.variable_scope(scope, reuse = tf.AUTO_REUSE):
         wx = tf.get_variable("lstm_wx", [nin, nh*4], initializer=my_initializer)
         wh = tf.get_variable("lstm_wh", [nh, nh*4], initializer=my_initializer)
-        b = tf.get_variable("lstm_b", [nh*4], initializer=tf.constant_initializer(0.0))
-        lstm_output_w = tf.get_variable("lstm_output_w", [nh, nin], initializer=my_initializer)
-        lstm_output_b = tf.get_variable("lstm_output_b", [nin], initializer=tf.constant_initializer(0.0))
+        b = tf.get_variable("lstm_b", [nh*4], initializer=tf.constant_initializer(0.0))    
+    
 
-    c, h = tf.split(axis=1, num_or_size_splits=2, value=hidden_s)    
-    for idy in range(cell_count):
-        z = tf.matmul(xs, wx) + tf.matmul(h, wh) + b
-        i, f, o, u = tf.split(axis=1, num_or_size_splits=4, value=z)
-        i = tf.nn.sigmoid(i)
-        f = tf.nn.sigmoid(f)
-        o = tf.nn.sigmoid(o)
-        u = tf.tanh(u)
-        c = f*c + i*u
-        h = o*tf.tanh(c)        
-    lstm_output = h
-    s = tf.concat(axis=1, values=[c, h])
+    c_old, h_old = tf.split(axis=1, num_or_size_splits=2, value=hidden_s)
+    
+    def f1(): 
+        c, h = None, None
+        output_seq = []
+        time_steps = 1
+        steps_cell_count = 1        
+        for idy in range(steps_cell_count):        
+            c, h = tf.expand_dims(c_old[idy * time_steps], axis = 0), tf.expand_dims(h_old[idy * time_steps], 0)        
+            for idx in range(time_steps):
+                single_input = tf.expand_dims(xs[idy * time_steps + idx], 0)
+                single_mask = tf.expand_dims(mask_s[idy * time_steps + idx], 0)
+                c = c * tf.cast((1 - single_mask), tf.float32)
+                h = h * tf.cast((1 - single_mask), tf.float32)
+                z = tf.matmul(single_input, wx) + tf.matmul(h, wh) + b
+                i, f, o, u = tf.split(axis=1, num_or_size_splits=4, value=z)
+                i = tf.nn.sigmoid(i)
+                f = tf.nn.sigmoid(f)
+                o = tf.nn.sigmoid(o)
+                u = tf.tanh(u)
+                c = f*c + i*u
+                h = o*tf.tanh(c)   
+                output_seq.append(h)     
+        lstm_output = tf.concat(axis=0, values=output_seq)        
+        s = tf.concat(axis=1, values=[c, h])
+        return lstm_output, s
+
+    def f2(): 
+        c, h = None, None
+        output_seq = []
+        batch_count = 128
+        time_steps = 8
+        steps_cell_count = int(batch_count / time_steps)        
+        for idy in range(steps_cell_count):        
+            c, h = tf.expand_dims(c_old[idy * time_steps], axis = 0), tf.expand_dims(h_old[idy * time_steps], 0)        
+            for idx in range(time_steps):
+                single_input = tf.expand_dims(xs[idy * time_steps + idx], 0)
+                single_mask = tf.expand_dims(mask_s[idy * time_steps + idx], 0)
+                c = c * tf.cast((1 - single_mask), tf.float32)
+                h = h * tf.cast((1 - single_mask), tf.float32)
+                z = tf.matmul(single_input, wx) + tf.matmul(h, wh) + b
+                i, f, o, u = tf.split(axis=1, num_or_size_splits=4, value=z)
+                i = tf.nn.sigmoid(i)
+                f = tf.nn.sigmoid(f)
+                o = tf.nn.sigmoid(o)
+                u = tf.tanh(u)
+                c = f*c + i*u
+                h = o*tf.tanh(c)   
+                output_seq.append(h)     
+        lstm_output = tf.concat(axis=0, values=output_seq)        
+        s = tf.concat(axis=1, values=[c, h])
+        return lstm_output, s
+
+    lstm_output, s = tf.cond(tf.equal(is_inference, True), f1, f2)
     return lstm_output, s

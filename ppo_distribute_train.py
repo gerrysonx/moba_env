@@ -40,7 +40,7 @@ def log_out(str_log):
 
 def get_one_step_data(timestep, work_thread_count):
     root_folder = os.path.split(os.path.abspath(__file__))[0]
-    ob, ac, std_atvtg, tdlamret, lens, rets, unclipped_rets = [], [], [], [], [], [], []
+    ob, ac, std_atvtg, tdlamret, lens, rets, unclipped_rets, news, hidden_states = [], [], [], [], [], [], [], [], []
     # Enumerate data files under folder
     data_folder_path = '{}/../distribute_collected_train_data/{}'.format(root_folder, timestep)
     collected_all_data_files = False
@@ -61,6 +61,9 @@ def get_one_step_data(timestep, work_thread_count):
                     lens.extend(_seg["ep_lens"])
                     rets.extend(_seg["ep_rets"])
                     unclipped_rets.extend(_seg["ep_unclipped_rets"])    
+                    news.extend(_seg["new"])
+                    if 'hidden_states' in _seg:
+                        hidden_states.extend(_seg["hidden_states"])
 
             collected_all_data_files = True
             break        
@@ -69,12 +72,14 @@ def get_one_step_data(timestep, work_thread_count):
     seg = {}
     seg["ob"] = np.array(ob)
     seg["ac"] = np.array(ac)
-    seg["std_atvtg"] = np.array(std_atvtg)
+    seg["adv"] = np.array(std_atvtg)
     seg["tdlamret"] = np.array(tdlamret)
     seg["ep_lens"] = np.array(lens)
     seg["ep_rets"] = np.array(rets)
+    seg["new"] = np.array(news)
     seg["ep_unclipped_rets"] = np.array(unclipped_rets)
-    return 
+    seg["hidden_states"] = np.array(hidden_states)
+    return seg
 
 
 def learn(scene_id, num_steps):

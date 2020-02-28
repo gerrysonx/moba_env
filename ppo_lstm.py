@@ -24,10 +24,11 @@ EPSILON = 0.2
 C = 1
 
 NUM_FRAME_PER_ACTION = 4
-BATCH_SIZE = 64 * 4
+BATCH_SIZE = 128
+
 EPOCH_NUM = 4
-LEARNING_RATE = 2e-3
-TIMESTEPS_PER_ACTOR_BATCH = 2048 * 4
+LEARNING_RATE = 1e-3
+TIMESTEPS_PER_ACTOR_BATCH = 2048
 GAMMA = 0.99
 LAMBDA = 0.95
 NUM_STEPS = 5000
@@ -144,7 +145,7 @@ class Data_Generator():
         while True:            
             hidden_state = hidden_state_before
             prevac = batch_actions
-            batch_actions, vpred, hidden_state = self.agent.predict(ob[np.newaxis, ...], hidden_state_before[np.newaxis, ...])
+            batch_actions, vpred, hidden_state = self.agent.predict(ob[np.newaxis, ...], hidden_state_before[np.newaxis, ...], [0])
             ac = batch_actions[0]
             #print('Action:', ac, 'Value:', vpred)
             # Slight weirdness here because we need value function at time T
@@ -278,6 +279,8 @@ class Agent():
             self.adv = tf.placeholder(tf.float32, [None, ], name='adv')
             self.importance_sample_arr_pl = tf.placeholder(tf.float32, [None, ], name='importance_sample')
             self.lstm_hidden = tf.placeholder(tf.float32, [None, HIDDEN_STATE_LEN * 2], name='lstm_hidden')
+            self.lstm_mask = tf.placeholder(tf.int32, [None, ], name='lstm_mask')
+            self.is_inference = tf.placeholder(tf.bool, name='is_inference')
 
             tf.summary.histogram("input_state", self.s)
             tf.summary.histogram("input_action", self.a)
@@ -287,8 +290,9 @@ class Agent():
 
 
     def _init_nn(self, *args):
-        self.a_policy_new, self.a_policy_logits_new, self.value, self.hidden_state_new, self.summary_new = self._init_actor_net('policy_net_new', trainable=True)
-        self.a_policy_old, self.a_policy_logits_old, _, self.hidden_state_old, self.summary_old = self._init_actor_net('policy_net_old', trainable=False)
+        self.a_policy_new, self.a_policy_logits_new, self.value, self.hidden_state_new = self._init_actor_net('policy_net_new', trainable=True, is_inference=False)
+        self.a_policy_new_infer, _1, self.value_infer, self.hidden_state_new_infer = self._init_actor_net('policy_net_new', trainable=True, is_inference=True)
+        self.a_policy_old, self.a_policy_logits_old, _, self.hidden_state_old = self._init_actor_net('policy_net_old', trainable=False, is_inference=False)
 
     def _init_op(self):
         self.lrmult = tf.placeholder(name='lrmult', dtype=tf.float32, shape=[])
@@ -373,9 +377,9 @@ class Agent():
 
 
 
-    def _init_actor_net(self, scope, trainable=True):        
+    def _init_actor_net(self, scope, trainable=True, is_inference = False):        
         my_initializer = tf.contrib.layers.xavier_initializer()
-        with tf.variable_scope(scope):
+        with tf.variable_scope(scope, reuse=tf.AUTO_REUSE):
 
             last_output_dims = 0
             last_output = None
@@ -400,32 +404,23 @@ class Agent():
 
                 fc_W_1 = tf.get_variable(shape=[flat_output_size, self.layer_size], name='fc_W_1',
                     trainable=trainable, initializer=my_initializer)
-                fc_b_1 = tf.Variable(tf.zeros([self.layer_size], dtype=tf.float32), name='fc_b_1',
+                fc_b_1 = tf.get_variable(shape=[1], name='fc_b_1',
                     trainable=trainable)
-
-                tf.summary.histogram("fc_W_1", fc_W_1)
-                tf.summary.histogram("fc_b_1", fc_b_1)
 
                 output1 = tf.nn.relu(tf.matmul(flat_output, fc_W_1) + fc_b_1)
 
                 fc_W_2 = tf.get_variable(shape=[self.layer_size, self.layer_size], name='fc_W_2',
                     trainable=trainable, initializer=my_initializer)
-                fc_b_2 = tf.Variable(tf.zeros([self.layer_size], dtype=tf.float32), name='fc_b_2',
+                fc_b_2 = tf.get_variable(shape=[1], name='fc_b_2',
                     trainable=trainable)
-
-                tf.summary.histogram("fc_W_2", fc_W_2)
-                tf.summary.histogram("fc_b_2", fc_b_2)
 
                 output2 = tf.nn.relu(tf.matmul(output1, fc_W_2) + fc_b_2)
 
 
                 fc_W_3 = tf.get_variable(shape=[self.layer_size, self.layer_size], name='fc_W_3',
                     trainable=trainable, initializer=my_initializer)
-                fc_b_3 = tf.Variable(tf.zeros([self.layer_size], dtype=tf.float32), name='fc_b_3',
+                fc_b_3 = tf.get_variable(shape=[1], name='fc_b_3',
                     trainable=trainable)
-
-                tf.summary.histogram("fc_W_3", fc_W_3)
-                tf.summary.histogram("fc_b_3", fc_b_3)
 
                 output3 = tf.nn.relu(tf.matmul(output2, fc_W_3) + fc_b_3)
 
@@ -434,7 +429,7 @@ class Agent():
 
             # Add lstm here, to convert last_output to lstm_output
             lstm_input = last_output
-            last_output, last_hidden_state = utils.lstm(lstm_input, self.lstm_hidden, 'lstm', HIDDEN_STATE_LEN, LSTM_CELL_COUNT, my_initializer)
+            last_output, last_hidden_state = utils.lstm(lstm_input, self.is_inference, self.lstm_hidden, self.lstm_mask, 'lstm', HIDDEN_STATE_LEN, LSTM_CELL_COUNT, my_initializer)
             last_output_dims = HIDDEN_STATE_LEN
             a_logits_arr = []
             a_prob_arr = []
@@ -449,34 +444,25 @@ class Agent():
 
                 fc_W_a = tf.get_variable(shape=[last_output_dims, output_num], name=weight_layer_name,
                     trainable=trainable, initializer=my_initializer)
-                fc_b_a = tf.Variable(tf.zeros([output_num], dtype=tf.float32), name=bias_layer_name,
-                    trainable=trainable)
-
-                tf.summary.histogram(weight_layer_name, fc_W_a)
-                tf.summary.histogram(bias_layer_name, fc_b_a)            
+                fc_b_a = tf.get_variable(shape=[1], name=bias_layer_name,
+                    trainable=trainable, initializer=tf.constant_initializer(0.0))
 
                 a_logits = tf.matmul(last_output, fc_W_a) + fc_b_a
-                a_logits_arr.append(a_logits)                
-                tf.summary.histogram(logit_layer_name, a_logits)
+                a_logits_arr.append(a_logits)
 
                 a_prob = stable_softmax(a_logits, head_layer_name) #tf.nn.softmax(a_logits)
                 a_prob_arr.append(a_prob)
-                tf.summary.histogram(head_layer_name, a_prob)
 
             # value network
             fc1_W_v = tf.get_variable(shape=[last_output_dims, 1], name='fc1_W_v',
                 trainable=trainable, initializer=my_initializer)
-            fc1_b_v = tf.Variable(tf.zeros([1], dtype=tf.float32), name='fc1_b_v',
-                trainable=trainable)
-
-            tf.summary.histogram("fc1_W_v", fc1_W_v)
-            tf.summary.histogram("fc1_b_v", fc1_b_v)
+            fc1_b_v = tf.get_variable(shape=[1], name='fc1_b_v',
+                trainable=trainable, initializer=tf.constant_initializer(0.0))
 
             value = tf.matmul(last_output, fc1_W_v) + fc1_b_v
             value = tf.reshape(value, [-1, ], name = "value_output")
-            tf.summary.histogram("value_head", value)
-            merged_summary = tf.summary.merge_all()
-            return a_prob_arr, a_logits_arr, value, last_hidden_state, merged_summary
+
+            return a_prob_arr, a_logits_arr, value, last_hidden_state
 
     def mask_invalid_action(self, s, distrib):
         new_distrib = distrib
@@ -500,10 +486,10 @@ class Agent():
 
         return new_distrib
 
-    def predict(self, s, hidden_state_val):
+    def predict(self, s, hidden_state_val, mask_state_val):
         # Calculate a eval prob.
-        tuple_val = self.session.run([self.value, self.a_policy_new[0], self.hidden_state_new], 
-        feed_dict={self.s: s, self.lstm_hidden: hidden_state_val})
+        tuple_val = self.session.run([self.value_infer, self.a_policy_new_infer[0], self.hidden_state_new_infer], 
+        feed_dict={self.s: s, self.lstm_hidden: hidden_state_val, self.lstm_mask: mask_state_val, self.is_inference:True})
         value = tuple_val[0]
         hidden_state_val  = tuple_val[-1]
         chosen_policy = tuple_val[1:] 
@@ -618,7 +604,7 @@ class Agent():
         return np.mean(Entropy_list), np.mean(KL_distance_list)
 
     def learn_one_traj(self, timestep, seg, train_writer):
-        ob, ac, atarg, tdlamret = seg["ob"], seg["ac"], seg["adv"], seg["tdlamret"]
+        ob, ac, atarg, tdlamret, game_ends = seg["ob"], seg["ac"], seg["adv"], seg["tdlamret"], seg['new']
         lens, rets, unclipped_rets = seg["ep_lens"], seg["ep_rets"], seg["ep_unclipped_rets"]
         hidden_states = seg["hidden_states"]
 
@@ -630,18 +616,20 @@ class Agent():
         KL_distance_list = []
 
         for _idx in range(EPOCH_NUM):
-            indices = np.random.permutation(len(ob))
+            indices = list(range(len(ob))) # np.random.permutation(len(ob))
             inner_loop_count = (len(ob)//BATCH_SIZE)
             for i in range(inner_loop_count):
                 temp_indices = indices[i*BATCH_SIZE : (i+1)*BATCH_SIZE]
                 # Minimize loss.
-                _, entropy, kl_distance, summary_new_val, summary_old_val = self.session.run([self.optimizer, self.policy_entropy, self.kl_distance, self.summary_new, self.summary_old], {
+                _, entropy, kl_distance = self.session.run([self.optimizer, self.policy_entropy, self.kl_distance], {
                     self.lrmult : lrmult,
                     self.adv: atarg[temp_indices],
                     self.s: ob[temp_indices],
                     self.a: ac[temp_indices],
                     self.cumulative_r: tdlamret[temp_indices],
                     self.lstm_hidden: hidden_states[temp_indices],
+                    self.lstm_mask: game_ends[temp_indices],
+                    self.is_inference:False
                 })
 
                 Entropy_list.append(entropy)
@@ -792,6 +780,19 @@ def play_game_with_saved_model():
 
 
 if __name__=='__main__':
+    x = tf.constant(2)
+    y = tf.constant(5)
+    z = tf.placeholder(tf.bool)
+
+    def f1():
+        return tf.multiply(x, 16)
+    def f2():
+        return tf.add(y, 23)
+
+    r = tf.cond(z, f1, f2)
+
+    session = tf.Session()
+    r_val = session.run(r, feed_dict = {z:True})
 
     if g_is_train:
         learn(num_steps=5000)

@@ -51,7 +51,7 @@ def generate_data(scene_id):
 
     while True:
         LoadModel(session, _step)
-        ob, ac, atarg, tdlamret, seg = data_generator.get_one_step_data()
+        seg = data_generator.get_one_step_data()
 
         data_folder_path = '{}/../distribute_collected_train_data/{}'.format(root_folder, _step)
         while True:
