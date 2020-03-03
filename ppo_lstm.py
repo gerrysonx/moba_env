@@ -25,6 +25,7 @@ C = 1
 
 NUM_FRAME_PER_ACTION = 4
 BATCH_SIZE = 128
+TIME_STEP = 8
 
 EPOCH_NUM = 4
 LEARNING_RATE = 1e-3
@@ -64,6 +65,14 @@ g_enable_per = False
 g_per_alpha = 0.6
 g_is_beta_start = 0.4
 g_is_beta_end = 1
+
+def inflate_random_indice(indices, inflate_ratio):
+    output_indices = []
+    for idx in indices:
+        for idy in range(inflate_ratio):
+            output_indices.append(idx * inflate_ratio + idy)
+        
+    return output_indices
 
 def stable_softmax(logits, name): 
     a = logits - tf.reduce_max(logits, axis=-1, keepdims=True) 
@@ -616,7 +625,8 @@ class Agent():
         KL_distance_list = []
 
         for _idx in range(EPOCH_NUM):
-            indices = list(range(len(ob))) # np.random.permutation(len(ob))
+            indices = np.random.permutation(int(len(ob) / TIME_STEP)) # list(range(len(ob))) # 
+            indices = inflate_random_indice(indices, TIME_STEP)
             inner_loop_count = (len(ob)//BATCH_SIZE)
             for i in range(inner_loop_count):
                 temp_indices = indices[i*BATCH_SIZE : (i+1)*BATCH_SIZE]
@@ -759,14 +769,14 @@ def play_game_with_saved_model():
         policy_tensor = sess.graph.get_tensor_by_name('policy_net_new/soft_logits:0')
         value_tensor = sess.graph.get_tensor_by_name('policy_net_new/value_output:0')
 
-        env = Environment()        
+        env = Environment()
         ob = env.reset()
 
         while True:
             time.sleep(0.05)
 
             chosen_policy, _ = sess.run([policy_tensor, value_tensor], feed_dict={input_tensor: ob[np.newaxis, ...]})
-            tac = np.argmax(chosen_policy[0]) 
+            tac = np.argmax(chosen_policy[0])
 
             #print('Predict :{}, input:{}, output:{}'.format(tac, ob, chosen_policy))
 
@@ -780,8 +790,12 @@ def play_game_with_saved_model():
 
 
 if __name__=='__main__':
+    input_indices = [4, 3, 7, 9, 0, 1, 2, 5, 6, 8]
+    input_indices = inflate_random_indice(input_indices, 2)
     x = tf.constant(2)
     y = tf.constant(5)
+    y0 = tf.constant([10, 2, 3, 4, 5, 6])
+    y1 = tf.reshape(y0, [-1, 3])
     z = tf.placeholder(tf.bool)
 
     def f1():
@@ -792,7 +806,7 @@ if __name__=='__main__':
     r = tf.cond(z, f1, f2)
 
     session = tf.Session()
-    r_val = session.run(r, feed_dict = {z:True})
+    r_val, y1_val = session.run([r, y1], feed_dict = {z:True})
 
     if g_is_train:
         learn(num_steps=5000)
