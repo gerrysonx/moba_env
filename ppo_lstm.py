@@ -17,6 +17,10 @@ import time
 import math
 import utils
 
+import tensorflow.contrib.eager as tfe 
+conf = tf.ConfigProto(intra_op_parallelism_threads=1, inter_op_parallelism_threads = 1)
+#tfe.enable_eager_execution(conf)
+
 
 EPSILON = 0.2
 
@@ -437,8 +441,24 @@ class Agent():
                 last_output = output3 
 
             # Add lstm here, to convert last_output to lstm_output
+
+            lstm_input = last_output
+            lstm_cell = tf.nn.rnn_cell.LSTMCell(HIDDEN_STATE_LEN, name='lstm_cell', dynamic = True)
+            c_old, h_old = tf.split(axis=1, num_or_size_splits=2, value=self.lstm_hidden)
+            c_old, h_old = c_old[:,::TIME_STEP], h_old[:,::TIME_STEP]
+            combined_hidden_states = tf.stack([c_old, h_old], axis = 2)
+            lstm_input = tf.reshape(lstm_input, (-1, TIME_STEP, *(lstm_input.get_shape()[1:])))
+            lstm_input = tf.unstack(lstm_input, axis = 1)
+            last_output, last_hidden_state = tf.nn.static_rnn(cell=lstm_cell, inputs=lstm_input, initial_state = combined_hidden_states)
+            # last_output, last_hidden_state = lstm_cell(inputs=lstm_input, state=(c_old, h_old))
+    #        last_output, last_hidden_state = tf.nn.dynamic_rnn(cell=lstm_cell, inputs=lstm_input, initial_state = combined_hidden_states)
+    #        last_output = last_output[0]
+
+            '''
             lstm_input = last_output
             last_output, last_hidden_state = utils.lstm(lstm_input, self.is_inference, self.lstm_hidden, self.lstm_mask, 'lstm', HIDDEN_STATE_LEN, LSTM_CELL_COUNT, my_initializer)
+            '''
+
             last_output_dims = HIDDEN_STATE_LEN
             a_logits_arr = []
             a_prob_arr = []
@@ -788,6 +808,46 @@ def play_game_with_saved_model():
 
     pass
 
+def static_rnn():
+    lstm_cell = tf.nn.rnn_cell.LSTMCell(HIDDEN_STATE_LEN, name='lstm_cell', dynamic = False)
+    lstm_input = tf.placeholder(tf.float32, (None, 128))
+    combined_hidden_states = tf.placeholder(tf.float32, (None, 2, HIDDEN_STATE_LEN))
+
+    lstm_input = tf.reshape(lstm_input, (-1, TIME_STEP, *(lstm_input.get_shape()[1:])))
+    lstm_input = tf.unstack(lstm_input, axis = 1)
+    last_output, last_hidden_state = tf.nn.static_rnn(cell=lstm_cell, inputs=lstm_input, initial_state = combined_hidden_states)    
+    pass
+
+def dyn_rnn():
+    lstm_cell = tf.nn.rnn_cell.LSTMCell(HIDDEN_STATE_LEN, name='lstm_cell', dynamic = True)
+    lstm_input = tf.placeholder(tf.float32, (None, 128))
+    combined_hidden_states = tf.placeholder(tf.float32, (None, HIDDEN_STATE_LEN))
+
+    lstm_input = tf.reshape(lstm_input, (-1, TIME_STEP, *(lstm_input.get_shape()[1:])))
+
+    last_output, last_hidden_state = tf.nn.dynamic_rnn(cell=lstm_cell, inputs=lstm_input, initial_state = combined_hidden_states)  
+    pass
+
+def dyn_rnn_2():
+    batch_size=10
+    hidden_size=100
+    max_time=40
+    depth=400
+    input_data=tf.Variable(tf.random_normal([batch_size, max_time, depth]))
+    lstm_cell = tf.nn.rnn_cell.LSTMCell(hidden_size)
+    #initial_state = lstm_cell.zero_state(batch_size, dtype=tf.float32)
+    initial_state_c = tf.get_variable('initial_state_c', [batch_size, hidden_size], dtype = tf.float32)
+    initial_state_h = tf.get_variable('initial_state_h', [batch_size, hidden_size], dtype = tf.float32)
+    initial_state = (initial_state_c, initial_state_h)
+    #tf.Variable(tf.random_normal([batch_size, hidden_size], dtype=tf.float32), dtype=tf.float32)
+    # #lstm_cell.zero_state(batch_size, dtype=tf.float32)#
+    #tf.get_variable('initial_state', [batch_size, hidden_size], dtype = tf.float32)
+    # #tf.placeholder(tf.float32, (batch_size, hidden_size))
+    # #lstm_cell.zero_state(batch_size, dtype=tf.float32)#
+    outputs, state = tf.nn.dynamic_rnn(lstm_cell, input_data, initial_state = initial_state, dtype=tf.float32, time_major = False)
+#    outputs, state = tf.nn.dynamic_rnn(lstm_cell, input_data, initial_state=initial_state, dtype=tf.float32, time_major=True)   
+ 
+    pass
 
 if __name__=='__main__':
     input_indices = [4, 3, 7, 9, 0, 1, 2, 5, 6, 8]
@@ -797,7 +857,18 @@ if __name__=='__main__':
     y0 = tf.constant([10, 2, 3, 4, 5, 6])
     y1 = tf.reshape(y0, [-1, 3])
     z = tf.placeholder(tf.bool)
+    dyn_rnn_2()
 
+    lstm_cell = tf.nn.rnn_cell.LSTMCell(HIDDEN_STATE_LEN, name='lstm_cell', dynamic = False)
+    lstm_input = tf.placeholder(tf.float32, (None, 128))
+    combined_hidden_states = tf.placeholder(tf.float32, (None, 2, HIDDEN_STATE_LEN))
+
+    lstm_input = tf.reshape(lstm_input, (-1, TIME_STEP, *(lstm_input.get_shape()[1:])))
+    lstm_input = tf.unstack(lstm_input, axis = 1)
+    last_output, last_hidden_state = tf.nn.static_rnn(cell=lstm_cell, inputs=lstm_input, initial_state = combined_hidden_states)
+    # last_output, last_hidden_state = lstm_cell(inputs=lstm_input, state=(c_old, h_old))
+#        last_output, last_hidden_state = tf.nn.dynamic_rnn(cell=lstm_cell, inputs=lstm_input, initial_state = combined_hidden_states)
+#        last_output = last_output[0]
     def f1():
         return tf.multiply(x, 16)
     def f2():
