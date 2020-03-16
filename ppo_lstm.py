@@ -838,7 +838,7 @@ def dyn_rnn_2():
     #initial_state = lstm_cell.zero_state(batch_size, dtype=tf.float32)
     initial_state_c = tf.get_variable('initial_state_c', [batch_size, hidden_size], dtype = tf.float32)
     initial_state_h = tf.get_variable('initial_state_h', [batch_size, hidden_size], dtype = tf.float32)
-    initial_state = (initial_state_c, initial_state_h)
+    initial_state = tf.contrib.rnn.LSTMStateTuple(initial_state_c, initial_state_h)
     #tf.Variable(tf.random_normal([batch_size, hidden_size], dtype=tf.float32), dtype=tf.float32)
     # #lstm_cell.zero_state(batch_size, dtype=tf.float32)#
     #tf.get_variable('initial_state', [batch_size, hidden_size], dtype = tf.float32)
