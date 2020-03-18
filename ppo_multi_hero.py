@@ -21,8 +21,12 @@ import json
 EPSILON = 0.2
 # 3 * 3 + 2
 ONE_HOT_SIZE = 10
-STATE_SIZE = 11
-F = STATE_SIZE + 1
+
+# STATE_SIZE will be calculated from scene unit config
+STATE_SIZE = 0
+
+ONE_HERO_FEATURE_SIZE = 3
+
 EMBED_SIZE = 5
 LAYER_SIZE = 128
 
@@ -82,7 +86,7 @@ class Environment(object):
     self.reward = 0
     self.terminal = True
     self.random_start = RANDOM_START_STEPS
-    self.obs = np.zeros(shape=(HERO_COUNT, F, C), dtype=np.float)
+    self.obs = np.zeros(shape=(HERO_COUNT, STATE_SIZE, C), dtype=np.float)
 
   def get_action_number(self):
     return 9
@@ -124,7 +128,7 @@ class MultiPlayer_Data_Generator():
         ep_lens = [] # lengths of ...
 
         # Initialize history arrays
-        obs = np.array([np.zeros(shape=(HERO_COUNT, F, C), dtype=np.float32) for _ in range(horizon)])
+        obs = np.array([np.zeros(shape=(HERO_COUNT, STATE_SIZE, C), dtype=np.float32) for _ in range(horizon)])
         rews = np.zeros(horizon, 'float32')
         unclipped_rews = np.zeros(horizon, 'float32')
         vpreds = np.zeros(horizon, 'float32')
@@ -203,8 +207,8 @@ class MultiPlayer_Data_Generator():
         atarg = (atarg - atarg.mean()) / atarg.std() # standardized advantage function estimate
         seg["std_atvtg"] = atarg
         return ob, ac, atarg, tdlamret, seg
-class MultiPlayerAgent():
 
+class MultiPlayerAgent():
     def __init__(self, session, a_space, a_space_keys, **options):       
         self.importance_sample_arr = np.ones([TIMESTEPS_PER_ACTOR_BATCH], dtype=np.float)
         self.session = session
@@ -227,7 +231,7 @@ class MultiPlayerAgent():
         self.a_space_keys = a_space_keys
         self.policy_head_num = len(a_space)
 
-        self.input_dims = F
+        self.input_dims = STATE_SIZE
         self.learning_rate = LEARNING_RATE
         self.num_total_steps = NUM_STEPS
         self.lenbuffer = deque(maxlen=100) # rolling buffer for episode lengths
@@ -372,7 +376,7 @@ class MultiPlayerAgent():
     def _init_single_actor_net(self, scope, input_pl, trainable=True):        
         my_initializer = tf.contrib.layers.xavier_initializer()
         with tf.variable_scope(scope, reuse=tf.AUTO_REUSE):
-            flat_output_size = F*C
+            flat_output_size = STATE_SIZE*C
             flat_output = tf.reshape(input_pl, [-1, flat_output_size], name='flat_output')
 
             # Add hero one-hot vector embedding
@@ -382,10 +386,8 @@ class MultiPlayerAgent():
                 input_hero_one_hot = tf.one_hot(input_hero_id, ONE_HOT_SIZE)
                 fc_W_embed = tf.get_variable(shape=[ONE_HOT_SIZE, EMBED_SIZE], name='fc_W_embed',
                     trainable=trainable, initializer=my_initializer)
-                fc_b_embed = tf.get_variable(shape=[EMBED_SIZE], name='fc_b_embed',
-                    trainable=trainable, initializer=my_initializer)
 
-                output_embedding = tf.nn.relu(tf.matmul(input_hero_one_hot, fc_W_embed) + fc_b_embed)
+                output_embedding = tf.matmul(input_hero_one_hot, fc_W_embed)
 
                 input_after_embed = tf.concat([input_state, output_embedding], -1)
                 fc_W_1 = tf.get_variable(shape=[EMBED_SIZE + STATE_SIZE, self.layer_size], name='fc_W_1',
@@ -603,6 +605,7 @@ class MultiPlayerAgent():
 def InitMetaConfig(scene_id):
     global HERO_COUNT
     global g_dir_skill_mask
+    global STATE_SIZE
     try:
         # Load train self heroes skill masks
         root_folder = os.path.split(os.path.abspath(__file__))[0]
@@ -622,6 +625,8 @@ def InitMetaConfig(scene_id):
             g_dir_skill_mask.append(hero_skill_types)
             
         HERO_COUNT = len(g_dir_skill_mask)
+        oppo_hero_count = len(map_dict['OppoHeroes'])
+        STATE_SIZE = (oppo_hero_count + HERO_COUNT) * ONE_HERO_FEATURE_SIZE
 
         # Write control file
         ctrl_file_path = '{}/ctrl.txt'.format(root_folder)

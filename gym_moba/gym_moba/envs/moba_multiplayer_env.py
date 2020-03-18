@@ -7,23 +7,22 @@ import numpy as np
 from gym import error, spaces, utils
 from gym.utils import seeding
 
+ONE_HERO_FEATURE_SIZE = 3
+BATTLE_FIELD_SIZE = 1000.0
+
 class MobaMultiPlayerEnv(gym.Env):
 	metadata = {'render.modes':['human']}
 	def restart_proc(self):
 	#	print('moba_env restart_proc is called.')
 		self.done = False
-		self.hero_count = 2
-		self.state = np.zeros((self.hero_count, 12))
+		self.hero_count = 0
+		self.oppo_hero_count = 0
+
+		self.state = None
 		self.reward = 0
 		self.info = None
-		self.self_0_health = 0
-		self.self_1_health = 0
-		self.oppo_health = 0
-		self.step_idx = 0	
-		self.full_self_0_health = 0
-		self.full_self_1_health = 0
-		self.full_oppo_health = 0
-				
+		self.last_state = None
+		self.step_idx = 0				
 		pass
 
 	def __init__(self):
@@ -66,6 +65,63 @@ class MobaMultiPlayerEnv(gym.Env):
 		print('moba_env initialized.')
 		pass
 
+	def fill_state(self, state, json_data):
+		# View from the point view of each self
+		self_hero_count = int(json_data['SelfHeroCount'])
+		
+		for hero_idx in range(self_hero_count):		
+			feature_idx = 0	
+			state[hero_idx][feature_idx] = (float(json_data['SelfHeroPosX'][hero_idx]) / BATTLE_FIELD_SIZE) - 0.5
+			feature_idx += 1
+			state[hero_idx][feature_idx] = (float(json_data['SelfHeroPosY'][hero_idx]) / BATTLE_FIELD_SIZE) - 0.5
+			feature_idx += 1
+			state[hero_idx][feature_idx] = (float(json_data['SelfHeroHealth'][hero_idx]) / float(json_data['SelfHeroHealthFull'][hero_idx])) - 0.5
+			feature_idx += 1
+			for _id_0 in range(self_hero_count):
+				if _id_0 == hero_idx:
+					continue
+				state[hero_idx][feature_idx] = (float(json_data['SelfHeroPosX'][_id_0]) / BATTLE_FIELD_SIZE) - 0.5
+				feature_idx += 1
+				state[hero_idx][feature_idx] = (float(json_data['SelfHeroPosY'][_id_0]) / BATTLE_FIELD_SIZE) - 0.5
+				feature_idx += 1
+				state[hero_idx][feature_idx] = (float(json_data['SelfHeroHealth'][_id_0]) / float(json_data['SelfHeroHealthFull'][_id_0])) - 0.5
+				feature_idx += 1
+
+			oppo_hero_count = int(json_data['OppoHeroCount'])
+			for _id_1 in range(oppo_hero_count):			
+				state[hero_idx][feature_idx] = (float(json_data['OppoHeroPosX'][_id_1]) / BATTLE_FIELD_SIZE) - 0.5
+				feature_idx += 1
+				state[hero_idx][feature_idx] = (float(json_data['OppoHeroPosY'][_id_1]) / BATTLE_FIELD_SIZE) - 0.5
+				feature_idx += 1
+				state[hero_idx][feature_idx] = (float(json_data['OppoHeroHealth'][_id_1]) / float(json_data['OppoHeroHealthFull'][_id_1])) - 0.5
+				feature_idx += 1
+
+			pass
+
+		pass
+
+	def get_hp_remain_reward(self):
+		total_self_hero_hp = 0
+		for hero_idx in range(self.hero_count):
+			total_self_hero_hp += self.state[hero_idx][2]
+
+		return total_self_hero_hp
+
+	def get_harm_reward(self):
+		harm_reward = 0.002
+		total_harm_reward = 0
+		for hero_idx in range(self.hero_count):
+			if self.state[hero_idx][2] < self.last_state[hero_idx][2]:
+				total_harm_reward -= harm_reward
+
+		start_feature_idx = self.hero_count * ONE_HERO_FEATURE_SIZE
+		for hero_idx in range(self.oppo_hero_count):
+			if self.state[0][start_feature_idx + hero_idx * ONE_HERO_FEATURE_SIZE + 2] < self.last_state[0][start_feature_idx + hero_idx * ONE_HERO_FEATURE_SIZE + 2]:
+				total_harm_reward += harm_reward
+
+
+		return total_harm_reward
+
 	def step(self, total_actions):
 		#time.sleep(1)
 		# action is 4-dimension vector
@@ -90,6 +146,7 @@ class MobaMultiPlayerEnv(gym.Env):
 			self.proc.stdin.flush()
 
 		# Wait for response.
+		# Parse the state
 		while True:
 			json_str = self.proc.stdout.readline()
 			#print('When step, recv game process response {}'.format(json_str))
@@ -105,8 +162,11 @@ class MobaMultiPlayerEnv(gym.Env):
 				if int(parts[0]) != self.step_idx:
 					print('Step::We expect:{}, while getting {}'.format(self.step_idx, int(parts[0])))
 					continue
-				jobj = json.loads(parts[1])	
-			#	print('moba_env v2 step called with action:{}, result:{}'.format(action, jobj))
+
+				jobj = json.loads(parts[1])
+				self.last_state = self.state	
+				self.fill_state(self.state, jobj)
+
 				if jobj['SelfWin'] != 0:
 					self.done = True
 					if 2 == jobj['SelfWin']:
@@ -115,63 +175,25 @@ class MobaMultiPlayerEnv(gym.Env):
 						self.reward = -1
 					else:
 						self.reward = 1#jobj['SelfWin']
-						hp_reward = (jobj['SelfHero0Health'] + jobj['SelfHero1Health']) / (jobj['SelfHero0HealthFull'] + jobj['SelfHero1HealthFull'])
-						self.reward += hp_reward
-				else:
-					harm_reward = 0.002
-					self.reward = 0
-					if self.self_0_health  > jobj['SelfHero0Health'] or self.self_1_health  > jobj['SelfHero1Health']:
-						self.reward -= harm_reward
-					if self.oppo_health  > jobj['OppoHeroHealth']:
-						self.reward += harm_reward
 
-					self.oppo_health = jobj['OppoHeroHealth']
-					self.self_0_health = jobj['SelfHero0Health']
-					self.self_1_health = jobj['SelfHero1Health']
+					# Add remain hp as reward
+					hp_reward = self.get_hp_remain_reward()
+					self.reward += hp_reward
+				else:					
+					self.reward = 0
+					harm_reward = self.get_harm_reward()
+
+					self.reward += harm_reward
 
 					self.done = False
+				
+
 				break
 			except:
 				print('Parsing json failed, terminate this game.')
 				self.done = True
 				self.reward = 0
-				return self.state, self.reward, self.done, self.step_idx	
-
-		norm_base = 1000.0	
-		# Player 1 perspective
-		self.state[0][0] = jobj['SelfHero0PosX'] / norm_base - 0.5
-		self.state[0][1] = jobj['SelfHero0PosY'] / norm_base - 0.5
-		self.state[0][2] = jobj['SelfHero0Health'] / jobj['SelfHero0HealthFull'] - 0.5
-
-		self.state[0][3] = jobj['SelfHero1PosX'] / norm_base - 0.5
-		self.state[0][4] = jobj['SelfHero1PosY'] / norm_base - 0.5
-		self.state[0][5] = jobj['SelfHero1Health'] / jobj['SelfHero1HealthFull'] - 0.5
-
-		self.state[0][6] = jobj['OppoHeroPosX'] / norm_base - 0.5
-		self.state[0][7] = jobj['OppoHeroPosY'] / norm_base - 0.5
-		self.state[0][8] = jobj['OppoHeroHealth'] / jobj['OppoHeroHealthFull'] - 0.5
-
-		self.state[0][9] = 0#jobj['SlowBuffState']
-		self.state[0][10] = jobj['SlowBuffRemainTime']
-		self.state[0][11] = 0
-
-		# Player 2 perspective
-		self.state[1][0] = jobj['SelfHero1PosX'] / norm_base - 0.5
-		self.state[1][1] = jobj['SelfHero1PosY'] / norm_base - 0.5
-		self.state[1][2] = jobj['SelfHero1Health'] / jobj['SelfHero1HealthFull'] - 0.5
-
-		self.state[1][3] = jobj['SelfHero0PosX'] / norm_base - 0.5
-		self.state[1][4] = jobj['SelfHero0PosY'] / norm_base - 0.5
-		self.state[1][5] = jobj['SelfHero0Health'] / jobj['SelfHero0HealthFull'] - 0.5
-
-		self.state[1][6] = jobj['OppoHeroPosX'] / norm_base - 0.5
-		self.state[1][7] = jobj['OppoHeroPosY'] / norm_base - 0.5
-		self.state[1][8] = jobj['OppoHeroHealth'] / jobj['OppoHeroHealthFull'] - 0.5
-
-		self.state[1][9] = 0#jobj['SlowBuffState']
-		self.state[1][10] = jobj['SlowBuffRemainTime']
-		self.state[1][11] = 1
-
+				return self.state, self.reward, self.done, self.step_idx
 
 		return self.state, self.reward, self.done, self.step_idx
 
@@ -183,13 +205,12 @@ class MobaMultiPlayerEnv(gym.Env):
 		#self.proc.stdout.readline()
 		self.proc.stdin.write(b'36864\n')
 		self.proc.stdin.flush()
-#		print('Send reset signal to game process.')
+
 		while True:
 			json_str = self.proc.stdout.readline()
-	#		print('When reset, recv game process response {}'.format(json_str))
+
 			if json_str == None or len(json_str) == 0:
-				print('When resetting env, json_str == None or len(json_str) == 0')
-				return self.state
+				raise Exception('When resetting env, json_str == None or len(json_str) == 0')
 
 			try:
 				str_json = json_str.decode("utf-8")
@@ -197,14 +218,18 @@ class MobaMultiPlayerEnv(gym.Env):
 				if int(parts[0]) != self.step_idx:
 					print('Reset::We expect:{}, while getting {}'.format(self.step_idx, int(parts[0])))
 					continue
+
 				jobj = json.loads(parts[1])	
 
-				self.full_self_0_health = jobj['SelfHero0HealthFull']
-				self.self_0_health = jobj['SelfHero0Health']
-				self.full_self_1_health = jobj['SelfHero1HealthFull']
-				self.self_1_health = jobj['SelfHero1Health']
-				self.full_oppo_health = jobj['OppoHeroHealthFull']
-				self.oppo_health = jobj['OppoHeroHealth']
+				self.hero_count = int(jobj['SelfHeroCount'])
+				self.oppo_hero_count = int(jobj['OppoHeroCount'])
+
+				state_feature_count = (self.hero_count + self.oppo_hero_count) * ONE_HERO_FEATURE_SIZE
+
+				self.state = np.zeros((self.hero_count, state_feature_count))
+				
+				self.fill_state(self.state, jobj)				
+				self.last_state = self.state
 				break
 
 			except:

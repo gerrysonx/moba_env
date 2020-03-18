@@ -108,7 +108,7 @@ func main() {
 
 				// Output game state to stdout
 				if *_multi_player {
-					game_state_str := core.GameInst.DumpMultiPlayerGameState()
+					game_state_str := core.GameInst.DumpVarPlayerGameState()
 					// core.LogBytes(file_handle, game_state_str)
 					// core.LogStr(fmt.Sprintf("Every step, logic_time:%v, _action_stamp:%d, game_state_str:%s", core.GameInst.LogicTime, _action_stamp, game_state_str))
 					fmt.Printf("%d@%s\n", _action_stamp, game_state_str)
@@ -125,7 +125,7 @@ func main() {
 						_action_stamp = 0
 						core.GameInst.HandleMultiPlayerAction(0, 9, 0, 0)
 						_last_input_time = 0
-						// game_state_str := core.GameInst.DumpMultiPlayerGameState()
+						// game_state_str := core.GameInst.DumpVarPlayerGameState()
 						// core.LogStr(fmt.Sprintf("After game.init, time:%v, game state is:%s", core.GameInst.LogicTime, game_state_str))
 						continue
 					}
@@ -166,7 +166,7 @@ func main() {
 			if false == *_gym_mode {
 				// Output game state to stdout
 				if *_multi_player {
-					game_state_str := core.GameInst.DumpMultiPlayerGameState()
+					game_state_str := core.GameInst.DumpVarPlayerGameState()
 					// core.LogBytes(file_handle, game_state_str)
 					fmt.Printf("%d@%s\n", _action_stamp, game_state_str)
 				} else {
@@ -175,11 +175,11 @@ func main() {
 				gap_time_in_nanoseconds := *_target_frame_gap_time * float64(time.Second)
 				time.Sleep(time.Duration(gap_time_in_nanoseconds))
 			}
-			//	game_state_str := core.GameInst.DumpMultiPlayerGameState()
+			//	game_state_str := core.GameInst.DumpVarPlayerGameState()
 			// core.LogBytes(file_handle, game_state_str)
 			//	core.LogStr(fmt.Sprintf("BeforeTick, _action_stamp:%v, game_state_str:%s", core.GameInst.LogicTime, game_state_str))
 			core.GameInst.Tick(*_target_frame_gap_time)
-			//	game_state_str = core.GameInst.DumpMultiPlayerGameState()
+			//	game_state_str = core.GameInst.DumpVarPlayerGameState()
 			// core.LogBytes(file_handle, game_state_str)
 			//	core.LogStr(fmt.Sprintf("AfterTick, _action_stamp:%v, game_state_str:%s", core.GameInst.LogicTime, game_state_str))
 			// Draw logic units on output image

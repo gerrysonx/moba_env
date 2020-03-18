@@ -296,69 +296,61 @@ func (game *Game) GetGameState(reverse bool) []float32 {
 	return game_state
 }
 
-func (game *Game) DumpMultiPlayerGameState() []byte {
-	//fmt.Printf("->DumpGameState, len(game.BattleUnits) is:%d, logictime:%f\n", len(game.BattleUnits), game.LogicTime)
-	self_hero_0_unit := game.SelfHeroes[0].(BaseFunc)
-	self_hero_1_unit := game.SelfHeroes[1].(BaseFunc)
-	oppo_unit := game.OppoHeroes[0].(BaseFunc)
-	// LogStr(fmt.Sprintf("DumpMultiPlayerGameState, unit 1 health:%v, unit 2 health:%v, oppo health:%v", self_hero_0_unit.Health(), self_hero_1_unit.Health(), oppo_unit.Health()))
+func (game *Game) ClearGameStateData() {
+	game.var_player_train_state.SelfHeroCount = 0
+	game.var_player_train_state.SelfHeroPosX = game.var_player_train_state.SelfHeroPosX[:0]
+	game.var_player_train_state.SelfHeroPosY = game.var_player_train_state.SelfHeroPosY[:0]
+	game.var_player_train_state.SelfHeroHealth = game.var_player_train_state.SelfHeroHealth[:0]
+	game.var_player_train_state.SelfHeroHealthFull = game.var_player_train_state.SelfHeroHealthFull[:0]
 
-	if (self_hero_0_unit.Health() > 0 || self_hero_1_unit.Health() > 0) && oppo_unit.Health() > 0 {
-		game.multi_player_train_state.SelfWin = 0
-		game.multi_player_train_state.SelfHero0PosX = self_hero_0_unit.Position()[0]
-		game.multi_player_train_state.SelfHero0PosY = self_hero_0_unit.Position()[1]
-		game.multi_player_train_state.SelfHero0Health = self_hero_0_unit.Health()
-		game.multi_player_train_state.SelfHero0HealthFull = self_hero_0_unit.MaxHealth()
+	game.var_player_train_state.OppoHeroCount = 0
+	game.var_player_train_state.OppoHeroPosX = game.var_player_train_state.OppoHeroPosX[:0]
+	game.var_player_train_state.OppoHeroPosY = game.var_player_train_state.OppoHeroPosY[:0]
+	game.var_player_train_state.OppoHeroHealth = game.var_player_train_state.OppoHeroHealth[:0]
+	game.var_player_train_state.OppoHeroHealthFull = game.var_player_train_state.OppoHeroHealthFull[:0]
+}
 
-		game.multi_player_train_state.SelfHero1PosX = self_hero_1_unit.Position()[0]
-		game.multi_player_train_state.SelfHero1PosY = self_hero_1_unit.Position()[1]
-		game.multi_player_train_state.SelfHero1Health = self_hero_1_unit.Health()
-		game.multi_player_train_state.SelfHero1HealthFull = self_hero_1_unit.MaxHealth()
+func (game *Game) DumpVarPlayerGameState() []byte {
+	game.ClearGameStateData()
+	all_oppo_heroes_dead := true
+	all_self_heroes_dead := true
 
-		game.multi_player_train_state.OppoHeroPosX = oppo_unit.Position()[0]
-		game.multi_player_train_state.OppoHeroPosY = oppo_unit.Position()[1]
-		game.multi_player_train_state.OppoHeroHealth = oppo_unit.Health()
-		game.multi_player_train_state.OppoHeroHealthFull = oppo_unit.MaxHealth()
-
-		slow_buff_state := 0.0
-		slow_buff := oppo_unit.GetBuff(BuffSpeedSlow)
-		slow_buff_remain_time_ratio := 0.0
-		if slow_buff != nil {
-			slow_buff_state = 1.0
-			if slow_buff.base.Life == 0 {
-				// slow_buff_remain_time_ratio = 0.777
-				// panic("slow_buff.base.Life shouldn't be 0")
-				LogStr(fmt.Sprintf("slow_buff.base.Life == 0 when dumping game state, buff_id:%v, val1:%v", slow_buff.base.Id, slow_buff.base.Val1))
-			} else {
-				slow_buff_remain_time_ratio = (slow_buff.base.Life + slow_buff.addTime - game.LogicTime) / slow_buff.base.Life
-			}
-		}
-		game.multi_player_train_state.SlowBuffState = float32(slow_buff_state)
-		game.multi_player_train_state.SlowBuffRemainTime = float32(slow_buff_remain_time_ratio)
-
-		// add variable player info
-		game.var_player_train_state.SelfWin = 0
-		game.var_player_train_state.SelfHeroCount = int32(len(game.SelfHeroes))
-		for i := 0; i < int(game.var_player_train_state.SelfHeroCount); i += 1 {
-			self_hero_unit := game.SelfHeroes[i].(BaseFunc)
-			game.var_player_train_state.OppoHeroPosX = append(game.var_player_train_state.OppoHeroPosX, self_hero_unit.Position()[0])
-			game.var_player_train_state.OppoHeroPosY = append(game.var_player_train_state.OppoHeroPosY, self_hero_unit.Position()[1])
-			game.var_player_train_state.SelfHeroHealth = append(game.var_player_train_state.SelfHeroHealth, self_hero_unit.Health())
-			game.var_player_train_state.SelfHeroHealthFull = append(game.var_player_train_state.SelfHeroHealthFull, self_hero_unit.MaxHealth())
-		}
-
-	} else {
-		if oppo_unit.Health() <= 0 {
-			game.multi_player_train_state.SelfWin = 1
-		} else {
-			game.multi_player_train_state.SelfWin = -1
+	game.var_player_train_state.SelfWin = 0
+	game.var_player_train_state.SelfHeroCount = int32(len(game.SelfHeroes))
+	for i := 0; i < int(game.var_player_train_state.SelfHeroCount); i += 1 {
+		self_hero_unit := game.SelfHeroes[i].(BaseFunc)
+		game.var_player_train_state.SelfHeroPosX = append(game.var_player_train_state.SelfHeroPosX, self_hero_unit.Position()[0])
+		game.var_player_train_state.SelfHeroPosY = append(game.var_player_train_state.SelfHeroPosY, self_hero_unit.Position()[1])
+		game.var_player_train_state.SelfHeroHealth = append(game.var_player_train_state.SelfHeroHealth, self_hero_unit.Health())
+		game.var_player_train_state.SelfHeroHealthFull = append(game.var_player_train_state.SelfHeroHealthFull, self_hero_unit.MaxHealth())
+		if self_hero_unit.Health() > float32(0.0) {
+			all_self_heroes_dead = false
 		}
 	}
 
-	e, err := json.Marshal(game.multi_player_train_state)
+	game.var_player_train_state.OppoHeroCount = int32(len(game.OppoHeroes))
+	for i := 0; i < int(game.var_player_train_state.OppoHeroCount); i += 1 {
+		oppo_hero_unit := game.OppoHeroes[i].(BaseFunc)
+		game.var_player_train_state.OppoHeroPosX = append(game.var_player_train_state.OppoHeroPosX, oppo_hero_unit.Position()[0])
+		game.var_player_train_state.OppoHeroPosY = append(game.var_player_train_state.OppoHeroPosY, oppo_hero_unit.Position()[1])
+		game.var_player_train_state.OppoHeroHealth = append(game.var_player_train_state.OppoHeroHealth, oppo_hero_unit.Health())
+		game.var_player_train_state.OppoHeroHealthFull = append(game.var_player_train_state.OppoHeroHealthFull, oppo_hero_unit.MaxHealth())
+		if oppo_hero_unit.Health() > float32(0.0) {
+			all_oppo_heroes_dead = false
+		}
+	}
+
+	if all_oppo_heroes_dead || all_self_heroes_dead {
+		if all_oppo_heroes_dead {
+			game.var_player_train_state.SelfWin = 1
+		} else {
+			game.var_player_train_state.SelfWin = -1
+		}
+	}
+
+	e, err := json.Marshal(game.var_player_train_state)
 	if err != nil {
 		return []byte(fmt.Sprintf("Marshal train_state failed.%v", game.multi_player_train_state))
-
 	}
 
 	return e

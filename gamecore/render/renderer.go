@@ -211,7 +211,7 @@ func key_call_back(w *glfw.Window, char rune) {
 
 	case "5":
 		core.GameInst.Init()
-		game_state_str := core.GameInst.DumpMultiPlayerGameState()
+		game_state_str := core.GameInst.DumpVarPlayerGameState()
 		fmt.Printf("%d@%s\n", 9999999, game_state_str)
 	}
 
