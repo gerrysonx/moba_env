@@ -773,7 +773,7 @@ def GetSkillTypes(skill_cfg_file_path, hero_skills):
     return skill_dir_type_check
 
 
-if __name__=='__main__':    
+if __name__=='__main__':
     scene_id = 10
 
     if g_is_train:
