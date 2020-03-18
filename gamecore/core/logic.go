@@ -48,6 +48,25 @@ type GameMultiPlayerTrainState struct {
 	SelfWin int32
 }
 
+type GameVarPlayerTrainState struct {
+	SelfHeroCount      int32
+	SelfHeroPosX       []float32
+	SelfHeroPosY       []float32
+	SelfHeroHealth     []float32
+	SelfHeroHealthFull []float32
+
+	OppoHeroCount      int32
+	OppoHeroPosX       []float32
+	OppoHeroPosY       []float32
+	OppoHeroHealth     []float32
+	OppoHeroHealthFull []float32
+
+	SlowBuffState      float32
+	SlowBuffRemainTime float32
+
+	SelfWin int32
+}
+
 type Game struct {
 	SceneId     int
 	CurrentTime float64
@@ -63,6 +82,7 @@ type Game struct {
 
 	train_state              GameTrainState
 	multi_player_train_state GameMultiPlayerTrainState
+	var_player_train_state   GameVarPlayerTrainState
 	skill_targets            []SkillTarget
 	skill_targets_add        []SkillTarget
 }
@@ -315,6 +335,17 @@ func (game *Game) DumpMultiPlayerGameState() []byte {
 		}
 		game.multi_player_train_state.SlowBuffState = float32(slow_buff_state)
 		game.multi_player_train_state.SlowBuffRemainTime = float32(slow_buff_remain_time_ratio)
+
+		// add variable player info
+		game.var_player_train_state.SelfWin = 0
+		game.var_player_train_state.SelfHeroCount = int32(len(game.SelfHeroes))
+		for i := 0; i < int(game.var_player_train_state.SelfHeroCount); i += 1 {
+			self_hero_unit := game.SelfHeroes[i].(BaseFunc)
+			game.var_player_train_state.OppoHeroPosX = append(game.var_player_train_state.OppoHeroPosX, self_hero_unit.Position()[0])
+			game.var_player_train_state.OppoHeroPosY = append(game.var_player_train_state.OppoHeroPosY, self_hero_unit.Position()[1])
+			game.var_player_train_state.SelfHeroHealth = append(game.var_player_train_state.SelfHeroHealth, self_hero_unit.Health())
+			game.var_player_train_state.SelfHeroHealthFull = append(game.var_player_train_state.SelfHeroHealthFull, self_hero_unit.MaxHealth())
+		}
 
 	} else {
 		if oppo_unit.Health() <= 0 {
