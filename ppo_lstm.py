@@ -304,7 +304,7 @@ class Agent():
 
     def _init_nn(self, *args):
         self.a_policy_new, self.a_policy_logits_new, self.value, self.hidden_state_new = self._init_actor_net('policy_net_new', trainable=True, is_inference=False)
-        self.a_policy_new_infer, _1, self.value_infer, self.hidden_state_new_infer = self._init_actor_net('policy_net_new', trainable=True, is_inference=True)
+        self.a_policy_new_infer, _1, self.value_infer, self.hidden_state_new_infer = self._init_actor_net('policy_net_new_infer', trainable=True, is_inference=True)
         self.a_policy_old, self.a_policy_logits_old, _, self.hidden_state_old = self._init_actor_net('policy_net_old', trainable=False, is_inference=False)
 
     def _init_op(self):
@@ -441,19 +441,40 @@ class Agent():
                 last_output = output3 
 
             # Add lstm here, to convert last_output to lstm_output
-            use_tensorflow_lstm = False
+            use_tensorflow_lstm = True
             if use_tensorflow_lstm:
                 lstm_input = last_output
-                lstm_cell = tf.nn.rnn_cell.LSTMCell(HIDDEN_STATE_LEN, name='lstm_cell', dynamic = True)
-                c_old, h_old = tf.split(axis=1, num_or_size_splits=2, value=self.lstm_hidden)
-                c_old, h_old = c_old[:,::TIME_STEP], h_old[:,::TIME_STEP]
-                combined_hidden_states = tf.stack([c_old, h_old], axis = 2)
-                lstm_input = tf.reshape(lstm_input, (-1, TIME_STEP, *(lstm_input.get_shape()[1:])))
-                lstm_input = tf.unstack(lstm_input, axis = 1)
-                last_output, last_hidden_state = tf.nn.static_rnn(cell=lstm_cell, inputs=lstm_input, initial_state = combined_hidden_states)
-                # last_output, last_hidden_state = lstm_cell(inputs=lstm_input, state=(c_old, h_old))
-        #        last_output, last_hidden_state = tf.nn.dynamic_rnn(cell=lstm_cell, inputs=lstm_input, initial_state = combined_hidden_states)
-        #        last_output = last_output[0]
+                use_keras = True
+                if use_keras:                    
+                    lstm_layer = tf.keras.layers.LSTM(HIDDEN_STATE_LEN, return_state=True, return_sequences = True)
+                    fold_time_step = TIME_STEP
+                    if is_inference:
+                        fold_time_step = 1
+                    reshaped_lstm_input = tf.reshape(lstm_input, [-1, fold_time_step, last_output_dims])
+
+                    reshaped_lstm_mask = tf.reshape(self.lstm_mask, [-1, fold_time_step])
+                    c_old, h_old = tf.split(axis=1, num_or_size_splits=2, value=self.lstm_hidden)
+                    c_old = c_old[::fold_time_step, ...]
+                    h_old = h_old[::fold_time_step, ...]
+                    reshaped_output, last_h, last_c = lstm_layer(reshaped_lstm_input, mask=reshaped_lstm_mask,
+                                                                    initial_state=[h_old, c_old])
+                    last_c = tf.reshape(last_c, [-1, HIDDEN_STATE_LEN])
+                    last_h = tf.reshape(last_h, [-1, HIDDEN_STATE_LEN])
+                    last_hidden_state = tf.concat(axis=1, values=[last_c, last_h])
+                    last_output = tf.reshape(reshaped_output, [-1, HIDDEN_STATE_LEN])
+
+                else:
+                    lstm_cell = tf.nn.rnn_cell.LSTMCell(HIDDEN_STATE_LEN, name='lstm_cell', dynamic = True)
+                    c_old, h_old = tf.split(axis=1, num_or_size_splits=2, value=self.lstm_hidden)
+                    c_old, h_old = c_old[:,::TIME_STEP], h_old[:,::TIME_STEP]
+                    combined_hidden_states = tf.stack([c_old, h_old], axis = 2)
+                    lstm_input = tf.reshape(lstm_input, (-1, TIME_STEP, *(lstm_input.get_shape()[1:])))
+                    lstm_input = tf.unstack(lstm_input, axis = 1)
+                    last_output, last_hidden_state = tf.nn.static_rnn(cell=lstm_cell, inputs=lstm_input, initial_state = combined_hidden_states)
+                    # last_output, last_hidden_state = lstm_cell(inputs=lstm_input, state=(c_old, h_old))
+            #        last_output, last_hidden_state = tf.nn.dynamic_rnn(cell=lstm_cell, inputs=lstm_input, initial_state = combined_hidden_states)
+            #        last_output = last_output[0]
+
             else:            
                 lstm_input = last_output
                 last_output, last_hidden_state = utils.lstm(lstm_input, self.is_inference, self.lstm_hidden, self.lstm_mask, 'lstm', HIDDEN_STATE_LEN, LSTM_CELL_COUNT, my_initializer)
@@ -849,7 +870,7 @@ def dyn_rnn_2():
  
     pass
 
-def test():
+def rnn_3():
     input_indices = [4, 3, 7, 9, 0, 1, 2, 5, 6, 8]
     input_indices = inflate_random_indice(input_indices, 2)
     x = tf.constant(2)
@@ -857,7 +878,6 @@ def test():
     y0 = tf.constant([10, 2, 3, 4, 5, 6])
     y1 = tf.reshape(y0, [-1, 3])
     z = tf.placeholder(tf.bool)
-    dyn_rnn_2()
 
     lstm_cell = tf.nn.rnn_cell.LSTMCell(HIDDEN_STATE_LEN, name='lstm_cell', dynamic = False)
     lstm_input = tf.placeholder(tf.float32, (None, 128))
@@ -878,10 +898,19 @@ def test():
 
     session = tf.Session()
     r_val, y1_val = session.run([r, y1], feed_dict = {z:True})
+
+
+def test():
+
+    dyn_rnn_2()
+
+
     pass
 
 
 if __name__=='__main__':
+#    test()
+#    exit(0)
     if g_is_train:
         learn(num_steps=5000)
     else:
