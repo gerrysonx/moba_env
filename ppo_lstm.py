@@ -304,7 +304,7 @@ class Agent():
 
     def _init_nn(self, *args):
         self.a_policy_new, self.a_policy_logits_new, self.value, self.hidden_state_new = self._init_actor_net('policy_net_new', trainable=True, is_inference=False)
-        self.a_policy_new_infer, _1, self.value_infer, self.hidden_state_new_infer = self._init_actor_net('policy_net_new_infer', trainable=True, is_inference=True)
+        self.a_policy_new_infer, _1, self.value_infer, self.hidden_state_new_infer = self._init_actor_net('policy_net_new', trainable=True, is_inference=True)
         self.a_policy_old, self.a_policy_logits_old, _, self.hidden_state_old = self._init_actor_net('policy_net_old', trainable=False, is_inference=False)
 
     def _init_op(self):
@@ -441,7 +441,7 @@ class Agent():
                 last_output = output3 
 
             # Add lstm here, to convert last_output to lstm_output
-            use_tensorflow_lstm = True
+            use_tensorflow_lstm = False
             if use_tensorflow_lstm:
                 lstm_input = last_output
                 use_keras = True
@@ -453,6 +453,8 @@ class Agent():
                     reshaped_lstm_input = tf.reshape(lstm_input, [-1, fold_time_step, last_output_dims])
 
                     reshaped_lstm_mask = tf.reshape(self.lstm_mask, [-1, fold_time_step])
+                    reshaped_lstm_mask = 1 - reshaped_lstm_mask
+                    reshaped_lstm_mask = tf.cast(reshaped_lstm_mask, dtype=np.bool)
                     c_old, h_old = tf.split(axis=1, num_or_size_splits=2, value=self.lstm_hidden)
                     c_old = c_old[::fold_time_step, ...]
                     h_old = h_old[::fold_time_step, ...]
@@ -739,6 +741,7 @@ def learn(num_steps=NUM_STEPS):
     _save_frequency = 50
     max_rew = -1000000
     for timestep in range(num_steps):
+        g_step += 1
         seg = data_generator.get_one_step_data()
         
         if g_enable_per:
