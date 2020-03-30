@@ -115,7 +115,9 @@ class MultiPlayer_Data_Generator():
         horizon: int timesteps_per_actor_batch
         '''
         t = 0
-        ac = [[0, 0, 0], [0,0,0]]
+        ac = []
+        for idx in range(HERO_COUNT):
+            ac.append([0, 0, 0])
 
         new = True # marks if we're on first timestep of an episode
         ob = self.env.reset()

@@ -133,7 +133,8 @@ class MobaMultiPlayerEnv(gym.Env):
 	def step(self, total_actions):
 		#time.sleep(1)
 		# action is 4-dimension vector
-		self.proc.stdin.write(b'2\n')
+		player_count = '{}\n'.format(self.hero_count)
+		self.proc.stdin.write(player_count.encode('utf-8'))
 		self.proc.stdin.flush() 
 		self.step_idx += 1
 		for hero_idx in range(self.hero_count):
