@@ -15,25 +15,44 @@ import tensorflow as tf
 import random, cv2
 import time
 import math
+import json
 
 
 EPSILON = 0.2
+# 3 * 3 + 2
+ONE_HOT_SIZE = 10
 
-F = 8
+# STATE_SIZE will be calculated from scene unit config
+STATE_SIZE = 0
+
+ONE_HERO_FEATURE_SIZE = 3
+
+EMBED_SIZE = 5
+LAYER_SIZE = 128
+
 C = 1
+HERO_COUNT = 0
+
+# Hero skill mask, to indicate if a hero skill is a directional one.
+# Dynamically load src hero skill types
+g_dir_skill_mask = []
+  
 
 NUM_FRAME_PER_ACTION = 4
-BATCH_SIZE = 64
+BATCH_SIZE = 64 * 8
 EPOCH_NUM = 4
 LEARNING_RATE = 1e-3
-TIMESTEPS_PER_ACTOR_BATCH = 256*8
+TIMESTEPS_PER_ACTOR_BATCH = 2048 * 8
 GAMMA = 0.99
 LAMBDA = 0.95
 NUM_STEPS = 5000
-ENV_NAME = 'gym_moba:moba-v0'
+ENV_NAME = 'gym_moba:moba-multiplayer-v0'
 RANDOM_START_STEPS = 4
 
-global g_step
+g_step = 0
+
+# Use hero id embedding
+g_embed_hero_id = False
 
 # Save model in pb format
 g_save_pb_model = False
@@ -43,7 +62,6 @@ g_out_tb = True
 
 # Control if train or play
 g_is_train = True
-g_manual_ctrl_enemy = False
 # True means start a new train task without loading previous model.
 g_start_anew = True
 
@@ -52,6 +70,8 @@ g_enable_per = False
 g_per_alpha = 0.6
 g_is_beta_start = 0.4
 g_is_beta_end = 1
+
+
 
 def stable_softmax(logits, name): 
     a = logits - tf.reduce_max(logits, axis=-1, keepdims=True) 
@@ -66,7 +86,7 @@ class Environment(object):
     self.reward = 0
     self.terminal = True
     self.random_start = RANDOM_START_STEPS
-    self.obs = np.zeros(shape=(F,C), dtype=np.float)
+    self.obs = np.zeros(shape=(HERO_COUNT, STATE_SIZE, C), dtype=np.float)
 
   def get_action_number(self):
     return 9
@@ -79,11 +99,11 @@ class Environment(object):
 
   def reset(self):
     self._screen = self.env.reset()
-    ob, _1, _2, _3 = self.step([0, 0, 0]) 
 
-    return ob
+    return self.obs
 
-class Data_Generator():
+
+class MultiPlayer_Data_Generator():
     def __init__(self, agent):
         self.env = Environment()
         self.agent = agent
@@ -95,7 +115,7 @@ class Data_Generator():
         horizon: int timesteps_per_actor_batch
         '''
         t = 0
-        ac = [0, 0, 0]
+        ac = [[0, 0, 0], [0,0,0]]
 
         new = True # marks if we're on first timestep of an episode
         ob = self.env.reset()
@@ -108,7 +128,7 @@ class Data_Generator():
         ep_lens = [] # lengths of ...
 
         # Initialize history arrays
-        obs = np.array([np.zeros(shape=(F,C), dtype=np.float32) for _ in range(horizon)])
+        obs = np.array([np.zeros(shape=(HERO_COUNT, STATE_SIZE, C), dtype=np.float32) for _ in range(horizon)])
         rews = np.zeros(horizon, 'float32')
         unclipped_rews = np.zeros(horizon, 'float32')
         vpreds = np.zeros(horizon, 'float32')
@@ -185,10 +205,10 @@ class Data_Generator():
         if atarg.std() < 1e-5:
             print('atarg std too small')
         atarg = (atarg - atarg.mean()) / atarg.std() # standardized advantage function estimate
+        seg["std_atvtg"] = atarg
         return ob, ac, atarg, tdlamret, seg
 
-class Agent():
-
+class MultiPlayerAgent():
     def __init__(self, session, a_space, a_space_keys, **options):       
         self.importance_sample_arr = np.ones([TIMESTEPS_PER_ACTOR_BATCH], dtype=np.float)
         self.session = session
@@ -211,7 +231,7 @@ class Agent():
         self.a_space_keys = a_space_keys
         self.policy_head_num = len(a_space)
 
-        self.input_dims = F
+        self.input_dims = STATE_SIZE
         self.learning_rate = LEARNING_RATE
         self.num_total_steps = NUM_STEPS
         self.lenbuffer = deque(maxlen=100) # rolling buffer for episode lengths
@@ -224,7 +244,7 @@ class Agent():
         self.restrict_y_max = 0.5
 
         # Full connection layer node size
-        self.layer_size = 128
+        self.layer_size = LAYER_SIZE
 
         self._init_input()
         self._init_nn()
@@ -235,24 +255,24 @@ class Agent():
 
     def _init_input(self, *args):
         with tf.variable_scope('input'):
-            self.s = tf.placeholder(tf.float32, [None, self.input_dims, C], name='s')
+            self.multi_s = tf.placeholder(tf.float32, [None, HERO_COUNT, self.input_dims, C], name='multi_s')
 
-            # Action shall have four elements, 
-            self.a = tf.placeholder(tf.int32, [None, self.policy_head_num], name='a')
+            # Action shall have 2 elements, 
+            self.multi_a = tf.placeholder(tf.int32, [None, HERO_COUNT, self.policy_head_num], name='multi_a')
 
             self.cumulative_r = tf.placeholder(tf.float32, [None, ], name='cumulative_r')
             self.adv = tf.placeholder(tf.float32, [None, ], name='adv')
             self.importance_sample_arr_pl = tf.placeholder(tf.float32, [None, ], name='importance_sample')
 
-            tf.summary.histogram("input_state", self.s)
-            tf.summary.histogram("input_action", self.a)
+            tf.summary.histogram("input_state", self.multi_s)
+            tf.summary.histogram("input_action", self.multi_a)
             tf.summary.histogram("input_cumulative_r", self.cumulative_r)
             tf.summary.histogram("input_adv", self.adv)
 
 
     def _init_nn(self, *args):
-        self.a_policy_new, self.a_policy_logits_new, self.value, self.summary_new = self._init_actor_net('policy_net_new', trainable=True)
-        self.a_policy_old, self.a_policy_logits_old, _, self.summary_old = self._init_actor_net('policy_net_old', trainable=False)
+        self.a_policy_new, self.a_policy_logits_new, self.value, self.summary_new = self._init_combine_actor_net('policy_net_new', HERO_COUNT, trainable=True)
+        self.a_policy_old, self.a_policy_logits_old, _, self.summary_old = self._init_combine_actor_net('policy_net_old', HERO_COUNT, trainable=False)
 
     def _init_op(self):
         self.lrmult = tf.placeholder(name='lrmult', dtype=tf.float32, shape=[])
@@ -267,58 +287,59 @@ class Agent():
         with tf.variable_scope('critic_loss_func'):
             # loss func.
             #self.c_loss_func = tf.losses.mean_squared_error(labels=self.cumulative_r, predictions=self.value)
-            self.c_loss_func_arr = tf.square(self.value - self.cumulative_r)
+            self.c_loss_func_arr = tf.square(sum(self.value) - self.cumulative_r)
             self.c_loss_func = tf.reduce_mean(self.c_loss_func_arr)
 
         with tf.variable_scope('actor_loss_func'):
-            batch_size = tf.shape(self.a)[0]
-
+            batch_size = tf.shape(self.multi_a)[0]
+            a_loss_func_arr = tf.zeros([batch_size, ], dtype = tf.float32) 
             ratio = tf.ones([batch_size, ], dtype = tf.float32) 
-            for idx in range(self.policy_head_num):
-                a = tf.slice(self.a, [0, idx], [batch_size, 1]) # a = a[:,idx]
-                a = tf.squeeze(a)
-                a_mask_cond = tf.equal(a, -1)
-                a = tf.where(a_mask_cond, tf.zeros([batch_size, ], dtype=tf.int32), a)
-                # We correct -1 value in a, in order to make the condition operation below work
-                a_indices = tf.stack([tf.range(batch_size, dtype=tf.int32), a], axis=1)
-                
-                new_policy_prob = tf.where(a_mask_cond, tf.ones([batch_size, ], dtype=tf.float32), tf.gather_nd(params=self.a_policy_new[idx], indices=a_indices))
-                old_policy_prob = tf.where(a_mask_cond, tf.ones([batch_size, ], dtype=tf.float32), tf.gather_nd(params=self.a_policy_old[idx], indices=a_indices))
+            for hero_idx in range(HERO_COUNT):                
+                for idx in range(self.policy_head_num):
+                    a = self.multi_a[:,hero_idx, idx] #tf.slice(self.multi_a, [0, hero_idx, idx], [batch_size, 1, 1]) # a = 
+                    a = tf.squeeze(a)
+                    a_mask_cond = tf.equal(a, -1)
+                    a = tf.where(a_mask_cond, tf.zeros([batch_size, ], dtype=tf.int32), a)
+                    # We correct -1 value in a, in order to make the condition operation below work
+                    a_indices = tf.stack([tf.range(batch_size, dtype=tf.int32), a], axis=1)
+                    
+                    new_policy_prob = tf.where(a_mask_cond, tf.ones([batch_size, ], dtype=tf.float32), tf.gather_nd(params=self.a_policy_new[hero_idx][idx], indices=a_indices))
+                    old_policy_prob = tf.where(a_mask_cond, tf.ones([batch_size, ], dtype=tf.float32), tf.gather_nd(params=self.a_policy_old[hero_idx][idx], indices=a_indices))
 
-                ratio = tf.multiply(ratio, tf.exp(tf.log(new_policy_prob) - tf.log(old_policy_prob)))
+                    ratio = tf.multiply(ratio, tf.exp(tf.log(new_policy_prob) - tf.log(old_policy_prob)))
 
             surr = ratio * self.adv                                 # surrogate loss
-            self.a_loss_func_arr = tf.minimum(        # clipped surrogate objective
+            a_loss_func_arr = tf.minimum(        # clipped surrogate objective
                 surr,
-                tf.clip_by_value(ratio, 1. - EPSILON*self.lrmult, 1. + EPSILON*self.lrmult) * self.adv)            
-            self.a_loss_func = -tf.reduce_mean(self.a_loss_func_arr)
+                tf.clip_by_value(ratio, 1. - EPSILON*self.lrmult, 1. + EPSILON*self.lrmult) * self.adv)
+            self.a_loss_func = -tf.reduce_mean(a_loss_func_arr)
 
         with tf.variable_scope('kl_distance'):
             self.kl_distance = tf.zeros([1, ], dtype = tf.float32)
-            for idx in range(self.policy_head_num):
-                a0 = self.a_policy_logits_new[idx] - tf.reduce_max(self.a_policy_logits_new[idx], axis=-1, keepdims=True)
-                a1 = self.a_policy_logits_old[idx] - tf.reduce_max(self.a_policy_logits_old[idx], axis=-1, keepdims=True)
-                ea0 = tf.exp(a0)
-                ea1 = tf.exp(a1)
-                z0 = tf.reduce_sum(ea0, axis=-1, keepdims=True)
-                z1 = tf.reduce_sum(ea1, axis=-1, keepdims=True)
-                p0 = ea0 / z0
-                self.kl_distance += tf.reduce_sum(p0 * (a0 - tf.log(z0) - a1 + tf.log(z1)), axis=-1)
+            for hero_idx in range(HERO_COUNT):  
+                for idx in range(self.policy_head_num):
+                    a0 = self.a_policy_logits_new[hero_idx][idx] - tf.reduce_max(self.a_policy_logits_new[hero_idx][idx], axis=-1, keepdims=True)
+                    a1 = self.a_policy_logits_old[hero_idx][idx] - tf.reduce_max(self.a_policy_logits_old[hero_idx][idx], axis=-1, keepdims=True)
+                    ea0 = tf.exp(a0)
+                    ea1 = tf.exp(a1)
+                    z0 = tf.reduce_sum(ea0, axis=-1, keepdims=True)
+                    z1 = tf.reduce_sum(ea1, axis=-1, keepdims=True)
+                    p0 = ea0 / z0
+                    self.kl_distance += tf.reduce_sum(p0 * (a0 - tf.log(z0) - a1 + tf.log(z1)), axis=-1)
 
         with tf.variable_scope('policy_entropy'):            
             self.policy_entropy_arr = tf.zeros([BATCH_SIZE, ], dtype = tf.float32)
-            for idx in range(self.policy_head_num):
-                a0 = self.a_policy_logits_new[idx] - tf.reduce_max(self.a_policy_logits_new[idx] , axis=-1, keepdims=True)
-                ea0 = tf.exp(a0)
-                z0 = tf.reduce_sum(ea0, axis=-1, keepdims=True)
-                p0 = ea0 / z0
-                self.policy_entropy_arr += tf.reduce_sum(p0 * (tf.log(z0) - a0), axis=-1)
+            for hero_idx in range(HERO_COUNT):  
+                for idx in range(self.policy_head_num):
+                    a0 = self.a_policy_logits_new[hero_idx][idx] - tf.reduce_max(self.a_policy_logits_new[hero_idx][idx] , axis=-1, keepdims=True)
+                    ea0 = tf.exp(a0)
+                    z0 = tf.reduce_sum(ea0, axis=-1, keepdims=True)
+                    p0 = ea0 / z0
+                    self.policy_entropy_arr += tf.reduce_sum(p0 * (tf.log(z0) - a0), axis=-1)
                 
             self.policy_entropy = tf.reduce_mean(self.policy_entropy_arr)
 
         with tf.variable_scope('optimizer'):
-            
-            
             if g_enable_per:          
                 self.total_loss_arr = -self.a_loss_func_arr + self.c_loss_func_arr - 0.01*self.policy_entropy_arr
                 self.total_loss_arr = tf.multiply(self.total_loss_arr, self.importance_sample_arr_pl)
@@ -334,28 +355,68 @@ class Agent():
             self.optimizer = tf.train.AdamOptimizer(learning_rate).minimize(self.total_loss)
             #self.optimizer = tf.train.AdamOptimizer(self.learning_rate).minimize(self.total_loss)
 
+    def _init_combine_actor_net(self, scope, actor_count, trainable=True): 
+        a_prob_arr_arr = []
+        a_logits_arr_arr = []
+        value_arr = []
 
-
-    def _init_actor_net(self, scope, trainable=True):        
-        my_initializer = None#tf.contrib.layers.xavier_initializer()
         with tf.variable_scope(scope):
-            flat_output_size = F*C
-            flat_output = tf.reshape(self.s, [-1, flat_output_size], name='flat_output')
+            for actor_idx in range(actor_count):
+                input_pl = self.multi_s[:,actor_idx,:,:]
+                # Share weights
+                a_prob_arr, a_logits_arr, value = self._init_single_actor_net(scope, input_pl, trainable)
+                a_prob_arr_arr.append(a_prob_arr)
+                a_logits_arr_arr.append(a_logits_arr)
+                value_arr.append(value)
 
-            fc_W_1 = tf.get_variable(shape=[flat_output_size, self.layer_size], name='fc_W_1',
-                trainable=trainable, initializer=my_initializer)
-            fc_b_1 = tf.Variable(tf.zeros([self.layer_size], dtype=tf.float32), name='fc_b_1',
-                trainable=trainable)
+            merged_summary = tf.summary.merge_all()
+            return a_prob_arr_arr, a_logits_arr_arr, value_arr, merged_summary
+        pass
 
-            tf.summary.histogram("fc_W_1", fc_W_1)
-            tf.summary.histogram("fc_b_1", fc_b_1)
+    def _init_single_actor_net(self, scope, input_pl, trainable=True):        
+        my_initializer = tf.contrib.layers.xavier_initializer()
+        with tf.variable_scope(scope, reuse=tf.AUTO_REUSE):
+            flat_output_size = STATE_SIZE*C
+            flat_output = tf.reshape(input_pl, [-1, flat_output_size], name='flat_output')
 
-            output1 = tf.nn.relu(tf.matmul(flat_output, fc_W_1) + fc_b_1)
+            # Add hero one-hot vector embedding
+            if g_embed_hero_id:
+                input_state = flat_output[:,:STATE_SIZE]
+                input_hero_id = flat_output[:,STATE_SIZE:STATE_SIZE + 1]
+                input_hero_one_hot = tf.one_hot(input_hero_id, ONE_HOT_SIZE)
+                fc_W_embed = tf.get_variable(shape=[ONE_HOT_SIZE, EMBED_SIZE], name='fc_W_embed',
+                    trainable=trainable, initializer=my_initializer)
+
+                output_embedding = tf.matmul(input_hero_one_hot, fc_W_embed)
+
+                input_after_embed = tf.concat([input_state, output_embedding], -1)
+                fc_W_1 = tf.get_variable(shape=[EMBED_SIZE + STATE_SIZE, self.layer_size], name='fc_W_1',
+                    trainable=trainable, initializer=my_initializer)
+
+                fc_b_1 = tf.get_variable(shape=[self.layer_size], name='fc_b_1',
+                    trainable=trainable, initializer=my_initializer)                    
+
+                tf.summary.histogram("fc_W_1", fc_W_1)
+                tf.summary.histogram("fc_b_1", fc_b_1)
+
+                output1 = tf.nn.relu(tf.matmul(input_after_embed, fc_W_1) + fc_b_1)
+            else:
+                fc_W_1 = tf.get_variable(shape=[flat_output_size, self.layer_size], name='fc_W_1',
+                    trainable=trainable, initializer=my_initializer)
+
+                fc_b_1 = tf.get_variable(shape=[self.layer_size], name='fc_b_1',
+                    trainable=trainable, initializer=my_initializer)
+
+                tf.summary.histogram("fc_W_1", fc_W_1)
+                tf.summary.histogram("fc_b_1", fc_b_1)
+
+                output1 = tf.nn.relu(tf.matmul(flat_output, fc_W_1) + fc_b_1)                
 
             fc_W_2 = tf.get_variable(shape=[self.layer_size, self.layer_size], name='fc_W_2',
                 trainable=trainable, initializer=my_initializer)
-            fc_b_2 = tf.Variable(tf.zeros([self.layer_size], dtype=tf.float32), name='fc_b_2',
-                trainable=trainable)
+
+            fc_b_2 = tf.get_variable(shape=[self.layer_size], name='fc_b_2',
+                trainable=trainable, initializer=my_initializer)
 
             tf.summary.histogram("fc_W_2", fc_W_2)
             tf.summary.histogram("fc_b_2", fc_b_2)
@@ -365,8 +426,9 @@ class Agent():
 
             fc_W_3 = tf.get_variable(shape=[self.layer_size, self.layer_size], name='fc_W_3',
                 trainable=trainable, initializer=my_initializer)
-            fc_b_3 = tf.Variable(tf.zeros([self.layer_size], dtype=tf.float32), name='fc_b_3',
-                trainable=trainable)
+
+            fc_b_3 = tf.get_variable(shape=[self.layer_size], name='fc_b_3',
+                trainable=trainable, initializer=my_initializer)
 
             tf.summary.histogram("fc_W_3", fc_W_3)
             tf.summary.histogram("fc_b_3", fc_b_3)
@@ -385,8 +447,9 @@ class Agent():
 
                 fc_W_a = tf.get_variable(shape=[self.layer_size, output_num], name=weight_layer_name,
                     trainable=trainable, initializer=my_initializer)
-                fc_b_a = tf.Variable(tf.zeros([output_num], dtype=tf.float32), name=bias_layer_name,
-                    trainable=trainable)
+
+                fc_b_a = tf.get_variable(shape=[output_num], name=bias_layer_name,
+                    trainable=trainable, initializer=my_initializer)                    
 
                 tf.summary.histogram(weight_layer_name, fc_W_a)
                 tf.summary.histogram(bias_layer_name, fc_b_a)            
@@ -402,8 +465,9 @@ class Agent():
             # value network
             fc1_W_v = tf.get_variable(shape=[self.layer_size, 1], name='fc1_W_v',
                 trainable=trainable, initializer=my_initializer)
-            fc1_b_v = tf.Variable(tf.zeros([1], dtype=tf.float32), name='fc1_b_v',
-                trainable=trainable)
+
+            fc1_b_v = tf.get_variable(shape=[1], name='fc1_b_v',
+                trainable=trainable, initializer=my_initializer)
 
             tf.summary.histogram("fc1_W_v", fc1_W_v)
             tf.summary.histogram("fc1_b_v", fc1_b_v)
@@ -411,177 +475,104 @@ class Agent():
             value = tf.matmul(output3, fc1_W_v) + fc1_b_v
             value = tf.reshape(value, [-1, ], name = "value_output")
             tf.summary.histogram("value_head", value)
-            merged_summary = tf.summary.merge_all()
-            return a_prob_arr, a_logits_arr, value, merged_summary
-
-    def mask_invalid_action(self, s, distrib):
-        new_distrib = distrib
-        delta = 0.02
-        if s[0] < self.restrict_x_min + delta:
-            new_distrib[1] = 0
-            new_distrib[4] = 0
-            new_distrib[6] = 0
-        if s[1] < self.restrict_y_min + delta:
-            new_distrib[1] = 0
-            new_distrib[2] = 0
-            new_distrib[3] = 0
-        if s[0] > self.restrict_x_max - delta:
-            new_distrib[3] = 0
-            new_distrib[5] = 0
-            new_distrib[8] = 0
-        if s[1] > self.restrict_y_max - delta:
-            new_distrib[6] = 0
-            new_distrib[7] = 0
-            new_distrib[8] = 0
-
-        return new_distrib
+            
+            return a_prob_arr, a_logits_arr, value
 
     def predict(self, s):
         # Calculate a eval prob.
-        tuple_val = self.session.run([self.value, self.a_policy_new[0], self.a_policy_new[1], self.a_policy_new[2]], feed_dict={self.s: s})
-        value = tuple_val[0]
-        chosen_policy = tuple_val[1:] 
-        #chosen_policy = self.session.run(self.a_policy_new, feed_dict={self.s: s})
-        actions = []
-        for idx in range(self.policy_head_num):            
-            ac = np.random.choice(range(chosen_policy[idx].shape[1]), p=chosen_policy[idx][0])
-            actions.append(ac)
-        if actions[0] == 0:
-            # Stay still
-            actions[1] = -1
-            actions[2] = -1
-        elif actions[0] == 1:
-            # Move
-            actions[2] = -1
-        elif actions[0] == 2:
-            # Normal attack
-            actions[1] = -1
-            actions[2] = -1
-        elif actions[0] == 3:
-            # skill 1 attack
-            actions[1] = -1
-            actions[2] = -1
-        elif actions[0] == 4:
-            # skill 2 attack
-            actions[1] = -1
-            actions[2] = -1        
-        elif actions[0] == 5:
-            # skill 3 attack
-            actions[1] = -1
-            actions[2] = -1
-        elif actions[0] == 6:
-            # skill 4 attack
-            actions[1] = -1
-            actions[2] = -1 
-        else:
-            print('Action predict wrong:{}'.format(actions[0]))
+        action_arr = []
+        value_arr = []
 
-        return actions, value
+        for hero_idx in range(HERO_COUNT):
+            tuple_val = self.session.run([self.value[hero_idx], self.a_policy_new[hero_idx][0], self.a_policy_new[hero_idx][1], self.a_policy_new[hero_idx][2]], feed_dict={self.multi_s: s})
+            value = tuple_val[0]
+            chosen_policy = tuple_val[1:]
+            #chosen_policy = self.session.run(self.a_policy_new, feed_dict={self.s: s})
+            
+            actions = []
+            for _idx in range(self.policy_head_num):
+                ac = np.random.choice(range(chosen_policy[_idx].shape[1]), p=chosen_policy[_idx][0])
+                actions.append(ac)
+
+            skill_is_dir = False
+            skill_dir_mask = g_dir_skill_mask[hero_idx]
+            check_if_skill = actions[0] >= 3 and actions[0] <= 6
+            if check_if_skill:
+                skill_is_dir = skill_dir_mask[actions[0] - 3]
+
+            if actions[0] == 0:
+                # Stay still
+                actions[1] = -1
+                actions[2] = -1
+            elif actions[0] == 1:
+                # Move
+                actions[2] = -1
+            elif actions[0] == 2:
+                # Normal attack
+                actions[1] = -1
+                actions[2] = -1
+            elif check_if_skill:
+                # skill 1 attack
+                actions[1] = -1
+                if not skill_is_dir:
+                    actions[2] = -1
+            else:
+                print('Action predict wrong:{}'.format(actions[0]))
+
+            action_arr.append(actions)
+            value_arr.append(value)
+
+        return action_arr, sum(value_arr)
 
     def greedy_predict(self, s):
         # Calculate a eval prob.
-        tuple_val = self.session.run([self.value, self.a_policy_new[0], self.a_policy_new[1], self.a_policy_new[2]], feed_dict={self.s: s})
-        value = tuple_val[0]
-        chosen_policy = tuple_val[1:] 
-        #chosen_policy = self.session.run(self.a_policy_new, feed_dict={self.s: s})
-        actions = []
-        for idx in range(self.policy_head_num):
-            ac = np.argmax(chosen_policy[idx][0])
-            actions.append(ac)
-        if actions[0] == 0:
-            # Stay still
-            actions[1] = -1
-            actions[2] = -1
-        elif actions[0] == 1:
-            # Move
-            actions[2] = -1
-        elif actions[0] == 2:
-            # Normal attack
-            actions[1] = -1
-            actions[2] = -1
-        elif actions[0] == 3:
-            # skill 1 attack
-            actions[1] = -1
-            actions[2] = -1
-        elif actions[0] == 4:
-            # skill 2 attack
-            actions[1] = -1
-            actions[2] = -1        
-        elif actions[0] == 5:
-            # skill 3 attack
-            actions[1] = -1
-            actions[2] = -1
-        elif actions[0] == 6:
-            # skill 4 attack
-            actions[1] = -1
-        #    actions[2] = -1 
-        else:
-            print('Action predict wrong:{}'.format(actions[0]))
+        action_arr = []
+        value_arr = []
 
-        return actions, value
+        for idx in range(HERO_COUNT):
+            tuple_val = self.session.run([self.value[idx], self.a_policy_new[idx][0], self.a_policy_new[idx][1], self.a_policy_new[idx][2]], feed_dict={self.s: s[idx]})
+            value = tuple_val[0]
+            chosen_policy = tuple_val[1:]
+            #chosen_policy = self.session.run(self.a_policy_new, feed_dict={self.s: s})
+            actions = []
+            for idx in range(self.policy_head_num):            
+                ac = np.argmax(chosen_policy[idx][0])
+                actions.append(ac)
+            if actions[0] == 0:
+                # Stay still
+                actions[1] = -1
+                actions[2] = -1
+            elif actions[0] == 1:
+                # Move
+                actions[2] = -1
+            elif actions[0] == 2:
+                # Normal attack
+                actions[1] = -1
+                actions[2] = -1
+            elif actions[0] == 3:
+                # skill 1 attack
+                actions[1] = -1
+            #    actions[2] = -1
+            elif actions[0] == 4:
+                # skill 2 attack
+                actions[1] = -1
+                actions[2] = -1        
+            elif actions[0] == 5:
+                # skill 3 attack
+                actions[1] = -1
+                actions[2] = -1
+            elif actions[0] == 6:
+                # skill 4 attack
+                actions[1] = -1
+            #    actions[2] = -1 
+            else:
+                print('Action predict wrong:{}'.format(actions[0]))
+            action_arr.append(actions)
+            value_arr.append(value)
 
-    def do_per_sample(self, atarg, draw_count, alpha):        
-        total_sample_num = len(atarg)
+        return action_arr, value_arr
 
-        distribution = np.power(np.absolute(atarg), alpha)
-        dist_sum = np.sum(distribution)
-        normalized_dist = distribution / dist_sum
-        indices = np.random.choice(range(total_sample_num), draw_count, p=normalized_dist, replace=False)
-
-        return indices, normalized_dist
-    #    pass
-
-    def learn_one_traj_per(self, timestep, ob, ac, atarg, tdlamret, seg, train_writer, beta):
-        global g_step
-        self.session.run(self.update_policy_net_op)
-
-        loss_sum_arr = np.ones([len(ob)], dtype=np.float) * 10.0      
-
-        lrmult = max(1.0 - float(timestep) / self.num_total_steps, .0)
-
-        Entropy_list = []
-        KL_distance_list = []
-        bigN = len(ob)
-        draw_count = bigN//BATCH_SIZE
-        loop_count = EPOCH_NUM * draw_count
-        for _idx in range(loop_count):            
-            indices, distribution = self.do_per_sample(loss_sum_arr, BATCH_SIZE, g_per_alpha)
-            #indices, distribution = self.do_per_sample(atarg, BATCH_SIZE, 1)
-            # Update importance sample coefficiency
-            _is_beta = beta
-            self.importance_sample_arr = np.power(distribution * bigN, -_is_beta)
-
-            temp_indices = indices
-            batch_is_val = self.importance_sample_arr[temp_indices]
-            batch_is_val /= np.max(batch_is_val)
-            # Minimize loss.
-            loss_val, _, entropy, kl_distance, summary_new_val, summary_old_val = self.session.run([self.total_loss_arr, self.optimizer, self.policy_entropy, self.kl_distance, self.summary_new, self.summary_old], {
-                self.lrmult : lrmult,
-                self.adv: atarg[temp_indices],
-                self.s: ob[temp_indices],
-                self.a: ac[temp_indices],
-                self.cumulative_r: tdlamret[temp_indices],
-                self.importance_sample_arr_pl: batch_is_val,
-            })
-
-            loss_sum_arr[temp_indices] = np.absolute(loss_val) + 1e-5
-            
-            if g_out_tb and _idx == loop_count - 1:
-                g_step += 1
-                train_writer.add_summary(summary_new_val, g_step)
-                train_writer.add_summary(summary_old_val, g_step)
-
-            Entropy_list.append(entropy)
-            KL_distance_list.append(kl_distance)
-
-        self.lenbuffer.extend(seg["ep_lens"])
-        self.rewbuffer.extend(seg["ep_rets"])
-        self.unclipped_rewbuffer.extend(seg["ep_unclipped_rets"])
-
-        return np.mean(Entropy_list), np.mean(KL_distance_list)
-
-    def learn_one_traj(self, timestep, ob, ac, atarg, tdlamret, seg, train_writer):
-        global g_step
+    def learn_one_traj(self, timestep, ob, ac, atarg, tdlamret, lens, rets, unclipped_rets, train_writer):
         self.session.run(self.update_policy_net_op)
 
         lrmult = max(1.0 - float(timestep) / self.num_total_steps, .0)
@@ -598,37 +589,74 @@ class Agent():
                 _, entropy, kl_distance, summary_new_val, summary_old_val = self.session.run([self.optimizer, self.policy_entropy, self.kl_distance, self.summary_new, self.summary_old], {
                     self.lrmult : lrmult,
                     self.adv: atarg[temp_indices],
-                    self.s: ob[temp_indices],
-                    self.a: ac[temp_indices],
+                    self.multi_s: ob[temp_indices],
+                    self.multi_a: ac[temp_indices],
                     self.cumulative_r: tdlamret[temp_indices],
                 })
-                
-                if g_out_tb and i == (inner_loop_count - 1) and _idx == (EPOCH_NUM -1):
-                    g_step += 1
-                    train_writer.add_summary(summary_new_val, g_step)
-                    train_writer.add_summary(summary_old_val, g_step)
 
                 Entropy_list.append(entropy)
                 KL_distance_list.append(kl_distance)
 
-        self.lenbuffer.extend(seg["ep_lens"])
-        self.rewbuffer.extend(seg["ep_rets"])
-        self.unclipped_rewbuffer.extend(seg["ep_unclipped_rets"])
+        self.lenbuffer.extend(lens)
+        self.rewbuffer.extend(rets)
+        self.unclipped_rewbuffer.extend(unclipped_rets)
         return np.mean(Entropy_list), np.mean(KL_distance_list)
 
+def InitMetaConfig(scene_id):
+    global HERO_COUNT
+    global g_dir_skill_mask
+    global STATE_SIZE
+    try:
+        # Load train self heroes skill masks
+        root_folder = os.path.split(os.path.abspath(__file__))[0]
+        g_dir_skill_mask = []
+        
+        cfg_file_path = '{}/gamecore/cfg'.format(root_folder)
+        training_map_file = '{}/maps/{}.json'.format(cfg_file_path, scene_id)
+        hero_cfg_file_path = '{}/heroes'.format(cfg_file_path)
+        skill_cfg_file_path = '{}/skills'.format(cfg_file_path)
+        map_dict = None
+        with open(training_map_file, 'r') as file_handle:
+            map_dict = json.load(file_handle)
 
+        for hero_id in map_dict['SelfHeroes']:
+            hero_skills = FindHeroSkills(hero_cfg_file_path, hero_id)
+            hero_skill_types = GetSkillTypes(skill_cfg_file_path, hero_skills)
+            g_dir_skill_mask.append(hero_skill_types)
+            
+        HERO_COUNT = len(g_dir_skill_mask)
+        oppo_hero_count = len(map_dict['OppoHeroes'])
+        STATE_SIZE = (oppo_hero_count + HERO_COUNT) * ONE_HERO_FEATURE_SIZE
 
-def learn(num_steps=NUM_STEPS):
-    global g_step
-    g_step = 0
+        # Write control file
+        ctrl_file_path = '{}/ctrl.txt'.format(root_folder)
+        file_handle = open(ctrl_file_path, 'w')
+
+        file_handle.write('1')
+
+        file_handle.write(' ')
+        file_handle.write('{}'.format(scene_id))
+        file_handle.close()
+    except Exception as ex:
+        pass	    
+    pass
+
+def GetDataGeneratorAndTrainer(scene_id):   
+    InitMetaConfig(scene_id)
     session = tf.Session()
-
     action_space_map = {'action':7, 'move':8, 'skill':8}
     a_space_keys = ['action', 'move', 'skill']
-    agent = Agent(session, action_space_map, a_space_keys)
+    agent = MultiPlayerAgent(session, action_space_map, a_space_keys)
+    data_generator = MultiPlayer_Data_Generator(agent)
+    return agent, data_generator, session
 
-    data_generator = Data_Generator(agent)
-    train_writer = tf.summary.FileWriter('summary_log_gerry', graph=tf.get_default_graph()) 
+def learn(scene_id, num_steps=NUM_STEPS):
+    global g_step
+    g_step = 0
+
+    agent, data_generator, session = GetDataGeneratorAndTrainer(scene_id)
+    root_folder = os.path.split(os.path.abspath(__file__))[0]
+    train_writer = tf.summary.FileWriter('{}/../summary_log_gerry'.format(root_folder), graph=tf.get_default_graph()) 
 
     saver = tf.train.Saver(max_to_keep=1)
     if False == g_start_anew:
@@ -636,15 +664,13 @@ def learn(num_steps=NUM_STEPS):
         if model_file != None:
             saver.restore(session,model_file)
 
-    _save_frequency = 50
+    _save_frequency = 1
     max_rew = -1000000
     for timestep in range(num_steps):
         ob, ac, atarg, tdlamret, seg = data_generator.get_one_step_data()
-        if g_enable_per:
-            is_beta = g_is_beta_start + (timestep / num_steps) * (g_is_beta_end - g_is_beta_start)
-            entropy, kl_distance = agent.learn_one_traj_per(timestep, ob, ac, atarg, tdlamret, seg, train_writer, is_beta)
-        else:
-            entropy, kl_distance = agent.learn_one_traj(timestep, ob, ac, atarg, tdlamret, seg, train_writer)
+        lens, rets, unclipped_rets = np.array(seg["ep_lens"]), np.array(seg["ep_rets"]), np.array(seg["ep_unclipped_rets"])
+
+        entropy, kl_distance = agent.learn_one_traj(timestep, ob, ac, atarg, tdlamret, lens, rets, unclipped_rets, train_writer)
 
         max_rew = max(max_rew, np.max(agent.unclipped_rewbuffer))
         if (timestep+1) % _save_frequency == 0:
@@ -686,17 +712,13 @@ def play_game():
     
     ob = env.reset()
 
-    steps = 0
-
     while True:
-        steps += 1
         time.sleep(0.2)
         ac, _ = agent.greedy_predict(ob[np.newaxis, ...])
         print('Predict :{}'.format(ac))
 
         ob, unclipped_rew, new, _ = env.step(ac)
         if new:
-            steps = 0
             print('Game is finishd, reward is:{}'.format(unclipped_rew))
             ob = env.reset()
 
@@ -728,30 +750,33 @@ def play_game_with_saved_model():
 
     pass
 
+def FindHeroSkills(hero_cfg_file_path, hero_id):
+    hero_cfg_file = '{}/{}.json'.format(hero_cfg_file_path, hero_id)
+    hero_skills = []
+    with open(hero_cfg_file, 'r') as file_handle:
+        hero_cfg = json.load(file_handle)
+        hero_skills = hero_cfg['skills']
+        return hero_skills
+    
+def GetSkillTypes(skill_cfg_file_path, hero_skills):
+    skill_dir_type_check = []
+    for skill_id in hero_skills:
+        skill_dir_type = False
+        skill_id = int(skill_id)
+        if -1 != skill_id:
+            skill_cfg_file = '{}/{}.json'.format(skill_cfg_file_path, skill_id)
+            with open(skill_cfg_file, 'r') as file_handle:
+                skill_cfg = json.load(file_handle)
+                if 0 == skill_cfg['type']:
+                    skill_dir_type = True
+        skill_dir_type_check.append(skill_dir_type)
+    return skill_dir_type_check
+
 
 if __name__=='__main__':
-    bb = {1:'a', 2:'b', 3:'c'}
-    #print(list(bb))
-    a = list(map(lambda x: math.pow(x, -2), range(1, 10)))
-    for val in a:
-        print(val)
-    print(a)
-
-    try:
-        # Write control file
-        root_folder = os.path.split(os.path.abspath(__file__))[0]
-        ctrl_file_path = '{}/ctrl.txt'.format(root_folder)
-        file_handle = open(ctrl_file_path, 'w')
-        if g_manual_ctrl_enemy:
-            file_handle.write('0')
-        else:
-            file_handle.write('1')
-
-        file_handle.close()
-    except:
-        pass	  
+    scene_id = 10
 
     if g_is_train:
-        learn(num_steps=5000)
+        learn(scene_id, num_steps=5000)
     else:
         play_game()

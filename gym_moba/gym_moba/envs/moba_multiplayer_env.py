@@ -61,6 +61,14 @@ class MobaMultiPlayerEnv(gym.Env):
 								stdout=subprocess.PIPE,
 								stderr=subprocess.PIPE, env=my_env)
 
+		# We shall parse the scene config file to get the input space and action space
+
+
+		self.observation_space = spaces.Box(low=-1, high=1, shape=(100, 3))
+
+        # Action space omits the Tackle/Catch actions, which are useful on defense
+		self.action_space = spaces.Tuple((spaces.Discrete(3),))				
+
 		self.restart_proc()
 		print('moba_env initialized.')
 		pass

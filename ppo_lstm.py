@@ -32,7 +32,7 @@ BATCH_SIZE = 128
 TIME_STEP = 8
 
 EPOCH_NUM = 4
-LEARNING_RATE = 1e-3
+LEARNING_RATE = 1e-4
 TIMESTEPS_PER_ACTOR_BATCH = 2048
 GAMMA = 0.99
 LAMBDA = 0.95
@@ -303,9 +303,9 @@ class Agent():
 
 
     def _init_nn(self, *args):
-        self.a_policy_new, self.a_policy_logits_new, self.value, self.hidden_state_new = self._init_actor_net('policy_net_new', trainable=True, is_inference=False)
-        self.a_policy_new_infer, _1, self.value_infer, self.hidden_state_new_infer = self._init_actor_net('policy_net_new', trainable=True, is_inference=True)
-        self.a_policy_old, self.a_policy_logits_old, _, self.hidden_state_old = self._init_actor_net('policy_net_old', trainable=False, is_inference=False)
+        self.a_policy_new, self.a_policy_logits_new, self.value, self.hidden_state_new, self.summary_train_new = self._init_actor_net('policy_net_new', trainable=True, is_inference=False)
+        self.a_policy_new_infer, _1, self.value_infer, self.hidden_state_new_infer, self.summary_infer_new = self._init_actor_net('policy_net_new', trainable=True, is_inference=True)
+        self.a_policy_old, self.a_policy_logits_old, _, self.hidden_state_old, self.summary_train_old = self._init_actor_net('policy_net_old', trainable=False, is_inference=False)
 
     def _init_op(self):
         self.lrmult = tf.placeholder(name='lrmult', dtype=tf.float32, shape=[])
@@ -382,6 +382,8 @@ class Agent():
             self.total_loss_arr = self.a_loss_func_arr + self.c_loss_func_arr - 0.01*self.policy_entropy_arr
             self.total_loss = self.a_loss_func + self.c_loss_func - 0.01*self.policy_entropy 
             '''
+            tf.summary.scalar("total_loss", self.total_loss)
+
             learning_rate = self.learning_rate * self.lrmult
             # Passing global_step to minimize() will increment it at each step.
             self.optimizer = tf.train.AdamOptimizer(learning_rate).minimize(self.total_loss)
@@ -396,6 +398,7 @@ class Agent():
 
             last_output_dims = 0
             last_output = None
+            last_hidden_state = None
             if USE_CNN:
                 cnn_w_1 = tf.get_variable("cnn_w_1", [8, 8, C, 32], initializer=my_initializer)
                 cnn_b_1 = tf.get_variable("cnn_b_1", [32], initializer=tf.constant_initializer(0.0))
@@ -441,12 +444,21 @@ class Agent():
                 last_output = output3 
 
             # Add lstm here, to convert last_output to lstm_output
-            use_tensorflow_lstm = False
+            tf.summary.histogram("lstm_input", last_output)
+            tf.summary.histogram("lstm_input_hidden_state", self.lstm_hidden)
+
+            use_tensorflow_lstm = True
             if use_tensorflow_lstm:
                 lstm_input = last_output
                 use_keras = True
                 if use_keras:                    
-                    lstm_layer = tf.keras.layers.LSTM(HIDDEN_STATE_LEN, return_state=True, return_sequences = True)
+                    lstm_layer = tf.keras.layers.LSTM(HIDDEN_STATE_LEN, 
+                    return_state=True, 
+                    return_sequences = True,
+                    kernel_initializer=my_initializer,
+                    recurrent_initializer=my_initializer
+                    )
+
                     fold_time_step = TIME_STEP
                     if is_inference:
                         fold_time_step = 1
@@ -458,8 +470,17 @@ class Agent():
                     c_old, h_old = tf.split(axis=1, num_or_size_splits=2, value=self.lstm_hidden)
                     c_old = c_old[::fold_time_step, ...]
                     h_old = h_old[::fold_time_step, ...]
-                    reshaped_output, last_h, last_c = lstm_layer(reshaped_lstm_input, mask=reshaped_lstm_mask,
+                    reshaped_output, last_h, last_c = lstm_layer(reshaped_lstm_input, #mask=reshaped_lstm_mask,
                                                                     initial_state=[h_old, c_old])
+
+                    '''                                                
+                    layer_weights = lstm_layer.get_weights()
+                    
+                    for idx in range(len(layer_weights)):
+                        new_tensor = tf.convert_to_tensor(layer_weights[idx])
+                        tf.summary.histogram("lstm_layer_{}".format(idx), new_tensor)
+                    '''
+
                     last_c = tf.reshape(last_c, [-1, HIDDEN_STATE_LEN])
                     last_h = tf.reshape(last_h, [-1, HIDDEN_STATE_LEN])
                     last_hidden_state = tf.concat(axis=1, values=[last_c, last_h])
@@ -477,10 +498,12 @@ class Agent():
             #        last_output, last_hidden_state = tf.nn.dynamic_rnn(cell=lstm_cell, inputs=lstm_input, initial_state = combined_hidden_states)
             #        last_output = last_output[0]
 
-            else:            
+            else:
                 lstm_input = last_output
                 last_output, last_hidden_state = utils.lstm(lstm_input, self.is_inference, self.lstm_hidden, self.lstm_mask, 'lstm', HIDDEN_STATE_LEN, LSTM_CELL_COUNT, my_initializer)
-            
+
+            tf.summary.histogram("last_output", last_output)
+            tf.summary.histogram("last_hidden_state", last_hidden_state)
 
             last_output_dims = HIDDEN_STATE_LEN
             a_logits_arr = []
@@ -504,6 +527,7 @@ class Agent():
 
                 a_prob = stable_softmax(a_logits, head_layer_name) #tf.nn.softmax(a_logits)
                 a_prob_arr.append(a_prob)
+                tf.summary.histogram("a_prob_{}".format(k), a_prob)
 
             # value network
             fc1_W_v = tf.get_variable(shape=[last_output_dims, 1], name='fc1_W_v',
@@ -513,8 +537,11 @@ class Agent():
 
             value = tf.matmul(last_output, fc1_W_v) + fc1_b_v
             value = tf.reshape(value, [-1, ], name = "value_output")
+            tf.summary.histogram("value", value)
 
-            return a_prob_arr, a_logits_arr, value, last_hidden_state
+            summary_merged = tf.summary.merge_all()
+
+            return a_prob_arr, a_logits_arr, value, last_hidden_state, summary_merged
 
     def mask_invalid_action(self, s, distrib):
         new_distrib = distrib
@@ -656,6 +683,7 @@ class Agent():
         return np.mean(Entropy_list), np.mean(KL_distance_list)
 
     def learn_one_traj(self, timestep, seg, train_writer):
+        global g_step
         ob, ac, atarg, tdlamret, game_ends = seg["ob"], seg["ac"], seg["adv"], seg["tdlamret"], seg['new']
         lens, rets, unclipped_rets = seg["ep_lens"], seg["ep_rets"], seg["ep_unclipped_rets"]
         hidden_states = seg["hidden_states"]
@@ -666,15 +694,18 @@ class Agent():
 
         Entropy_list = []
         KL_distance_list = []
+        loss_list = []
 
         for _idx in range(EPOCH_NUM):
             indices = np.random.permutation(int(len(ob) / TIME_STEP)) # list(range(len(ob))) # 
             indices = inflate_random_indice(indices, TIME_STEP)
             inner_loop_count = (len(ob)//BATCH_SIZE)
             for i in range(inner_loop_count):
+                g_step += 1
                 temp_indices = indices[i*BATCH_SIZE : (i+1)*BATCH_SIZE]
                 # Minimize loss.
-                _, entropy, kl_distance = self.session.run([self.optimizer, self.policy_entropy, self.kl_distance], {
+                loss_val, _, entropy, kl_distance, summary_train_new_val, summary_infer_new_val, summary_train_old_val = self.session.run([self.total_loss, self.optimizer, self.policy_entropy, 
+                    self.kl_distance, self.summary_train_new, self.summary_infer_new, self.summary_train_old], {
                     self.lrmult : lrmult,
                     self.adv: atarg[temp_indices],
                     self.s: ob[temp_indices],
@@ -687,11 +718,16 @@ class Agent():
 
                 Entropy_list.append(entropy)
                 KL_distance_list.append(kl_distance)
+                loss_list.append(loss_val)
+
+        #        train_writer.add_summary(summary_train_new_val, g_step)
+        #        train_writer.add_summary(summary_infer_new_val, g_step)   
+        #        train_writer.add_summary(summary_train_old_val, g_step)             
 
         self.lenbuffer.extend(lens)
         self.rewbuffer.extend(rets)
         self.unclipped_rewbuffer.extend(unclipped_rets)
-        return np.mean(Entropy_list), np.mean(KL_distance_list)
+        return np.mean(Entropy_list), np.mean(KL_distance_list), np.mean(loss_list)
 
 def GetDataGeneratorAndTrainer(scene_id):   
     session = tf.Session()
@@ -748,7 +784,7 @@ def learn(num_steps=NUM_STEPS):
             is_beta = g_is_beta_start + (timestep / num_steps) * (g_is_beta_end - g_is_beta_start)
             entropy, kl_distance = agent.learn_one_traj_per(timestep, ob, ac, atarg, tdlamret, seg, train_writer, is_beta)
         else:
-            entropy, kl_distance = agent.learn_one_traj(timestep, seg, train_writer)
+            entropy, kl_distance, loss_val = agent.learn_one_traj(timestep, seg, train_writer)
 
         max_rew = max(max_rew, np.max(agent.unclipped_rewbuffer))
         if (timestep+1) % _save_frequency == 0:
@@ -773,7 +809,8 @@ def learn(num_steps=NUM_STEPS):
             "\tUnClippedEpRewMean:", '%.3f'%np.mean(agent.unclipped_rewbuffer),
             "\tMaxUnClippedRew:", max_rew,
             "\tEntropy:", '%.3f'%entropy,
-            "\tKL_distance:", '%.8f'%kl_distance)
+            "\tKL_distance:", '%.8f'%kl_distance,
+            "\tloss:", '{}'.format(loss_val))
 
 def play_game():
     session = tf.Session()
