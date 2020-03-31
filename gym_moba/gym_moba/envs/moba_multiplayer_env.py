@@ -30,32 +30,18 @@ class MobaMultiPlayerEnv(gym.Env):
 		is_train = True
 		root_folder = os.path.split(os.path.abspath(__file__))[0]
 
-		scene_id = 0
-		try:
-			# Read control file			
-			ctrl_file_path = '{}/../../../ctrl.txt'.format(root_folder)
-			file_handle = open(ctrl_file_path, 'r')
-			ctrl_str = file_handle.read()
-			segs = ctrl_str.split(' ')
-			file_handle.close()		
-			if int(segs[0]) == 1:
-				is_train = True
-			else:
-				is_train = False
-
-			scene_id = int(segs[1])
-
-		except:
-			pass		
+		my_env = os.environ.copy()
+		is_train = my_env['moba_env_is_train'] == 'True'
+		scene_id = my_env['moba_env_scene_id']	
 		
 		manual_str = '-manual_enemy=false'
 		if not is_train:
 			manual_str = '-manual_enemy=true'
-		my_env = os.environ.copy()
+		
 		my_env['TF_CPP_MIN_LOG_LEVEL'] = '3'
 		gamecore_file_path = '{}/../../../gamecore/gamecore'.format(root_folder)
 		self.proc = subprocess.Popen([gamecore_file_path, 
-								'-render=false', '-gym_mode=true', '-debug_log=true', '-slow_tick=false', 
+								'-render=true', '-gym_mode=true', '-debug_log=true', '-slow_tick=false', 
 								'-multi_player=true', '-scene={}'.format(scene_id), manual_str],
 								stdin=subprocess.PIPE,
 								stdout=subprocess.PIPE,

@@ -558,6 +558,19 @@ func (renderer *Renderer) DrawHealthBar(colorUniform int32, f0 core.BaseFunc) {
 	gl.DrawArrays(gl.TRIANGLES, 0, 1*2*3)
 }
 
+func (renderer *Renderer) DrawBackground(colorUniform int32) {
+	gl.Uniform3f(colorUniform, 1, 1, 1)
+	gl.BindVertexArray(renderer.vao)
+
+	gl.ActiveTexture(gl.TEXTURE0)
+	gl.BindTexture(gl.TEXTURE_2D, renderer.texture)
+
+	gl.DrawArrays(gl.TRIANGLES, 0, 1*2*3)
+	gl.BindVertexArray(0)
+	gl.BindTexture(gl.TEXTURE_2D, 0)
+
+}
+
 func (renderer *Renderer) Render() {
 
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
@@ -567,6 +580,8 @@ func (renderer *Renderer) Render() {
 	// gl.UniformMatrix4fv(modelUniform, 1, false, &model[0])
 
 	// 1. Background
+	colorUniform := gl.GetUniformLocation(renderer.program, gl.Str("camp_color\x00"))
+	renderer.DrawBackground(colorUniform)
 	/*
 		colorUniform := gl.GetUniformLocation(renderer.program, gl.Str("camp_color\x00"))
 		gl.Uniform3f(colorUniform, 1, 1, 1)

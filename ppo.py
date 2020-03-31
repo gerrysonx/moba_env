@@ -777,6 +777,9 @@ def GetSkillTypes(skill_cfg_file_path, hero_skills):
 
 if __name__=='__main__':
     scene_id = 10
+    my_env = os.environ
+    my_env['moba_env_is_train'] = 'True'
+    my_env['moba_env_scene_id'] = '{}'.format(scene_id)
 
     if g_is_train:
         learn(scene_id, num_steps=5000)
