@@ -3,7 +3,7 @@
 	"attackFreq" : 1,
 	"attackRange" : 20,
 	"viewRange" : 2000,
-	"health" : 3000,
+	"health" : 2000,
 	"damage" : 100,
 	"speed" : 20,
 	"skills" : [-1, -1, -1, -1]

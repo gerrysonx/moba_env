@@ -776,6 +776,11 @@ def GetSkillTypes(skill_cfg_file_path, hero_skills):
 
 
 if __name__=='__main__':
+
+    from gym import spaces
+    space = spaces.Box(low = -0.5, high = 0.5, shape=(10,), dtype=np.float32) # Set with 8 elements {0, 1, 2, ..., 7}
+    x = space.sample() 
+
     scene_id = 10
     my_env = os.environ
     my_env['moba_env_is_train'] = 'True'
