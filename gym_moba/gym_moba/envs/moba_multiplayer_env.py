@@ -65,7 +65,12 @@ def InitMetaConfig(scene_id):
         pass        
     pass
 
-    return (obs_size, ), (self_hero_count, MAIN_ACTION_DIMS, MOVE_DIMS, SKILL_DIMS), self_hero_count, oppo_hero_count
+    return (self_hero_count, obs_size), (self_hero_count, MAIN_ACTION_DIMS, MOVE_DIMS, SKILL_DIMS), self_hero_count, oppo_hero_count
+
+class MobaEnvInfo(dict):
+    def __init__(self, step_idx = 0):
+        self.step_idx = step_idx
+        pass
 
 class MobaMultiPlayerEnv(gym.Env):
     metadata = {'render.modes':['human']}
@@ -75,7 +80,7 @@ class MobaMultiPlayerEnv(gym.Env):
         
         self.state = None
         self.reward = 0
-        self.info = None
+        self.info = MobaEnvInfo()
         self.last_state = None
         self.step_idx = 0                
         pass
@@ -109,10 +114,14 @@ class MobaMultiPlayerEnv(gym.Env):
 
         # Action space omits the Tackle/Catch actions, which are useful on defense
         self.action_space = spaces.Box(low = -1, high = 65536, shape=action_shape, dtype=np.int32)  
+        self.action_space.low = -1
+        self.action_space.high = 65535
         self.self_hero_count = self_hero_count
         self.oppo_hero_count = oppo_hero_count
 
         self.restart_proc()
+        self.step_idx = -1
+        
         print('moba_env initialized.')
         pass
 
@@ -183,15 +192,36 @@ class MobaMultiPlayerEnv(gym.Env):
         for hero_idx in range(self.self_hero_count):
             action = total_actions[hero_idx]
             action_encode = 0
-            action_encode = (action[0] << 12)
+            isarr = isinstance(action[0], np.ndarray)
+            action_0 = 0
+            if isarr:
+                action_0 = action[0][0]                
+            else:
+                action_0 = action[0]
+
+            action_encode = (action_0 << 12)
 
             move_dir_encode = 0
-            if action[1] != -1:
-                move_dir_encode = (action[1] << 8)    
+            action_1 = 0
+            isarr = isinstance(action[1], np.ndarray)
+            if isarr:
+                action_1 = action[1][0] 
+            else:
+                action_1 = action[1]
+
+            if action_1 != -1:
+                move_dir_encode = (action_1 << 8)    
 
             skill_dir_encode = 0
+            action_2 = 0
+            isarr = isinstance(action[2], np.ndarray)
+            if isarr:
+                action_2 = action[2][0] 
+            else:
+                action_2 = action[2]
+
             if action[2] != -1:
-                skill_dir_encode = (action[2] << 4)    
+                skill_dir_encode = (action_2 << 4)    
 
             encoded_action_val = (self.step_idx << 16) + action_encode + move_dir_encode + skill_dir_encode
             self.proc.stdin.write('{}\n'.format(encoded_action_val).encode())
@@ -245,12 +275,16 @@ class MobaMultiPlayerEnv(gym.Env):
                 print('Parsing json failed, terminate this game.')
                 self.done = True
                 self.reward = 0
-                return self.state, self.reward, self.done, self.step_idx
+                self.info.step_idx = self.step_idx
+                return self.state, self.reward, self.done, self.info
 
-        return self.state, self.reward, self.done, self.step_idx
+        self.info.step_idx = self.step_idx
+        return self.state, self.reward, self.done, self.info
 
 
     def reset(self):
+        if 0 == self.step_idx:
+            return self.state
         self.restart_proc()
         # To avoid deadlocks: careful to: add \n to output, flush output, use
         # readline() rather than read()
@@ -262,6 +296,7 @@ class MobaMultiPlayerEnv(gym.Env):
             json_str = self.proc.stdout.readline()
 
             if json_str == None or len(json_str) == 0:
+                continue
                 raise Exception('When resetting env, json_str == None or len(json_str) == 0')
 
             try:

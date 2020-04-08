@@ -171,7 +171,7 @@ class MultiPlayer_Data_Generator():
             cur_ep_ret += rew
             cur_ep_unclipped_ret += unclipped_rew
             cur_ep_len += 1
-            if new or step_info > 600:
+            if new or step_info.step_idx > 600:
                 if False:#cur_ep_unclipped_ret == 0:
                     pass
                 else:
@@ -776,10 +776,6 @@ def GetSkillTypes(skill_cfg_file_path, hero_skills):
 
 
 if __name__=='__main__':
-
-    from gym import spaces
-    space = spaces.Box(low = -0.5, high = 0.5, shape=(10,), dtype=np.float32) # Set with 8 elements {0, 1, 2, ..., 7}
-    x = space.sample() 
 
     scene_id = 10
     my_env = os.environ

@@ -1,0 +1,10 @@
+goroutine 1 [running, locked to thread]:
+main.main.func1(0xc00001a240, 0x3a)
+	/home/gerrysun/work/ml-prjs/go-lang/moba/moba_env/gamecore/main.go:27 +0x6f
+panic(0x5ed400, 0xc0003b40a0)
+	/usr/lib/go-1.13/src/runtime/panic.go:679 +0x1b2
+_/home/gerrysun/work/ml-prjs/go-lang/moba/moba_env/gamecore/core.(*Game).HandleMultiPlayerAction(0x9645e0, 0x3, 0x3, 0x4, 0x4)
+	/home/gerrysun/work/ml-prjs/go-lang/moba/moba_env/gamecore/core/logic.go:403 +0x8f3
+main.main()
+	/home/gerrysun/work/ml-prjs/go-lang/moba/moba_env/gamecore/main.go:146 +0xeec
+
