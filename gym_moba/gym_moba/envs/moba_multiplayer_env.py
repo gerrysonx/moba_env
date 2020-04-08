@@ -39,10 +39,12 @@ def InitMetaConfig(scene_id):
     obs_size = 0
     self_hero_count = 0
     oppo_hero_count = 0
+
+    dir_skill_mask = []
     try:
         # Load train self heroes skill masks
         root_folder = os.path.split(os.path.abspath(__file__))[0]
-        g_dir_skill_mask = []
+        
         
         cfg_file_path = '{}/../../../gamecore/cfg'.format(root_folder)
         training_map_file = '{}/maps/{}.json'.format(cfg_file_path, scene_id)
@@ -55,7 +57,7 @@ def InitMetaConfig(scene_id):
         for hero_id in map_dict['SelfHeroes']:
             hero_skills = FindHeroSkills(hero_cfg_file_path, hero_id)
             hero_skill_types = GetSkillTypes(skill_cfg_file_path, hero_skills)
-            g_dir_skill_mask.append(hero_skill_types)
+            dir_skill_mask.append(hero_skill_types)
             
         self_hero_count = len(map_dict['SelfHeroes'])
         oppo_hero_count = len(map_dict['OppoHeroes'])
@@ -65,7 +67,7 @@ def InitMetaConfig(scene_id):
         pass        
     pass
 
-    return (self_hero_count, obs_size), (self_hero_count, MAIN_ACTION_DIMS, MOVE_DIMS, SKILL_DIMS), self_hero_count, oppo_hero_count
+    return (self_hero_count, obs_size), (self_hero_count, MAIN_ACTION_DIMS, MOVE_DIMS, SKILL_DIMS), self_hero_count, oppo_hero_count, dir_skill_mask
 
 class MobaEnvInfo(dict):
     def __init__(self, step_idx = 0):
@@ -108,7 +110,7 @@ class MobaMultiPlayerEnv(gym.Env):
                                 stderr=subprocess.PIPE, env=my_env)
 
         # We shall parse the scene config file to get the input space and action space
-        state_shape, action_shape, self_hero_count, oppo_hero_count = InitMetaConfig(scene_id)
+        state_shape, action_shape, self_hero_count, oppo_hero_count, hero_dir_skill_mask = InitMetaConfig(scene_id)
 
         self.observation_space = spaces.Box(low = -0.5, high = 0.5, shape=state_shape, dtype=np.float32)
 
@@ -121,6 +123,7 @@ class MobaMultiPlayerEnv(gym.Env):
 
         self.restart_proc()
         self.step_idx = -1
+        self.hero_dir_skill_mask = hero_dir_skill_mask
         
         print('moba_env initialized.')
         pass
