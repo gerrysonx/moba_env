@@ -249,7 +249,7 @@ class MobaMultiPlayerEnv(gym.Env):
                     continue
 
                 jobj = json.loads(parts[1])
-                self.last_state = self.state    
+                self.last_state[...] = self.state[...]
                 self.fill_state(self.state, jobj)
 
                 if jobj['SelfWin'] != 0:
@@ -322,7 +322,7 @@ class MobaMultiPlayerEnv(gym.Env):
                 self.state = np.zeros((self.self_hero_count, state_feature_count))
                 
                 self.fill_state(self.state, jobj)                
-                self.last_state = self.state
+                self.last_state = self.state.copy()
                 break
 
             except:

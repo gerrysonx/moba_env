@@ -1,0 +1,13 @@
+{
+	"Restricted_x" : 400,
+	"Restricted_y" : 400,
+	"Restricted_w" : 200,
+	"Restricted_h" : 200,
+	"SelfHeroes" : [2005],
+	"OppoHeroes" : [2006],
+	"SpawnAreaWidth" : 100,
+	"SelfTowers" : [],
+	"OppoTowers" : [],
+	"SelfCreeps" : [],
+	"OppoCreeps" : []
+}
