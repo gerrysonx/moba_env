@@ -29,7 +29,7 @@ def observation_placeholder(ob_space, batch_size=None, name='Ob'):
     if dtype == np.int8:
         dtype = np.uint8
     '''
-    dtype = np.uint8
+    dtype = ob_space.dtype
     return tf.placeholder(shape=(batch_size,) + ob_space.shape, dtype=dtype, name=name)
 
 

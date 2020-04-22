@@ -3,7 +3,8 @@ import functools
 
 from baselines.common.tf_util import get_session, save_variables, load_variables
 from baselines.common.tf_util import initialize
-
+from baselines.common.tf_util import histo_summary
+from baselines.common.tf_util import scalar_summary
 try:
     from baselines.common.mpi_adam_optimizer import MpiAdamOptimizer
     from mpi4py import MPI
@@ -58,7 +59,7 @@ class Model(object):
 
         # Calculate the entropy
         # Entropy is used to improve exploration by limiting the premature convergence to suboptimal policy.
-        entropy = tf.reduce_mean(train_model.pd.entropy())
+        entropy = tf.reduce_mean(train_model.pd.entropy(), name='entropy_tag_op')
 
         # CALCULATE THE LOSS
         # Total loss = Policy gradient loss - entropy * entropy coefficient + Value coefficient * value loss
@@ -66,13 +67,13 @@ class Model(object):
         # Clip the value to reduce variability during Critic training
         # Get the predicted value
         vpred = train_model.vf
-        vpredclipped = OLDVPRED + tf.clip_by_value(train_model.vf - OLDVPRED, - CLIPRANGE, CLIPRANGE)
+    #    vpredclipped = OLDVPRED + tf.clip_by_value(train_model.vf - OLDVPRED, - CLIPRANGE, CLIPRANGE)
         # Unclipped value
         vf_losses1 = tf.square(vpred - R)
         # Clipped value
-        vf_losses2 = tf.square(vpredclipped - R)
+    #    vf_losses2 = tf.square(vpredclipped - R)
 
-        vf_loss = .5 * tf.reduce_mean(tf.maximum(vf_losses1, vf_losses2))
+        vf_loss = tf.reduce_mean(vf_losses1, name='vf_loss_tag_op') #.5 * tf.reduce_mean(tf.maximum(vf_losses1, vf_losses2))
 
         # Calculate ratio (pi current policy / pi old policy)
         ratio = tf.exp(OLDNEGLOGPAC - neglogpac)
@@ -83,35 +84,47 @@ class Model(object):
         pg_losses2 = -ADV * tf.clip_by_value(ratio, 1.0 - CLIPRANGE, 1.0 + CLIPRANGE)
 
         # Final PG loss
-        pg_loss = tf.reduce_mean(tf.maximum(pg_losses, pg_losses2))
+        pg_loss = tf.reduce_mean(tf.maximum(pg_losses, pg_losses2), name='pg_loss_tag_op')
         approxkl = .5 * tf.reduce_mean(tf.square(neglogpac - OLDNEGLOGPAC))
         clipfrac = tf.reduce_mean(tf.to_float(tf.greater(tf.abs(ratio - 1.0), CLIPRANGE)))
 
         # Total loss
-        loss = pg_loss - entropy * ent_coef + vf_loss * vf_coef
+        loss = pg_loss + vf_loss- entropy * ent_coef#pg_loss - entropy * ent_coef + vf_loss * vf_coef
 
         # UPDATE THE PARAMETERS USING LOSS
         # 1. Get the model parameters
-        params = tf.trainable_variables('ppo_moba_model')
+        # params = tf.trainable_variables('ppo_moba_model')
         # 2. Build our trainer
         if comm is not None and comm.Get_size() > 1:
             self.trainer = MpiAdamOptimizer(comm, learning_rate=LR, mpi_rank_weight=mpi_rank_weight, epsilon=1e-5)
         else:
             self.trainer = tf.train.AdamOptimizer(learning_rate=LR, epsilon=1e-5)
-        # 3. Calculate the gradients
-        grads_and_var = self.trainer.compute_gradients(loss, params)
-        grads, var = zip(*grads_and_var)
 
+        # 3. Calculate the gradients
+        params = tf.trainable_variables('ppo_moba_model')
+        grads_and_var = self.trainer.compute_gradients(loss, params)
+        #grads, var = zip(*grads_and_var)
+        for (grad, var) in grads_and_var:
+            # xx
+            tf.summary.histogram(var.name + '_gradient', grad)
+
+        
+
+        '''
+        
         if max_grad_norm is not None:
             # Clip the gradients (normalize)
             grads, _grad_norm = tf.clip_by_global_norm(grads, max_grad_norm)
         grads_and_var = list(zip(grads, var))
+        
         # zip aggregate each gradient with parameters associated
         # For instance zip(ABCD, xyza) => Ax, By, Cz, Da
 
         self.grads = grads
         self.var = var
-        self._train_op = self.trainer.apply_gradients(grads_and_var)
+        '''
+        #gerry_wonder
+        self._train_op = tf.train.AdamOptimizer(LR).minimize(loss)#self.trainer.apply_gradients(grads_and_var)
         self.loss_names = ['policy_loss', 'value_loss', 'policy_entropy', 'approxkl', 'clipfrac']
         self.stats_list = [pg_loss, vf_loss, entropy, approxkl, clipfrac]
 
@@ -125,12 +138,15 @@ class Model(object):
         self.save = functools.partial(save_variables, sess=sess)
         self.load = functools.partial(load_variables, sess=sess)
 
+        self.step_idx = 0
+
         initialize()
         global_variables = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope="")
         if MPI is not None:
             sync_from_root(sess, global_variables, comm=comm) #pylint: disable=E1101
 
     def train(self, lr, cliprange, obs, returns, masks, actions, values, neglogpacs, states=None):
+        self.step_idx += 1
         # Here we calculate advantage A(s,a) = R + yV(s') - V(s)
         # Returns = R + yV(s')
         advs = returns - values
@@ -152,8 +168,25 @@ class Model(object):
             td_map[self.train_model.S] = states
             td_map[self.train_model.M] = masks
 
-        return self.sess.run(
-            self.stats_list + [self._train_op],
+        run_result_arr = self.sess.run(
+            self.stats_list + [self._train_op, self.train_model.summary_tensor],
             td_map
-        )[:-1]
+        )
+
+        self.train_model.summary_writer.add_summary(run_result_arr[-1], self.step_idx)
+
+        histo_summary(self.train_model.summary_writer, 'adv_input_for_train', advs, self.step_idx)
+        histo_summary(self.train_model.summary_writer, 'returns_input_for_train', returns, self.step_idx)
+        histo_summary(self.train_model.summary_writer, 'values_input_for_train', values, self.step_idx)
+        histo_summary(self.train_model.summary_writer, 'returns_input_for_train', returns, self.step_idx)
+        scalar_summary(self.train_model.summary_writer, 'cliprange_input_for_train', cliprange, self.step_idx)
+
+        return run_result_arr[:-2]
+
+    def set_summary_writer(self, summary_writer, summary_tensor):
+        self.train_model.summary_writer = summary_writer
+        self.train_model.summary_tensor = summary_tensor        
+        pass
+
+
 

@@ -13,6 +13,9 @@ try:
 except ImportError:
     MPI = None
 from baselines.ppo_moba.runner import Runner
+import baselines.common.misc_util as misc_util
+
+from baselines.common.tf_util import histo_summary
 
 
 def constfn(val):
@@ -95,6 +98,8 @@ def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=2
     # Get state_space and action_space
     ob_space = env.observation_space
     ac_space = env.action_space
+    hero_dir_skill_mask = env.envs[0].env.env.hero_dir_skill_mask
+    misc_util.set_hero_dir_skill_mask(hero_dir_skill_mask)
 
     # Calculate the batch_size
     nbatch = nenvs * nsteps
@@ -128,6 +133,14 @@ def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=2
     logger_dir = logger.get_dir()
     summary_writer = tf.summary.FileWriter(logger_dir, graph=session.graph)
 
+    #tf.summary.histogram("input_actions", model.A)
+    #tf.summary.histogram("input_obs", model.train_model.X) 
+
+    summary_tensor = tf.summary.merge_all()
+    model.set_summary_writer(summary_writer, summary_tensor)
+    
+
+
     # Start total timer
     tfirststart = time.perf_counter()
 
@@ -146,6 +159,13 @@ def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=2
 
         # Get minibatch
         obs, returns, masks, actions, values, neglogpacs, states, epinfos = runner.run() #pylint: disable=E0632
+        histo_summary(summary_writer, 'train_obs', obs, update)
+        histo_summary(summary_writer, 'train_actions', actions, update)
+        histo_summary(summary_writer, 'train_neglogpacs', neglogpacs, update)
+        histo_summary(summary_writer, 'train_values', values, update)
+        histo_summary(summary_writer, 'train_returns', returns, update)
+
+
         if eval_env is not None:
             eval_obs, eval_returns, eval_masks, eval_actions, eval_values, eval_neglogpacs, eval_states, eval_epinfos = eval_runner.run() #pylint: disable=E0632
 

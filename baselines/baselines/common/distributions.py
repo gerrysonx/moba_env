@@ -3,6 +3,7 @@ import numpy as np
 import baselines.common.tf_util as U
 from baselines.a2c.utils import fc
 from tensorflow.python.ops import math_ops
+import baselines.common.misc_util as misc_util
 
 class Pd(object):
     """
@@ -125,7 +126,7 @@ class MultiUnitMultiHeadPdType(PdType):
     def pdfromlatent(self, latent_vector, init_scale=1.0, init_bias=0.0):
         total_dims = latent_vector.get_shape()[1].value
         reshaped_input = tf.reshape(latent_vector, shape = [-1, self.unit_count, total_dims // self.unit_count])
-        pdparam = _multi_unit_multi_head_matching_fc(self.unit_count, reshaped_input, 'pi', self.multi_head_shape, init_scale=init_scale, init_bias=init_bias)
+        pdparam = _multi_unit_multi_head_matching_fc(self.unit_count, reshaped_input, 'multi_unit_multi_head', self.multi_head_shape, init_scale=init_scale, init_bias=init_bias)
         return self.pdfromflat(pdparam), pdparam
 
     def param_shape(self):
@@ -304,15 +305,22 @@ class MultiUnitMultiHeadPd(Pd):
                 # return tf.nn.sparse_softmax_cross_entropy_with_logits(logits=self.logits, labels=x)
                 # Note: we can't use sparse_softmax_cross_entropy_with_logits because
                 #       the implementation does not allow second-order derivatives...
+                _neglogp = 0
                 if x.dtype in {tf.uint8, tf.int32, tf.int64}:
                     # one-hot encoding
-                    x = tf.one_hot(x, logits.get_shape()[-1].value)
+                    # Need to change actin with id -1 to zero vector
+                    no_action_cond = tf.equal(x, -1)                  
+                    x_onehot = tf.one_hot(x, logits.get_shape()[-1].value)
+                    _neglogp_action = tf.nn.softmax_cross_entropy_with_logits_v2(logits=logits, labels=x_onehot)
+                    _neglogp = tf.where(no_action_cond, tf.cast(tf.zeros_like(x), tf.float32), _neglogp_action)
+                
                 else:
                     # already encoded
                     assert x.shape.as_list() == logits.shape.as_list()
-
-                _neglogp = tf.nn.softmax_cross_entropy_with_logits_v2(logits=logits, labels=x)
+                
+                # Action with id -1 will be set to zero for logp                
                 total_neglogp += _neglogp
+
         return total_neglogp
 
     def kl(self, other):
@@ -351,17 +359,51 @@ class MultiUnitMultiHeadPd(Pd):
                 total_entropy += _entropy
         return total_entropy
 
-    def sample(self):        
+    def sample(self):
+        skill_mask = misc_util.get_hero_dir_skill_mask()     
+        skill_mask_tensor = tf.constant(skill_mask, name='skill_mask_constant')   
         unit_actions = []
         unit_count = len(self.logits)
         for unit_idx in range(unit_count):
             multi_heads = self.logits[unit_idx]
             action_head = []
+            main_action_head = None
+            _skill_mask_per_hero = skill_mask_tensor[unit_idx]
             for head_idx in range(len(multi_heads)):
-                self_logits = self.logits[unit_idx][head_idx]        
-                u = tf.random_uniform(tf.shape(self_logits), dtype=self_logits.dtype)
-                action_id = tf.argmax(self_logits - tf.log(-tf.log(u)), axis=-1)
+                self_logits = self.logits[unit_idx][head_idx]
+                action_id = tf.multinomial(self_logits, 1)
+                action_id = action_id[:, 0]
+                
+                #action_id = tf.argmax(self_logits - tf.log(-tf.log(u)), axis=-1)
+                # Need to change action id according main action id and hero_skill dir type
+                if 0 == head_idx:
+                    main_action_head = action_id
+                else:
+                    # Change action id according to main action head
+                    stay_mask_cond = tf.equal(main_action_head, 0)
+                    move_mask_cond = tf.equal(main_action_head, 1)
+                    normal_attack_mask_cond = tf.equal(main_action_head, 2)
+                    skill_attack_mask_cond = tf.greater_equal(main_action_head, 3)
+                    
+
+                    action_id = tf.where(stay_mask_cond, -1 * tf.ones_like(action_id), action_id)
+                    action_id = tf.where(normal_attack_mask_cond, -1 * tf.ones_like(action_id), action_id)
+                    if 1 == head_idx:
+                        # Move dir               
+                        action_id = tf.where(move_mask_cond, action_id, -1 * tf.ones_like(action_id))
+                        action_id = tf.where(skill_attack_mask_cond, -1 * tf.ones_like(action_id), action_id)
+                    else:
+                        # Skill dir                        
+                        bigger_action_id = tf.where(skill_attack_mask_cond, main_action_head, 3 * tf.ones_like(main_action_head))
+                        action_id_to_skill_idx = tf.where(skill_attack_mask_cond, bigger_action_id - 3, tf.zeros_like(action_id))
+                        dir_skill_check = tf.nn.embedding_lookup(_skill_mask_per_hero, action_id_to_skill_idx)
+                        skill_and_dir_check = tf.logical_and(dir_skill_check, skill_attack_mask_cond)
+                        
+                        action_id = tf.where(skill_and_dir_check, action_id, -1 * tf.ones_like(action_id))
+                        action_id = tf.where(move_mask_cond, -1 * tf.ones_like(action_id), action_id)
+                    pass
                 action_head.append(action_id)
+
             action_head_arr = tf.stack(action_head, axis = 1)
             unit_actions.append(action_head_arr)
         # Shall be converted to batch, unit_id, head_id
@@ -481,25 +523,41 @@ def _matching_fc(tensor, name, size, init_scale, init_bias):
 
 # Shall return the log of policy head
 def _multi_unit_multi_head_matching_fc(unit_count, hidden_tensor, scope, output_shape, init_scale, init_bias):
+    my_initializer = tf.contrib.layers.xavier_initializer()
+
+    batch_count = hidden_tensor.get_shape()[0].value
+    train_switch = True
+    if 1 != batch_count:
+        train_switch = True   
+
     hidden_size = hidden_tensor.get_shape()[-1].value
     all_logits_arr = []
     with tf.variable_scope(scope):
-        for idx in range(unit_count):
+        for unit_idx in range(unit_count):
             logits_arr = []
-            unit_hidden_tensor = hidden_tensor[:, idx, ...]
+            unit_hidden_tensor = hidden_tensor[:, unit_idx, ...]
             
             #self.a_space_keys
             for idx in range(len(output_shape)):
+
+                if 1 != batch_count:
+                    tf.summary.histogram("multi_head_fc_{}_{}_input".format(unit_idx, idx), unit_hidden_tensor)
+
                 output_num = output_shape[idx]
                 # actor network
-                weight_layer_name = 'multi_head_fc_W_{}'.format(idx)
-                bias_layer_name = 'multi_head_fc_b_{}'.format(idx)
+                weight_layer_name = 'multi_head_fc_{}_{}_W'.format(unit_idx, idx)
+                bias_layer_name = 'multi_head_fc_{}_{}_b'.format(unit_idx, idx)
 
-                fc_W_a = tf.get_variable(shape=[hidden_size, output_num], name=weight_layer_name)
-                fc_b_a = tf.get_variable(shape=[output_num], name=bias_layer_name)
+                fc_W_a = tf.get_variable(shape=[hidden_size, output_num], name=weight_layer_name, trainable=train_switch, initializer = my_initializer)
+                fc_b_a = tf.get_variable(shape=[output_num], name=bias_layer_name, trainable=train_switch, initializer=my_initializer)
                 a_logits = tf.matmul(unit_hidden_tensor, fc_W_a)+fc_b_a
 
                 logits_arr.append(a_logits)
+
+                if 1 != batch_count:
+                    tf.summary.histogram(weight_layer_name, fc_W_a)
+                    tf.summary.histogram(bias_layer_name, fc_b_a)
+                    tf.summary.histogram("multi_head_fc_{}_{}_output_logits".format(unit_idx, idx), a_logits)
 
             all_logits_arr.append(logits_arr)
 
