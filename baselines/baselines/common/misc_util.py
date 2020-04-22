@@ -241,3 +241,12 @@ def pickle_load(path, compression=False):
     else:
         with open(path, "rb") as f:
             return pickle.load(f)
+
+g_hero_dir_skill_mask = None
+def set_hero_dir_skill_mask(skill_mask):
+    global g_hero_dir_skill_mask
+    g_hero_dir_skill_mask = skill_mask
+
+def get_hero_dir_skill_mask():    
+    return g_hero_dir_skill_mask
+

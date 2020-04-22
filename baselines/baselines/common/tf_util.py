@@ -441,3 +441,32 @@ def launch_tensorboard_in_background(log_dir):
     '''
     import subprocess
     subprocess.Popen(['tensorboard', '--logdir', log_dir])
+
+def scalar_summary(summary_writer, tag_val, values, step):
+    summary0 = tf.Summary()
+    summary0.value.add(tag=tag_val, simple_value=np.mean(values))
+    summary_writer.add_summary(summary0, step)    
+    pass
+
+def histo_summary(summary_writer, tag, values, step, bins=1000):
+        """Adds histogram to the tensorboard"""
+
+        counts, bin_edges = np.histogram(values, bins=bins)
+
+        hist = tf.HistogramProto()
+        hist.min = float(np.min(values))
+        hist.max = float(np.max(values))
+        hist.num = int(np.prod(values.shape))
+        hist.sum = float(np.sum(values))
+        hist.sum_squares = float(np.sum(values ** 2))
+
+        bin_edges = bin_edges[1:]
+
+        for edge in bin_edges:
+            hist.bucket_limit.append(edge)
+        for c in counts:
+            hist.bucket.append(c)
+
+        summary = tf.Summary(value=[tf.Summary.Value(tag=tag, histo=hist)])
+        summary_writer.add_summary(summary, step)    
+        summary_writer.flush()     

@@ -103,73 +103,77 @@ def mlp(num_layers=2, num_hidden=64, activation=tf.tanh, layer_norm=False):
     return network_fn
 
 g_embed_hero_id = False
-def _init_single_actor_net(scope, input_pl, num_layers, layer_size, trainable=True):        
+def _init_single_actor_net(input_pl, num_layers, layer_size, trainable=True):        
     my_initializer = tf.contrib.layers.xavier_initializer()
-    with tf.variable_scope(scope, reuse=tf.AUTO_REUSE):
-        flat_output_size = input_pl.get_shape()[1].value
-        flat_output = tf.reshape(input_pl, [-1, flat_output_size], name='flat_output')
 
-        # Add hero one-hot vector embedding
-        if g_embed_hero_id:
-            input_state = flat_output[:,:STATE_SIZE]
-            input_hero_id = flat_output[:,STATE_SIZE:STATE_SIZE + 1]
-            input_hero_one_hot = tf.one_hot(input_hero_id, ONE_HOT_SIZE)
-            fc_W_embed = tf.get_variable(shape=[ONE_HOT_SIZE, EMBED_SIZE], name='fc_W_embed',
-                trainable=trainable, initializer=my_initializer)
+    flat_output_size = input_pl.get_shape()[1].value
+    batch_size = input_pl.get_shape()[0].value
+    flat_output = tf.reshape(input_pl, [-1, flat_output_size], name='single_actor_flat_input')
 
-            output_embedding = tf.matmul(input_hero_one_hot, fc_W_embed)
-
-            input_after_embed = tf.concat([input_state, output_embedding], -1)
-            fc_W_1 = tf.get_variable(shape=[EMBED_SIZE + STATE_SIZE, layer_size], name='fc_W_1',
-                trainable=trainable, initializer=my_initializer)
-
-            fc_b_1 = tf.get_variable(shape=[layer_size], name='fc_b_1',
-                trainable=trainable, initializer=my_initializer)                    
-
-            tf.summary.histogram("fc_W_1", fc_W_1)
-            tf.summary.histogram("fc_b_1", fc_b_1)
-
-            output1 = tf.nn.relu(tf.matmul(input_after_embed, fc_W_1) + fc_b_1)
-        else:
-            fc_W_1 = tf.get_variable(shape=[flat_output_size, layer_size], name='fc_W_1',
-                trainable=trainable, initializer=my_initializer)
-
-            fc_b_1 = tf.get_variable(shape=[layer_size], name='fc_b_1',
-                trainable=trainable, initializer=my_initializer)
-
-            tf.summary.histogram("fc_W_1", fc_W_1)
-            tf.summary.histogram("fc_b_1", fc_b_1)
-
-            output1 = tf.nn.relu(tf.matmul(flat_output, fc_W_1) + fc_b_1)                
-
-        fc_W_2 = tf.get_variable(shape=[layer_size, layer_size], name='fc_W_2',
+    # Add hero one-hot vector embedding
+    if g_embed_hero_id:
+        input_state = flat_output[:,:STATE_SIZE]
+        input_hero_id = flat_output[:,STATE_SIZE:STATE_SIZE + 1]
+        input_hero_one_hot = tf.one_hot(input_hero_id, ONE_HOT_SIZE)
+        fc_W_embed = tf.get_variable(shape=[ONE_HOT_SIZE, EMBED_SIZE], name='fc_W_embed',
             trainable=trainable, initializer=my_initializer)
 
-        fc_b_2 = tf.get_variable(shape=[layer_size], name='fc_b_2',
+        output_embedding = tf.matmul(input_hero_one_hot, fc_W_embed)
+
+        input_after_embed = tf.concat([input_state, output_embedding], -1)
+        fc_W_1 = tf.get_variable(shape=[EMBED_SIZE + STATE_SIZE, layer_size], name='fc_W_1',
             trainable=trainable, initializer=my_initializer)
 
-        tf.summary.histogram("fc_W_2", fc_W_2)
-        tf.summary.histogram("fc_b_2", fc_b_2)
+        fc_b_1 = tf.get_variable(shape=[layer_size], name='fc_b_1',
+            trainable=trainable, initializer=my_initializer)                    
 
-        output2 = tf.nn.relu(tf.matmul(output1, fc_W_2) + fc_b_2)
+        tf.summary.histogram("fc_W_1", fc_W_1)
+        tf.summary.histogram("fc_b_1", fc_b_1)
 
-
-        fc_W_3 = tf.get_variable(shape=[layer_size, layer_size], name='fc_W_3',
+        output1 = tf.nn.relu(tf.matmul(input_after_embed, fc_W_1) + fc_b_1)
+    else:
+        fc_W_1 = tf.get_variable(shape=[flat_output_size, layer_size], name='single_actor_weight_1_layer',
             trainable=trainable, initializer=my_initializer)
 
-        fc_b_3 = tf.get_variable(shape=[layer_size], name='fc_b_3',
-            trainable=trainable, initializer=my_initializer)
+        fc_b_1 = tf.get_variable(shape=[layer_size], name='single_actor_bias_1_layer',
+            trainable=trainable, initializer=tf.constant_initializer(0))
 
-        tf.summary.histogram("fc_W_3", fc_W_3)
-        tf.summary.histogram("fc_b_3", fc_b_3)
+        tf.summary.histogram("single_actor_weight_1_layer", fc_W_1)
+        tf.summary.histogram("single_actor_bias_1_layer", fc_b_1)
 
-        output3 = tf.nn.relu(tf.matmul(output2, fc_W_3) + fc_b_3)
-        # return hidden state
-        return output3
+        output1 = tf.nn.relu(tf.matmul(flat_output, fc_W_1) + fc_b_1)  
+        if batch_size != 1:
+            tf.summary.histogram("single_actor_output1", output1) 
+        return output1      
+
+    fc_W_2 = tf.get_variable(shape=[layer_size, layer_size], name='single_actor_weight_2_layer',
+        trainable=trainable, initializer=my_initializer)
+
+    fc_b_2 = tf.get_variable(shape=[layer_size], name='single_actor_bias_2_layer',
+        trainable=trainable, initializer=my_initializer)
+
+    tf.summary.histogram("single_actor_weight_2_layer", fc_W_2)
+    tf.summary.histogram("single_actor_bias_2_layer", fc_b_2)
+
+    output2 = tf.nn.relu(tf.matmul(output1, fc_W_2) + fc_b_2)
+
+
+    fc_W_3 = tf.get_variable(shape=[layer_size, layer_size], name='single_actor_weight_3_layer',
+        trainable=trainable, initializer=my_initializer)
+
+    fc_b_3 = tf.get_variable(shape=[layer_size], name='single_actor_bias_3_layer',
+        trainable=trainable, initializer=my_initializer)
+
+    tf.summary.histogram("single_actor_weight_3_layer", fc_W_3)
+    tf.summary.histogram("single_actor_bias_3_layer", fc_b_3)
+
+    output3 = tf.nn.relu(tf.matmul(output2, fc_W_3) + fc_b_3)
+
+    return output3
 
 
 @register("multi_unit_mlp")
-def multi_unit_mlp(num_layers=2, num_hidden=64):
+def multi_unit_mlp(num_layers=2, num_hidden=128):
     """
     Stack of fully-connected layers to be used in a policy / q-function approximator
 
@@ -188,6 +192,11 @@ def multi_unit_mlp(num_layers=2, num_hidden=64):
     function that builds fully connected network with a given input tensor / placeholder
     """
     def network_fn(X):
+        # return hidden state
+        batch_count = X.get_shape()[0].value
+        if 1 != batch_count:
+            tf.summary.histogram("hidden_input_train", X)
+
         unit_count = X.get_shape()[1].value
 
         hidden_state_arr = []
@@ -195,17 +204,25 @@ def multi_unit_mlp(num_layers=2, num_hidden=64):
         for actor_idx in range(unit_count):
             single_unit_input = X[:,actor_idx, ...]
             # Share weights
-            hidden_state = _init_single_actor_net('single_unit_backbone', single_unit_input, num_layers, num_hidden, trainable = True)
+            train_switch = True
+            if 1 != batch_count:
+                train_switch = True
+
+            hidden_state = _init_single_actor_net(single_unit_input, num_layers, num_hidden, trainable = train_switch)
 
             hidden_state_arr.append(hidden_state)
 
-        concated_tensor = tf.concat(hidden_state_arr, -1)
+        concated_tensor = tf.stack(hidden_state_arr, axis = 1)
+        # return hidden state
+        if 1 != batch_count:
+            tf.summary.histogram("hidden_output_train", concated_tensor)
+
         return concated_tensor
 
     return network_fn    
 
 @register("multi_unit_mlp_lstm")
-def multi_unit_mlp_lstm(num_layers=2, num_hidden=64):
+def multi_unit_mlp_lstm(num_layers=2, num_hidden=128):
     """
     Stack of fully-connected layers to be used in a policy / q-function approximator
 

@@ -1,4 +1,5 @@
 import tensorflow as tf
+import numpy as np
 from baselines.common import tf_util
 from baselines.a2c.utils import fc
 from baselines.common.distributions import make_pdtype
@@ -54,14 +55,39 @@ class PolicyWithValue(object):
         # Calculate the neg log of our probability
         self.neglogp = self.pd.neglogp(self.action)
         self.sess = sess or tf.get_default_session()
-
+        self.vf_latent = vf_latent
         if estimate_q:
             assert isinstance(env.action_space, gym.spaces.Discrete)
             self.q = fc(vf_latent, 'q', env.action_space.n)
             self.vf = self.q
         else:
-            self.vf = fc(vf_latent, 'vf', 1)
+            # value network
+            batch_count = vf_latent.get_shape()[0].value
+            train_switch = True
+            if 1 != batch_count:
+                train_switch = True
+
+            my_initializer = tf.contrib.layers.xavier_initializer()
+            nin = vf_latent.get_shape()[1].value
+            fc1_W_v = tf.get_variable(shape=[nin, 1], name='value_head_weight',
+                trainable=train_switch, initializer=my_initializer)
+
+            fc1_b_v = tf.get_variable(shape=[1], name='value_head_bias',
+                trainable=train_switch, initializer=tf.constant_initializer(0))
+
+            tf.summary.histogram("value_head_weight", fc1_W_v)
+            tf.summary.histogram("value_head_bias", fc1_b_v)
+
+            self.vf = tf.matmul(vf_latent, fc1_W_v) + fc1_b_v
+
+            #self.vf = fc(vf_latent, 'vf_weights', 1)
+            # gerry_wonder
             self.vf = self.vf[:,0]
+
+        self.summary_tensor = None
+        self.summary_writer = None
+        self.step_id = 0
+       
 
     def _evaluate(self, variables, observation, **extra_feed):
         sess = self.sess
@@ -90,7 +116,9 @@ class PolicyWithValue(object):
         (action, value estimate, next state, negative log likelihood of the action under current policy parameters) tuple
         """
 
+        self.step_id += 1
         a, v, state, neglogp = self._evaluate([self.action, self.vf, self.state, self.neglogp], observation, **extra_feed)
+              
         if state.size == 0:
             state = None
         return a, v, state, neglogp
@@ -138,7 +166,7 @@ def build_policy(env, policy_network, value_network=None,  normalize_observation
 
         encoded_x = encode_observation(ob_space, encoded_x)
 
-        with tf.variable_scope('pi', reuse=tf.AUTO_REUSE):
+        with tf.variable_scope('policy_front', reuse=tf.AUTO_REUSE):
             policy_latent = policy_network(encoded_x)
             if isinstance(policy_latent, tuple):
                 policy_latent, recurrent_tensors = policy_latent
@@ -161,7 +189,7 @@ def build_policy(env, policy_network, value_network=None,  normalize_observation
             else:
                 assert callable(_v_net)
 
-            with tf.variable_scope('vf', reuse=tf.AUTO_REUSE):
+            with tf.variable_scope('vf_scope', reuse=tf.AUTO_REUSE):
                 # TODO recurrent architectures are not supported with value_network=copy yet
                 vf_latent = _v_net(encoded_x)
 
