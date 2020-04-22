@@ -39,10 +39,11 @@ g_dir_skill_mask = []
   
 
 NUM_FRAME_PER_ACTION = 4
-BATCH_SIZE = 64 * 8
+BATCH_SCALE = 1
+BATCH_SIZE = 64 * BATCH_SCALE
 EPOCH_NUM = 4
 LEARNING_RATE = 3e-3
-TIMESTEPS_PER_ACTOR_BATCH = 2048 * 8
+TIMESTEPS_PER_ACTOR_BATCH = 2048 * BATCH_SCALE
 GAMMA = 0.99
 LAMBDA = 0.95
 NUM_STEPS = 5000
@@ -71,7 +72,34 @@ g_per_alpha = 0.6
 g_is_beta_start = 0.4
 g_is_beta_end = 1
 
+def scalar_summary(summary_writer, tag_val, values, step):
+    summary0 = tf.Summary()
+    summary0.value.add(tag=tag_val, simple_value=np.mean(values))
+    summary_writer.add_summary(summary0, step)    
+    pass
 
+def histo_summary(summary_writer, tag, values, step, bins=1000):
+        """Adds histogram to the tensorboard"""
+
+        counts, bin_edges = np.histogram(values, bins=bins)
+
+        hist = tf.HistogramProto()
+        hist.min = float(np.min(values))
+        hist.max = float(np.max(values))
+        hist.num = int(np.prod(values.shape))
+        hist.sum = float(np.sum(values))
+        hist.sum_squares = float(np.sum(values ** 2))
+
+        bin_edges = bin_edges[1:]
+
+        for edge in bin_edges:
+            hist.bucket_limit.append(edge)
+        for c in counts:
+            hist.bucket.append(c)
+
+        summary = tf.Summary(value=[tf.Summary.Value(tag=tag, histo=hist)])
+        summary_writer.add_summary(summary, step)    
+        summary_writer.flush()     
 
 def stable_softmax(logits, name): 
     a = logits - tf.reduce_max(logits, axis=-1, keepdims=True) 
@@ -99,6 +127,8 @@ class Environment(object):
 
   def reset(self):
     self._screen = self.env.reset()
+    for idx in range(C):
+        self.obs[..., idx] = self._screen
 
     return self.obs
 
@@ -252,6 +282,8 @@ class MultiPlayerAgent():
         self._init_nn()
         self._init_op()
 
+        self.train_writer = None
+
         self.session.run(tf.global_variables_initializer())        
         
 
@@ -378,6 +410,9 @@ class MultiPlayerAgent():
     def _init_single_actor_net(self, scope, input_pl, trainable=True):        
         my_initializer = tf.contrib.layers.xavier_initializer()
         with tf.variable_scope(scope, reuse=tf.AUTO_REUSE):
+            if trainable:
+                tf.summary.histogram("hidde input:", input_pl)
+                
             flat_output_size = STATE_SIZE*C
             flat_output = tf.reshape(input_pl, [-1, flat_output_size], name='flat_output')
 
@@ -436,6 +471,9 @@ class MultiPlayerAgent():
             tf.summary.histogram("fc_b_3", fc_b_3)
 
             output3 = tf.nn.relu(tf.matmul(output2, fc_W_3) + fc_b_3)
+            if trainable:
+                tf.summary.histogram("hidde output:", output3)
+
             a_logits_arr = []
             a_prob_arr = []
             #self.a_space_keys
@@ -574,13 +612,18 @@ class MultiPlayerAgent():
 
         return action_arr, value_arr
 
-    def learn_one_traj(self, timestep, ob, ac, atarg, tdlamret, lens, rets, unclipped_rets, train_writer):
+    def learn_one_traj(self, timestep, ob, ac, atarg, tdlamret, lens, rets, unclipped_rets):
         self.session.run(self.update_policy_net_op)
 
         lrmult = max(1.0 - float(timestep) / self.num_total_steps, .0)
 
         Entropy_list = []
         KL_distance_list = []
+        c_loss_list = []
+        a_loss_list = []
+
+        summary_new_val = None
+        summary_old_val = None
 
         for _idx in range(EPOCH_NUM):
             indices = np.random.permutation(len(ob))
@@ -588,7 +631,8 @@ class MultiPlayerAgent():
             for i in range(inner_loop_count):
                 temp_indices = indices[i*BATCH_SIZE : (i+1)*BATCH_SIZE]
                 # Minimize loss.
-                _, entropy, kl_distance, summary_new_val, summary_old_val = self.session.run([self.optimizer, self.policy_entropy, self.kl_distance, self.summary_new, self.summary_old], {
+                _, entropy, kl_distance, summary_new_val, summary_old_val, c_loss, a_loss = self.session.run([self.optimizer, 
+                self.policy_entropy, self.kl_distance, self.summary_new, self.summary_old, self.c_loss_func, self.a_loss_func], {
                     self.lrmult : lrmult,
                     self.adv: atarg[temp_indices],
                     self.multi_s: ob[temp_indices],
@@ -598,6 +642,18 @@ class MultiPlayerAgent():
 
                 Entropy_list.append(entropy)
                 KL_distance_list.append(kl_distance)
+                c_loss_list.append(c_loss)
+                a_loss_list.append(a_loss)
+
+        self.train_writer.add_summary(summary_new_val, timestep)
+        self.train_writer.add_summary(summary_old_val, timestep)
+
+        scalar_summary(self.train_writer, 'c_loss_raw', c_loss_list, timestep)
+        scalar_summary(self.train_writer, 'a_loss_raw', a_loss_list, timestep)
+        scalar_summary(self.train_writer, 'a_entropy_raw', Entropy_list, timestep)
+
+        histo_summary(self.train_writer, 'tdlamret_raw', tdlamret, timestep)
+        histo_summary(self.train_writer, 'atarg_raw', atarg, timestep)
 
         self.lenbuffer.extend(lens)
         self.rewbuffer.extend(rets)
@@ -646,7 +702,7 @@ def InitMetaConfig(scene_id):
 def GetDataGeneratorAndTrainer(scene_id):   
     InitMetaConfig(scene_id)
     session = tf.Session()
-    action_space_map = {'action':7, 'move':8, 'skill':8}
+    action_space_map = {'action':3, 'move':8, 'skill':8}
     a_space_keys = ['action', 'move', 'skill']
     agent = MultiPlayerAgent(session, action_space_map, a_space_keys)
     data_generator = MultiPlayer_Data_Generator(agent)
@@ -659,6 +715,7 @@ def learn(scene_id, num_steps=NUM_STEPS):
     agent, data_generator, session = GetDataGeneratorAndTrainer(scene_id)
     root_folder = os.path.split(os.path.abspath(__file__))[0]
     train_writer = tf.summary.FileWriter('{}/../summary_log_gerry'.format(root_folder), graph=tf.get_default_graph()) 
+    agent.train_writer = train_writer
 
     saver = tf.train.Saver(max_to_keep=1)
     if False == g_start_anew:
@@ -672,7 +729,7 @@ def learn(scene_id, num_steps=NUM_STEPS):
         ob, ac, atarg, tdlamret, seg = data_generator.get_one_step_data()
         lens, rets, unclipped_rets = np.array(seg["ep_lens"]), np.array(seg["ep_rets"]), np.array(seg["ep_unclipped_rets"])
 
-        entropy, kl_distance = agent.learn_one_traj(timestep, ob, ac, atarg, tdlamret, lens, rets, unclipped_rets, train_writer)
+        entropy, kl_distance = agent.learn_one_traj(timestep, ob, ac, atarg, tdlamret, lens, rets, unclipped_rets)
 
         max_rew = max(max_rew, np.max(agent.unclipped_rewbuffer))
         if (timestep+1) % _save_frequency == 0:
@@ -685,11 +742,11 @@ def learn(scene_id, num_steps=NUM_STEPS):
         
         summary0 = tf.Summary()
         summary0.value.add(tag='EpLenMean', simple_value=np.mean(agent.lenbuffer))
-        train_writer.add_summary(summary0, g_step)
+        train_writer.add_summary(summary0, timestep)
 
         summary1 = tf.Summary()
         summary1.value.add(tag='UnClippedEpRewMean', simple_value=np.mean(agent.unclipped_rewbuffer))
-        train_writer.add_summary(summary1, g_step)
+        train_writer.add_summary(summary1, timestep)
 
         print('Timestep:', timestep,
             "\tEpLenMean:", '%.3f'%np.mean(agent.lenbuffer),
