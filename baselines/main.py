@@ -8,7 +8,7 @@ os.environ['OPENAI_LOGDIR'] = '../_logdar/'
 if __name__ == '__main__':
     
     run.main(['main.py', '--alg=ppo_moba', '--env=gym_moba:moba-multiplayer-v0', 
-    '--network=multi_unit_mlp', '--num_timesteps=5e6', '--scene_id=12', '--is_train'])
+    '--network=multi_unit_mlp', '--num_timesteps=1e7', '--scene_id=13', '--is_train'])
     
     '''
     run.main(['main.py', '--alg=ppo2', '--env=Breakout-v0', 

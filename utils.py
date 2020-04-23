@@ -1,4 +1,4 @@
-import os
+import os,time
 import numpy as np
 import tensorflow as tf
 from collections import deque
@@ -99,3 +99,25 @@ def lstm(xs, is_inference, hidden_s, mask_s, scope, nh, cell_count, my_initializ
 
     lstm_output, s = tf.cond(tf.equal(is_inference, True), f1, f2)
     return lstm_output, s
+
+def restore_from_ckpt(saver, session, ckpt_no):
+    root_folder = os.path.split(os.path.abspath(__file__))[0] 
+
+    if 0 == ckpt_no:
+        return
+
+    while True:
+        model_file = '{}/../ckpt/mnist.ckpt-{}'.format(root_folder, ckpt_no)
+        try:            
+            saver.restore(session, model_file)
+            print('restore file success:{}'.format(model_file))
+            break
+        except:
+            print('restore file failed:{}, continue to try...'.format(model_file))
+            time.sleep(30)
+            continue
+
+def LoadModel(session, step):
+    saver = tf.train.Saver()
+    restore_from_ckpt(saver, session, step)
+    pass    

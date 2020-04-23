@@ -159,11 +159,13 @@ def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=2
 
         # Get minibatch
         obs, returns, masks, actions, values, neglogpacs, states, epinfos = runner.run() #pylint: disable=E0632
+        '''
         histo_summary(summary_writer, 'train_obs', obs, update)
         histo_summary(summary_writer, 'train_actions', actions, update)
         histo_summary(summary_writer, 'train_neglogpacs', neglogpacs, update)
         histo_summary(summary_writer, 'train_values', values, update)
         histo_summary(summary_writer, 'train_returns', returns, update)
+        '''
 
 
         if eval_env is not None:

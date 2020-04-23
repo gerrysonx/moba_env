@@ -737,27 +737,7 @@ def GetDataGeneratorAndTrainer(scene_id):
     data_generator = Data_Generator(agent)
     return agent, data_generator, session
 
-def restore_from_ckpt(saver, session, ckpt_no):
-    root_folder = os.path.split(os.path.abspath(__file__))[0] 
 
-    if 0 == ckpt_no:
-        return
-
-    while True:
-        model_file = '{}/../ckpt/mnist.ckpt-{}'.format(root_folder, ckpt_no)
-        try:            
-            saver.restore(session, model_file)
-            print('restore file success:{}'.format(model_file))
-            break
-        except:
-            print('restore file failed:{}, continue to try...'.format(model_file))
-            time.sleep(30)
-            continue
-
-def LoadModel(session, step):
-    saver = tf.train.Saver()
-    restore_from_ckpt(saver, session, step)
-    pass
 
 def learn(num_steps=NUM_STEPS):
     global g_step

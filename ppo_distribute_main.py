@@ -21,6 +21,8 @@ if __name__=='__main__':
     my_env['TF_CPP_MIN_LOG_LEVEL'] = '3'
     
     global_step = 0
+    scene_id = 13
+    
     time_stamp = int(time.time()*1000)
     train_log_full_path = '{}/../log/train_{}.log'.format(root_folder, time_stamp)
     file_handle = open(train_log_full_path, 'wb')

@@ -116,8 +116,8 @@ class Environment(object):
     self.random_start = RANDOM_START_STEPS
     self.obs = np.zeros(shape=(HERO_COUNT, STATE_SIZE, C), dtype=np.float)
 
-  def get_action_number(self):
-    return 9
+  def get_action_space(self):
+    return self.env.action_space
 
   def step(self, action):
     self._screen, self.reward, self.terminal, info = self.env.step(action)
@@ -134,8 +134,8 @@ class Environment(object):
 
 
 class MultiPlayer_Data_Generator():
-    def __init__(self, agent):
-        self.env = Environment()
+    def __init__(self, agent, env):
+        self.env = env
         self.agent = agent
         self.timesteps_per_actor_batch = TIMESTEPS_PER_ACTOR_BATCH
         self.seg_gen = self.traj_segment_generator(horizon=self.timesteps_per_actor_batch)
@@ -238,10 +238,10 @@ class MultiPlayer_Data_Generator():
             print('atarg std too small')
         atarg = (atarg - atarg.mean()) / atarg.std() # standardized advantage function estimate
         seg["std_atvtg"] = atarg
-        return ob, ac, atarg, tdlamret, seg
+        return seg
 
 class MultiPlayerAgent():
-    def __init__(self, session, a_space, a_space_keys, **options):       
+    def __init__(self, session, env):       
         self.importance_sample_arr = np.ones([TIMESTEPS_PER_ACTOR_BATCH], dtype=np.float)
         self.session = session
         # Here we get 4 action output heads
@@ -259,9 +259,8 @@ class MultiPlayerAgent():
         # 2 --- Move direction, 8 directions, 0-7
         # 3 --- Skill direction, 8 directions, 0-7
         # 4 --- Skill target area, 0-8
-        self.a_space = a_space
-        self.a_space_keys = a_space_keys
-        self.policy_head_num = len(a_space)
+        self.a_space = env.get_action_space().shape[1:]
+        self.policy_head_num = len(self.a_space)
 
         self.input_dims = STATE_SIZE
         self.learning_rate = LEARNING_RATE
@@ -477,13 +476,13 @@ class MultiPlayerAgent():
             a_logits_arr = []
             a_prob_arr = []
             #self.a_space_keys
-            for k in self.a_space_keys:
+            for k in range(self.policy_head_num):
                 output_num = self.a_space[k]
                 # actor network
-                weight_layer_name = 'fc_W_{}'.format(k)
-                bias_layer_name = 'fc_b_{}'.format(k)
-                logit_layer_name = '{}_logits'.format(k)
-                head_layer_name = '{}_head'.format(k)
+                weight_layer_name = 'policy_head_fc_W_{}'.format(k)
+                bias_layer_name = 'policy_head_fc_b_{}'.format(k)
+                logit_layer_name = 'policy_head_{}_logits'.format(k)
+                head_layer_name = 'policy_head_{}_head'.format(k)
 
                 fc_W_a = tf.get_variable(shape=[self.layer_size, output_num], name=weight_layer_name,
                     trainable=trainable, initializer=my_initializer)
@@ -612,7 +611,10 @@ class MultiPlayerAgent():
 
         return action_arr, value_arr
 
-    def learn_one_traj(self, timestep, ob, ac, atarg, tdlamret, lens, rets, unclipped_rets):
+    def learn_one_traj(self, timestep, seg):
+        lens, rets, unclipped_rets = np.array(seg["ep_lens"]), np.array(seg["ep_rets"]), np.array(seg["ep_unclipped_rets"])
+        ob, ac, atarg, tdlamret = np.array(seg["ob"]), np.array(seg["ac"]), np.array(seg["std_atvtg"]), np.array(seg["tdlamret"])
+
         self.session.run(self.update_policy_net_op)
 
         lrmult = max(1.0 - float(timestep) / self.num_total_steps, .0)
@@ -702,10 +704,13 @@ def InitMetaConfig(scene_id):
 def GetDataGeneratorAndTrainer(scene_id):   
     InitMetaConfig(scene_id)
     session = tf.Session()
-    action_space_map = {'action':3, 'move':8, 'skill':8}
-    a_space_keys = ['action', 'move', 'skill']
-    agent = MultiPlayerAgent(session, action_space_map, a_space_keys)
-    data_generator = MultiPlayer_Data_Generator(agent)
+    env = Environment()
+    agent = MultiPlayerAgent(session, env)
+    root_folder = os.path.split(os.path.abspath(__file__))[0]
+    train_writer = tf.summary.FileWriter('{}/../summary_log_gerry'.format(root_folder), graph=tf.get_default_graph()) 
+    agent.train_writer = train_writer
+
+    data_generator = MultiPlayer_Data_Generator(agent, env)
     return agent, data_generator, session
 
 def learn(scene_id, num_steps=NUM_STEPS):
@@ -713,9 +718,7 @@ def learn(scene_id, num_steps=NUM_STEPS):
     g_step = 0
 
     agent, data_generator, session = GetDataGeneratorAndTrainer(scene_id)
-    root_folder = os.path.split(os.path.abspath(__file__))[0]
-    train_writer = tf.summary.FileWriter('{}/../summary_log_gerry'.format(root_folder), graph=tf.get_default_graph()) 
-    agent.train_writer = train_writer
+
 
     saver = tf.train.Saver(max_to_keep=1)
     if False == g_start_anew:
@@ -726,10 +729,9 @@ def learn(scene_id, num_steps=NUM_STEPS):
     _save_frequency = 1
     max_rew = -1000000
     for timestep in range(num_steps):
-        ob, ac, atarg, tdlamret, seg = data_generator.get_one_step_data()
-        lens, rets, unclipped_rets = np.array(seg["ep_lens"]), np.array(seg["ep_rets"]), np.array(seg["ep_unclipped_rets"])
+        seg = data_generator.get_one_step_data()        
 
-        entropy, kl_distance = agent.learn_one_traj(timestep, ob, ac, atarg, tdlamret, lens, rets, unclipped_rets)
+        entropy, kl_distance = agent.learn_one_traj(timestep, seg)
 
         max_rew = max(max_rew, np.max(agent.unclipped_rewbuffer))
         if (timestep+1) % _save_frequency == 0:
@@ -742,11 +744,11 @@ def learn(scene_id, num_steps=NUM_STEPS):
         
         summary0 = tf.Summary()
         summary0.value.add(tag='EpLenMean', simple_value=np.mean(agent.lenbuffer))
-        train_writer.add_summary(summary0, timestep)
+        agent.train_writer.add_summary(summary0, timestep)
 
         summary1 = tf.Summary()
         summary1.value.add(tag='UnClippedEpRewMean', simple_value=np.mean(agent.unclipped_rewbuffer))
-        train_writer.add_summary(summary1, timestep)
+        agent.train_writer.add_summary(summary1, timestep)
 
         print('Timestep:', timestep,
             "\tEpLenMean:", '%.3f'%np.mean(agent.lenbuffer),
@@ -758,8 +760,7 @@ def learn(scene_id, num_steps=NUM_STEPS):
 
 def play_game():
     session = tf.Session()
-    action_space_map = {'action':7, 'move':8, 'skill':8}
-    a_space_keys = ['action', 'move', 'skill']
+
     agent = Agent(session, action_space_map, a_space_keys)
 
     saver = tf.train.Saver(max_to_keep=1)
@@ -834,7 +835,7 @@ def GetSkillTypes(skill_cfg_file_path, hero_skills):
 
 if __name__=='__main__':
 
-    scene_id = 12
+    scene_id = 13
     my_env = os.environ
     my_env['moba_env_is_train'] = 'True'
     my_env['moba_env_scene_id'] = '{}'.format(scene_id)

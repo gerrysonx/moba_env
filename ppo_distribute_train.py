@@ -17,7 +17,7 @@ import time
 import math
 import pickle
 import json
-from ppo_lstm import GetDataGeneratorAndTrainer
+from ppo import GetDataGeneratorAndTrainer
 
 
 g_step = 0
@@ -72,7 +72,7 @@ def get_one_step_data(timestep, work_thread_count):
     seg = {}
     seg["ob"] = np.array(ob)
     seg["ac"] = np.array(ac)
-    seg["adv"] = np.array(std_atvtg)
+    seg["std_atvtg"] = np.array(std_atvtg)
     seg["tdlamret"] = np.array(tdlamret)
     seg["ep_lens"] = np.array(lens)
     seg["ep_rets"] = np.array(rets)
@@ -87,7 +87,6 @@ def learn(scene_id, num_steps):
     global g_step
     agent, _, session = GetDataGeneratorAndTrainer(scene_id)
 
-    train_writer = tf.summary.FileWriter('{}/../summary_log_gerry'.format(root_folder), graph=tf.get_default_graph()) 
     saver = tf.train.Saver(max_to_keep=50)
     max_rew = -10000
     base_step = g_step
@@ -95,7 +94,7 @@ def learn(scene_id, num_steps):
         g_step = base_step + timestep
         seg = get_one_step_data(g_step, g_data_generator_count)
 
-        entropy, kl_distance = agent.learn_one_traj(g_step, seg, train_writer)
+        entropy, kl_distance = agent.learn_one_traj(g_step, seg)
 
         max_rew = max(max_rew, np.max(agent.unclipped_rewbuffer))
 
@@ -112,7 +111,9 @@ def learn(scene_id, num_steps):
         print(str_log)
 
 if __name__=='__main__':
-    scene_id = 10
+    scene_id = 13
+    g_step = 0
+    g_data_generator_count = 1
 
     if len(sys.argv) > 1:
         g_data_generator_count = int(sys.argv[1])
@@ -122,5 +123,9 @@ if __name__=='__main__':
 
     if len(sys.argv) > 3:    
         scene_id = int(sys.argv[3])
+
+    my_env = os.environ
+    my_env['moba_env_is_train'] = 'True'
+    my_env['moba_env_scene_id'] = '{}'.format(scene_id)
 
     learn(scene_id, num_steps=500)

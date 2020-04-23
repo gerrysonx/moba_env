@@ -172,7 +172,7 @@ class Model(object):
             self.stats_list + [self._train_op, self.train_model.summary_tensor],
             td_map
         )
-
+        '''
         self.train_model.summary_writer.add_summary(run_result_arr[-1], self.step_idx)
 
         histo_summary(self.train_model.summary_writer, 'adv_input_for_train', advs, self.step_idx)
@@ -180,7 +180,7 @@ class Model(object):
         histo_summary(self.train_model.summary_writer, 'values_input_for_train', values, self.step_idx)
         histo_summary(self.train_model.summary_writer, 'returns_input_for_train', returns, self.step_idx)
         scalar_summary(self.train_model.summary_writer, 'cliprange_input_for_train', cliprange, self.step_idx)
-
+        '''
         return run_result_arr[:-2]
 
     def set_summary_writer(self, summary_writer, summary_tensor):

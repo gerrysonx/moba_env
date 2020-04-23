@@ -18,8 +18,8 @@ import math
 import pickle
 import json
 import shutil
-from ppo_lstm import LoadModel
-from ppo_lstm import GetDataGeneratorAndTrainer
+from utils import LoadModel
+from ppo import GetDataGeneratorAndTrainer
 
 g_step = 0
 g_worker_id = 0
@@ -74,7 +74,9 @@ def generate_data(scene_id):
 
 if __name__=='__main__':
     g_step = 0
-    scene_id = 10
+    scene_id = 13
+    g_worker_id = 0
+    TIMESTEPS_PER_ACTOR_BATCH = 2048
     if len(sys.argv) > 1:
         TIMESTEPS_PER_ACTOR_BATCH = int(sys.argv[1])
         
@@ -87,4 +89,8 @@ if __name__=='__main__':
     if len(sys.argv) > 4:
         scene_id = int(sys.argv[4])
 
+    my_env = os.environ
+    my_env['moba_env_is_train'] = 'True'
+    my_env['moba_env_scene_id'] = '{}'.format(scene_id)
+    
     generate_data(scene_id)
