@@ -103,7 +103,7 @@ class MobaMultiPlayerEnv(gym.Env):
         my_env['TF_CPP_MIN_LOG_LEVEL'] = '3'
         gamecore_file_path = '{}/../../../gamecore/gamecore'.format(root_folder)
         self.proc = subprocess.Popen([gamecore_file_path, 
-                                '-render=true', '-gym_mode=true', '-debug_log=true', '-slow_tick=false', 
+                                '-render=false', '-gym_mode=true', '-debug_log=true', '-slow_tick=false', 
                                 '-multi_player=true', '-scene={}'.format(scene_id), manual_str],
                                 stdin=subprocess.PIPE,
                                 stdout=subprocess.PIPE,
@@ -171,16 +171,18 @@ class MobaMultiPlayerEnv(gym.Env):
         return total_self_hero_hp
 
     def get_harm_reward(self):
-        harm_reward = 0.002
+        harm_reward = 0.00002
         total_harm_reward = 0
         for hero_idx in range(self.self_hero_count):
             if self.state[hero_idx][2] < self.last_state[hero_idx][2]:
-                total_harm_reward -= harm_reward
+                delta_hp = self.last_state[hero_idx][2] - self.state[hero_idx][2]
+                total_harm_reward -= harm_reward * delta_hp
 
         start_feature_idx = self.self_hero_count * ONE_HERO_FEATURE_SIZE
         for hero_idx in range(self.oppo_hero_count):
             if self.state[0][start_feature_idx + hero_idx * ONE_HERO_FEATURE_SIZE + 2] < self.last_state[0][start_feature_idx + hero_idx * ONE_HERO_FEATURE_SIZE + 2]:
-                total_harm_reward += harm_reward
+                delta_hp = self.last_state[0][start_feature_idx + hero_idx * ONE_HERO_FEATURE_SIZE + 2] - self.state[0][start_feature_idx + hero_idx * ONE_HERO_FEATURE_SIZE + 2]
+                total_harm_reward += harm_reward * delta_hp
 
 
         return total_harm_reward
