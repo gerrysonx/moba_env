@@ -264,8 +264,9 @@ class MobaMultiPlayerEnv(gym.Env):
                         self.reward = 1#jobj['SelfWin']
 
                     # Add remain hp as reward
+                    hp_remain_reward_coef = 0
                     hp_reward = self.get_hp_remain_reward()
-                    self.reward += hp_reward
+                    self.reward += hp_remain_reward_coef * hp_reward
                 else:                    
                     self.reward = 0
                     harm_reward = self.get_harm_reward()

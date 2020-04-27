@@ -11,8 +11,8 @@ if __name__=='__main__':
     
     root_folder = os.path.split(os.path.abspath(__file__))[0]
 
-    horizon_total = 2048*4
-    horizon_per_worker = 2048
+    horizon_total = 8192*128
+    horizon_per_worker = 8192*8
     worker_count = horizon_total // horizon_per_worker
 
     train_full_path = '{}/ppo_distribute_train.py'.format(root_folder)
