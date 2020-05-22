@@ -16,6 +16,15 @@ import random, cv2
 import time
 import math
 import json
+import argparse
+
+# Command line options
+parser = argparse.ArgumentParser(description='Controlling trianing process.')
+parser.add_argument('-r', '--render', default='false', action='store_const', const='true',  help='render the game')
+parser.add_argument('-t', '--train', default=False, action='store_true', help='training')
+parser.add_argument('-s', '--scene',  nargs = '?', default=13, help='training scene (corresponds to map id in the gamecore/cfg/maps files)')
+parser.add_argument('--resume', default=False, action='store_true', help='resuming from ckpt')
+
 
 
 EPSILON = 0.2
@@ -36,7 +45,7 @@ HERO_COUNT = 0
 # Hero skill mask, to indicate if a hero skill is a directional one.
 # Dynamically load src hero skill types
 g_dir_skill_mask = []
-  
+
 
 NUM_FRAME_PER_ACTION = 4
 BATCH_SIZE = 64 * 8
@@ -73,11 +82,11 @@ g_is_beta_end = 1
 
 
 
-def stable_softmax(logits, name): 
-    a = logits - tf.reduce_max(logits, axis=-1, keepdims=True) 
-    ea = tf.exp(a) 
-    z = tf.reduce_sum(ea, axis=-1, keepdims=True) 
-    return tf.div(ea, z, name = name) 
+def stable_softmax(logits, name):
+    a = logits - tf.reduce_max(logits, axis=-1, keepdims=True)
+    ea = tf.exp(a)
+    z = tf.reduce_sum(ea, axis=-1, keepdims=True)
+    return tf.div(ea, z, name = name)
 
 class Environment(object):
   def __init__(self):
@@ -109,7 +118,7 @@ class MultiPlayer_Data_Generator():
         self.agent = agent
         self.timesteps_per_actor_batch = TIMESTEPS_PER_ACTOR_BATCH
         self.seg_gen = self.traj_segment_generator(horizon=self.timesteps_per_actor_batch)
-    
+
     def traj_segment_generator(self, horizon=256):
         '''
         horizon: int timesteps_per_actor_batch
@@ -183,7 +192,7 @@ class MultiPlayer_Data_Generator():
                 cur_ep_len = 0
                 ob = self.env.reset()
             t += 1
-    
+
     def add_vtarg_and_adv(self, seg, gamma=0.99, lam=0.95):
         """
         Compute target value using TD(lambda) estimator, and advantage with GAE(lambda)
@@ -211,7 +220,7 @@ class MultiPlayer_Data_Generator():
         return ob, ac, atarg, tdlamret, seg
 
 class MultiPlayerAgent():
-    def __init__(self, session, a_space, a_space_keys, **options):       
+    def __init__(self, session, a_space, a_space_keys, is_test=False, **options):
         self.importance_sample_arr = np.ones([TIMESTEPS_PER_ACTOR_BATCH], dtype=np.float)
         self.session = session
         # Here we get 4 action output heads
@@ -239,7 +248,7 @@ class MultiPlayerAgent():
         self.lenbuffer = deque(maxlen=100) # rolling buffer for episode lengths
         self.rewbuffer = deque(maxlen=100) # rolling buffer for clipped episode rewards
         self.unclipped_rewbuffer = deque(maxlen=100) # rolling buffer for unclipped episode rewards
-        
+
         self.restrict_x_min = -0.5
         self.restrict_x_max = 0.5
         self.restrict_y_min = -0.5
@@ -250,16 +259,17 @@ class MultiPlayerAgent():
 
         self._init_input()
         self._init_nn()
-        self._init_op()
+        if not is_test:
+            self._init_op()
 
-        self.session.run(tf.global_variables_initializer())        
-        
+        self.session.run(tf.global_variables_initializer())
+
 
     def _init_input(self, *args):
         with tf.variable_scope('input'):
             self.multi_s = tf.placeholder(tf.float32, [None, HERO_COUNT, self.input_dims, C], name='multi_s')
 
-            # Action shall have 2 elements, 
+            # Action shall have 2 elements,
             self.multi_a = tf.placeholder(tf.int32, [None, HERO_COUNT, self.policy_head_num], name='multi_a')
 
             self.cumulative_r = tf.placeholder(tf.float32, [None, ], name='cumulative_r')
@@ -285,7 +295,7 @@ class MultiPlayerAgent():
             params_old = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='policy_net_old')
             self.update_policy_net_op = [tf.assign(o, n) for o, n in zip(params_old, params_new)]
 
-        
+
         with tf.variable_scope('critic_loss_func'):
             # loss func.
             #self.c_loss_func = tf.losses.mean_squared_error(labels=self.cumulative_r, predictions=self.value)
@@ -294,17 +304,17 @@ class MultiPlayerAgent():
 
         with tf.variable_scope('actor_loss_func'):
             batch_size = tf.shape(self.multi_a)[0]
-            a_loss_func_arr = tf.zeros([batch_size, ], dtype = tf.float32) 
-            ratio = tf.ones([batch_size, ], dtype = tf.float32) 
-            for hero_idx in range(HERO_COUNT):                
+            a_loss_func_arr = tf.zeros([batch_size, ], dtype = tf.float32)
+            ratio = tf.ones([batch_size, ], dtype = tf.float32)
+            for hero_idx in range(HERO_COUNT):
                 for idx in range(self.policy_head_num):
-                    a = self.multi_a[:,hero_idx, idx] #tf.slice(self.multi_a, [0, hero_idx, idx], [batch_size, 1, 1]) # a = 
+                    a = self.multi_a[:,hero_idx, idx] #tf.slice(self.multi_a, [0, hero_idx, idx], [batch_size, 1, 1]) # a =
                     a = tf.squeeze(a)
                     a_mask_cond = tf.equal(a, -1)
                     a = tf.where(a_mask_cond, tf.zeros([batch_size, ], dtype=tf.int32), a)
                     # We correct -1 value in a, in order to make the condition operation below work
                     a_indices = tf.stack([tf.range(batch_size, dtype=tf.int32), a], axis=1)
-                    
+
                     new_policy_prob = tf.where(a_mask_cond, tf.ones([batch_size, ], dtype=tf.float32), tf.gather_nd(params=self.a_policy_new[hero_idx][idx], indices=a_indices))
                     old_policy_prob = tf.where(a_mask_cond, tf.ones([batch_size, ], dtype=tf.float32), tf.gather_nd(params=self.a_policy_old[hero_idx][idx], indices=a_indices))
 
@@ -318,7 +328,7 @@ class MultiPlayerAgent():
 
         with tf.variable_scope('kl_distance'):
             self.kl_distance = tf.zeros([1, ], dtype = tf.float32)
-            for hero_idx in range(HERO_COUNT):  
+            for hero_idx in range(HERO_COUNT):
                 for idx in range(self.policy_head_num):
                     a0 = self.a_policy_logits_new[hero_idx][idx] - tf.reduce_max(self.a_policy_logits_new[hero_idx][idx], axis=-1, keepdims=True)
                     a1 = self.a_policy_logits_old[hero_idx][idx] - tf.reduce_max(self.a_policy_logits_old[hero_idx][idx], axis=-1, keepdims=True)
@@ -329,35 +339,35 @@ class MultiPlayerAgent():
                     p0 = ea0 / z0
                     self.kl_distance += tf.reduce_sum(p0 * (a0 - tf.log(z0) - a1 + tf.log(z1)), axis=-1)
 
-        with tf.variable_scope('policy_entropy'):            
+        with tf.variable_scope('policy_entropy'):
             self.policy_entropy_arr = tf.zeros([BATCH_SIZE, ], dtype = tf.float32)
-            for hero_idx in range(HERO_COUNT):  
+            for hero_idx in range(HERO_COUNT):
                 for idx in range(self.policy_head_num):
                     a0 = self.a_policy_logits_new[hero_idx][idx] - tf.reduce_max(self.a_policy_logits_new[hero_idx][idx] , axis=-1, keepdims=True)
                     ea0 = tf.exp(a0)
                     z0 = tf.reduce_sum(ea0, axis=-1, keepdims=True)
                     p0 = ea0 / z0
                     self.policy_entropy_arr += tf.reduce_sum(p0 * (tf.log(z0) - a0), axis=-1)
-                
+
             self.policy_entropy = tf.reduce_mean(self.policy_entropy_arr)
 
         with tf.variable_scope('optimizer'):
-            if g_enable_per:          
+            if g_enable_per:
                 self.total_loss_arr = -self.a_loss_func_arr + self.c_loss_func_arr - 0.01*self.policy_entropy_arr
                 self.total_loss_arr = tf.multiply(self.total_loss_arr, self.importance_sample_arr_pl)
                 self.total_loss = tf.reduce_mean(self.total_loss_arr)
             else:
-                self.total_loss = self.a_loss_func + self.c_loss_func - 0.01*self.policy_entropy 
+                self.total_loss = self.a_loss_func + self.c_loss_func - 0.01*self.policy_entropy
             '''
             self.total_loss_arr = self.a_loss_func_arr + self.c_loss_func_arr - 0.01*self.policy_entropy_arr
-            self.total_loss = self.a_loss_func + self.c_loss_func - 0.01*self.policy_entropy 
+            self.total_loss = self.a_loss_func + self.c_loss_func - 0.01*self.policy_entropy
             '''
             learning_rate = self.learning_rate * self.lrmult
             # Passing global_step to minimize() will increment it at each step.
             self.optimizer = tf.train.AdamOptimizer(learning_rate).minimize(self.total_loss)
             #self.optimizer = tf.train.AdamOptimizer(self.learning_rate).minimize(self.total_loss)
 
-    def _init_combine_actor_net(self, scope, actor_count, trainable=True): 
+    def _init_combine_actor_net(self, scope, actor_count, trainable=True):
         a_prob_arr_arr = []
         a_logits_arr_arr = []
         value_arr = []
@@ -375,7 +385,7 @@ class MultiPlayerAgent():
             return a_prob_arr_arr, a_logits_arr_arr, value_arr, merged_summary
         pass
 
-    def _init_single_actor_net(self, scope, input_pl, trainable=True):        
+    def _init_single_actor_net(self, scope, input_pl, trainable=True):
         my_initializer = tf.contrib.layers.xavier_initializer()
         with tf.variable_scope(scope, reuse=tf.AUTO_REUSE):
             flat_output_size = STATE_SIZE*C
@@ -396,7 +406,7 @@ class MultiPlayerAgent():
                     trainable=trainable, initializer=my_initializer)
 
                 fc_b_1 = tf.get_variable(shape=[self.layer_size], name='fc_b_1',
-                    trainable=trainable, initializer=my_initializer)                    
+                    trainable=trainable, initializer=my_initializer)
 
                 tf.summary.histogram("fc_W_1", fc_W_1)
                 tf.summary.histogram("fc_b_1", fc_b_1)
@@ -412,7 +422,7 @@ class MultiPlayerAgent():
                 tf.summary.histogram("fc_W_1", fc_W_1)
                 tf.summary.histogram("fc_b_1", fc_b_1)
 
-                output1 = tf.nn.relu(tf.matmul(flat_output, fc_W_1) + fc_b_1)                
+                output1 = tf.nn.relu(tf.matmul(flat_output, fc_W_1) + fc_b_1)
 
             fc_W_2 = tf.get_variable(shape=[self.layer_size, self.layer_size], name='fc_W_2',
                 trainable=trainable, initializer=my_initializer)
@@ -451,13 +461,13 @@ class MultiPlayerAgent():
                     trainable=trainable, initializer=my_initializer)
 
                 fc_b_a = tf.get_variable(shape=[output_num], name=bias_layer_name,
-                    trainable=trainable, initializer=my_initializer)                    
+                    trainable=trainable, initializer=my_initializer)
 
                 tf.summary.histogram(weight_layer_name, fc_W_a)
-                tf.summary.histogram(bias_layer_name, fc_b_a)            
+                tf.summary.histogram(bias_layer_name, fc_b_a)
 
                 a_logits = tf.matmul(output3, fc_W_a) + fc_b_a
-                a_logits_arr.append(a_logits)                
+                a_logits_arr.append(a_logits)
                 tf.summary.histogram(logit_layer_name, a_logits)
 
                 a_prob = stable_softmax(a_logits, head_layer_name) #tf.nn.softmax(a_logits)
@@ -477,7 +487,7 @@ class MultiPlayerAgent():
             value = tf.matmul(output3, fc1_W_v) + fc1_b_v
             value = tf.reshape(value, [-1, ], name = "value_output")
             tf.summary.histogram("value_head", value)
-            
+
             return a_prob_arr, a_logits_arr, value
 
     def predict(self, s):
@@ -490,7 +500,7 @@ class MultiPlayerAgent():
             value = tuple_val[0]
             chosen_policy = tuple_val[1:]
             #chosen_policy = self.session.run(self.a_policy_new, feed_dict={self.s: s})
-            
+
             actions = []
             for _idx in range(self.policy_head_num):
                 ac = np.random.choice(range(chosen_policy[_idx].shape[1]), p=chosen_policy[_idx][0])
@@ -532,12 +542,12 @@ class MultiPlayerAgent():
         value_arr = []
 
         for idx in range(HERO_COUNT):
-            tuple_val = self.session.run([self.value[idx], self.a_policy_new[idx][0], self.a_policy_new[idx][1], self.a_policy_new[idx][2]], feed_dict={self.s: s[idx]})
+            tuple_val = self.session.run([self.value[idx], self.a_policy_new[idx][0], self.a_policy_new[idx][1], self.a_policy_new[idx][2]], feed_dict={self.multi_s: s})
             value = tuple_val[0]
             chosen_policy = tuple_val[1:]
             #chosen_policy = self.session.run(self.a_policy_new, feed_dict={self.s: s})
             actions = []
-            for idx in range(self.policy_head_num):            
+            for idx in range(self.policy_head_num):
                 ac = np.argmax(chosen_policy[idx][0])
                 actions.append(ac)
             if actions[0] == 0:
@@ -558,7 +568,7 @@ class MultiPlayerAgent():
             elif actions[0] == 4:
                 # skill 2 attack
                 actions[1] = -1
-                actions[2] = -1        
+                actions[2] = -1
             elif actions[0] == 5:
                 # skill 3 attack
                 actions[1] = -1
@@ -566,7 +576,7 @@ class MultiPlayerAgent():
             elif actions[0] == 6:
                 # skill 4 attack
                 actions[1] = -1
-            #    actions[2] = -1 
+            #    actions[2] = -1
             else:
                 print('Action predict wrong:{}'.format(actions[0]))
             action_arr.append(actions)
@@ -612,7 +622,7 @@ def InitMetaConfig(scene_id):
         # Load train self heroes skill masks
         root_folder = os.path.split(os.path.abspath(__file__))[0]
         g_dir_skill_mask = []
-        
+
         cfg_file_path = '{}/gamecore/cfg'.format(root_folder)
         training_map_file = '{}/maps/{}.json'.format(cfg_file_path, scene_id)
         hero_cfg_file_path = '{}/heroes'.format(cfg_file_path)
@@ -625,7 +635,7 @@ def InitMetaConfig(scene_id):
             hero_skills = FindHeroSkills(hero_cfg_file_path, hero_id)
             hero_skill_types = GetSkillTypes(skill_cfg_file_path, hero_skills)
             g_dir_skill_mask.append(hero_skill_types)
-            
+
         HERO_COUNT = len(g_dir_skill_mask)
         oppo_hero_count = len(map_dict['OppoHeroes'])
         STATE_SIZE = (oppo_hero_count + HERO_COUNT) * ONE_HERO_FEATURE_SIZE
@@ -640,10 +650,10 @@ def InitMetaConfig(scene_id):
         file_handle.write('{}'.format(scene_id))
         file_handle.close()
     except Exception as ex:
-        pass	    
+        pass
     pass
 
-def GetDataGeneratorAndTrainer(scene_id):   
+def GetDataGeneratorAndTrainer(scene_id):
     InitMetaConfig(scene_id)
     session = tf.Session()
     action_space_map = {'action':7, 'move':8, 'skill':8}
@@ -658,7 +668,7 @@ def learn(scene_id, num_steps=NUM_STEPS):
 
     agent, data_generator, session = GetDataGeneratorAndTrainer(scene_id)
     root_folder = os.path.split(os.path.abspath(__file__))[0]
-    train_writer = tf.summary.FileWriter('{}/../summary_log_gerry'.format(root_folder), graph=tf.get_default_graph()) 
+    train_writer = tf.summary.FileWriter('{}/../summary_log_gerry'.format(root_folder), graph=tf.get_default_graph())
 
     saver = tf.train.Saver(max_to_keep=1)
     if False == g_start_anew:
@@ -680,9 +690,9 @@ def learn(scene_id, num_steps=NUM_STEPS):
             if g_save_pb_model:
                 tf.saved_model.simple_save(session,
                         "./model/model_{}".format(g_step),
-                        inputs={"input_state":agent.s},
-                        outputs={"output_policy_0": agent.a_policy_new[0], "output_policy_1": agent.a_policy_new[1], "output_policy_2": agent.a_policy_new[2], "output_value":agent.value})            
-        
+                        inputs={"input_state":agent.multi_s},
+                        outputs={"output_policy_0": agent.a_policy_new[0], "output_policy_1": agent.a_policy_new[1], "output_policy_2": agent.a_policy_new[2], "output_value":agent.value})
+
         summary0 = tf.Summary()
         summary0.value.add(tag='EpLenMean', simple_value=np.mean(agent.lenbuffer))
         train_writer.add_summary(summary0, g_step)
@@ -700,10 +710,11 @@ def learn(scene_id, num_steps=NUM_STEPS):
             "\tKL_distance:", '%.8f'%kl_distance)
 
 def play_game():
+    InitMetaConfig(scene_id)
     session = tf.Session()
     action_space_map = {'action':7, 'move':8, 'skill':8}
     a_space_keys = ['action', 'move', 'skill']
-    agent = Agent(session, action_space_map, a_space_keys)
+    agent = MultiPlayerAgent(session, action_space_map, a_space_keys, True)
 
     saver = tf.train.Saver(max_to_keep=1)
     model_file=tf.train.latest_checkpoint('ckpt/')
@@ -711,12 +722,12 @@ def play_game():
         saver.restore(session, model_file)
 
     env = Environment()
-    
+
     ob = env.reset()
 
     while True:
         time.sleep(0.2)
-        ac, _ = agent.greedy_predict(ob[np.newaxis, ...])
+        ac, _ = agent.predict(ob[np.newaxis, ...])
         print('Predict :{}'.format(ac))
 
         ob, unclipped_rew, new, _ = env.step(ac)
@@ -733,14 +744,14 @@ def play_game_with_saved_model():
         policy_tensor = sess.graph.get_tensor_by_name('policy_net_new/soft_logits:0')
         value_tensor = sess.graph.get_tensor_by_name('policy_net_new/value_output:0')
 
-        env = Environment()        
+        env = Environment()
         ob = env.reset()
 
         while True:
             time.sleep(0.05)
 
             chosen_policy, _ = sess.run([policy_tensor, value_tensor], feed_dict={input_tensor: ob[np.newaxis, ...]})
-            tac = np.argmax(chosen_policy[0]) 
+            tac = np.argmax(chosen_policy[0])
 
             #print('Predict :{}, input:{}, output:{}'.format(tac, ob, chosen_policy))
 
@@ -759,7 +770,7 @@ def FindHeroSkills(hero_cfg_file_path, hero_id):
         hero_cfg = json.load(file_handle)
         hero_skills = hero_cfg['skills']
         return hero_skills
-    
+
 def GetSkillTypes(skill_cfg_file_path, hero_skills):
     skill_dir_type_check = []
     for skill_id in hero_skills:
@@ -776,11 +787,18 @@ def GetSkillTypes(skill_cfg_file_path, hero_skills):
 
 
 if __name__=='__main__':
+    args = parser.parse_args()
 
-    scene_id = 12
     my_env = os.environ
-    my_env['moba_env_is_train'] = 'True'
+    scene_id = args.scene
+    g_start_anew = not args.resume # during test, do not start anew
+    g_is_train = args.train
+
+    my_env['moba_env_is_train'] = str(args.train)
     my_env['moba_env_scene_id'] = '{}'.format(scene_id)
+    my_env['moba_env_do_render'] = args.render
+
+    print("args: " + str(args))
 
     if g_is_train:
         learn(scene_id, num_steps=5000)

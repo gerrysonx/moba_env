@@ -33,7 +33,7 @@ def GetSkillTypes(skill_cfg_file_path, hero_skills):
                 if 0 == skill_cfg['type']:
                     skill_dir_type = True
         skill_dir_type_check.append(skill_dir_type)
-    return skill_dir_type_check    
+    return skill_dir_type_check
 
 def InitMetaConfig(scene_id):
     obs_size = 0
@@ -44,8 +44,8 @@ def InitMetaConfig(scene_id):
     try:
         # Load train self heroes skill masks
         root_folder = os.path.split(os.path.abspath(__file__))[0]
-        
-        
+
+
         cfg_file_path = '{}/../../../gamecore/cfg'.format(root_folder)
         training_map_file = '{}/maps/{}.json'.format(cfg_file_path, scene_id)
         hero_cfg_file_path = '{}/heroes'.format(cfg_file_path)
@@ -58,13 +58,13 @@ def InitMetaConfig(scene_id):
             hero_skills = FindHeroSkills(hero_cfg_file_path, hero_id)
             hero_skill_types = GetSkillTypes(skill_cfg_file_path, hero_skills)
             dir_skill_mask.append(hero_skill_types)
-            
+
         self_hero_count = len(map_dict['SelfHeroes'])
         oppo_hero_count = len(map_dict['OppoHeroes'])
         obs_size = (oppo_hero_count + self_hero_count) * ONE_HERO_FEATURE_SIZE
 
     except Exception as ex:
-        pass        
+        pass
     pass
 
     return (self_hero_count, obs_size), (self_hero_count, MAIN_ACTION_DIMS, MOVE_DIMS, SKILL_DIMS), self_hero_count, oppo_hero_count, dir_skill_mask
@@ -79,12 +79,12 @@ class MobaMultiPlayerEnv(gym.Env):
     def restart_proc(self):
     #    print('moba_env restart_proc is called.')
         self.done = False
-        
+
         self.state = None
         self.reward = 0
         self.info = MobaEnvInfo()
         self.last_state = None
-        self.step_idx = 0                
+        self.step_idx = 0
         pass
 
     def __init__(self):
@@ -94,16 +94,20 @@ class MobaMultiPlayerEnv(gym.Env):
 
         my_env = os.environ.copy()
         is_train = my_env['moba_env_is_train'] == 'True'
-        scene_id = my_env['moba_env_scene_id']    
-        
+        scene_id = my_env['moba_env_scene_id']
+        do_render = my_env.get('moba_env_do_render', 'false')
+
         manual_str = '-manual_enemy=false'
         if not is_train:
             manual_str = '-manual_enemy=true'
-        
+
         my_env['TF_CPP_MIN_LOG_LEVEL'] = '3'
         gamecore_file_path = '{}/../../../gamecore/gamecore'.format(root_folder)
-        self.proc = subprocess.Popen([gamecore_file_path, 
-                                '-render=true', '-gym_mode=true', '-debug_log=true', '-slow_tick=false', 
+        self.proc = subprocess.Popen([gamecore_file_path,
+                                '-render={}'.format(do_render),
+                                '-gym_mode=true',
+                                '-debug_log=true',
+                                '-slow_tick=false',
                                 '-multi_player=true', '-scene={}'.format(scene_id), manual_str],
                                 stdin=subprocess.PIPE,
                                 stdout=subprocess.PIPE,
@@ -115,7 +119,7 @@ class MobaMultiPlayerEnv(gym.Env):
         self.observation_space = spaces.Box(low = -0.5, high = 0.5, shape=state_shape, dtype=np.float32)
 
         # Action space omits the Tackle/Catch actions, which are useful on defense
-        self.action_space = spaces.Box(low = -1, high = 65536, shape=action_shape, dtype=np.int32)  
+        self.action_space = spaces.Box(low = -1, high = 65536, shape=action_shape, dtype=np.int32)
         self.action_space.low = -1
         self.action_space.high = 65535
         self.self_hero_count = self_hero_count
@@ -124,16 +128,16 @@ class MobaMultiPlayerEnv(gym.Env):
         self.restart_proc()
         self.step_idx = -1
         self.hero_dir_skill_mask = hero_dir_skill_mask
-        
+
         print('moba_env initialized.')
         pass
 
     def fill_state(self, state, json_data):
         # View from the point view of each self
         self_hero_count = int(json_data['SelfHeroCount'])
-        
-        for hero_idx in range(self_hero_count):        
-            feature_idx = 0    
+
+        for hero_idx in range(self_hero_count):
+            feature_idx = 0
             state[hero_idx][feature_idx] = (float(json_data['SelfHeroPosX'][hero_idx]) / BATTLE_FIELD_SIZE) - 0.5
             feature_idx += 1
             state[hero_idx][feature_idx] = (float(json_data['SelfHeroPosY'][hero_idx]) / BATTLE_FIELD_SIZE) - 0.5
@@ -151,7 +155,7 @@ class MobaMultiPlayerEnv(gym.Env):
                 feature_idx += 1
 
             oppo_hero_count = int(json_data['OppoHeroCount'])
-            for _id_1 in range(oppo_hero_count):            
+            for _id_1 in range(oppo_hero_count):
                 state[hero_idx][feature_idx] = (float(json_data['OppoHeroPosX'][_id_1]) / BATTLE_FIELD_SIZE) - 0.5
                 feature_idx += 1
                 state[hero_idx][feature_idx] = (float(json_data['OppoHeroPosY'][_id_1]) / BATTLE_FIELD_SIZE) - 0.5
@@ -190,7 +194,7 @@ class MobaMultiPlayerEnv(gym.Env):
         # action is 4-dimension vector
         player_count = '{}\n'.format(self.self_hero_count)
         self.proc.stdin.write(player_count.encode('utf-8'))
-        self.proc.stdin.flush() 
+        self.proc.stdin.flush()
         self.step_idx += 1
         for hero_idx in range(self.self_hero_count):
             action = total_actions[hero_idx]
@@ -198,7 +202,7 @@ class MobaMultiPlayerEnv(gym.Env):
             isarr = isinstance(action[0], np.ndarray)
             action_0 = 0
             if isarr:
-                action_0 = action[0][0]                
+                action_0 = action[0][0]
             else:
                 action_0 = action[0]
 
@@ -208,23 +212,23 @@ class MobaMultiPlayerEnv(gym.Env):
             action_1 = 0
             isarr = isinstance(action[1], np.ndarray)
             if isarr:
-                action_1 = action[1][0] 
+                action_1 = action[1][0]
             else:
                 action_1 = action[1]
 
             if action_1 != -1:
-                move_dir_encode = (action_1 << 8)    
+                move_dir_encode = (action_1 << 8)
 
             skill_dir_encode = 0
             action_2 = 0
             isarr = isinstance(action[2], np.ndarray)
             if isarr:
-                action_2 = action[2][0] 
+                action_2 = action[2][0]
             else:
                 action_2 = action[2]
 
             if action[2] != -1:
-                skill_dir_encode = (action_2 << 4)    
+                skill_dir_encode = (action_2 << 4)
 
             encoded_action_val = (self.step_idx << 16) + action_encode + move_dir_encode + skill_dir_encode
             self.proc.stdin.write('{}\n'.format(encoded_action_val).encode())
@@ -264,14 +268,14 @@ class MobaMultiPlayerEnv(gym.Env):
                     # Add remain hp as reward
                     hp_reward = self.get_hp_remain_reward()
                     self.reward += hp_reward
-                else:                    
+                else:
                     self.reward = 0
                     harm_reward = self.get_harm_reward()
 
                     self.reward += harm_reward
 
                     self.done = False
-                
+
 
                 break
             except:
@@ -311,7 +315,7 @@ class MobaMultiPlayerEnv(gym.Env):
 
                 jobj = json.loads(parts[1])
 
-                # Do the info check. 
+                # Do the info check.
                 initial_self_hero_count = int(jobj['SelfHeroCount'])
                 initial_oppo_hero_count = int(jobj['OppoHeroCount'])
                 assert initial_self_hero_count == self.self_hero_count
@@ -320,15 +324,16 @@ class MobaMultiPlayerEnv(gym.Env):
                 state_feature_count = (self.self_hero_count + self.oppo_hero_count) * ONE_HERO_FEATURE_SIZE
 
                 self.state = np.zeros((self.self_hero_count, state_feature_count))
-                
-                self.fill_state(self.state, jobj)                
+
+                self.fill_state(self.state, jobj)
                 self.last_state = self.state.copy()
                 break
 
             except:
                 print('When resetting env, parsing json failed.')
+                print(json_str)
                 continue
-    
+
         return self.state
 
 
@@ -338,5 +343,5 @@ class MobaMultiPlayerEnv(gym.Env):
     def close(self):
         self.proc.stdin.close()
         self.proc.terminate()
-        self.proc.wait(timeout=0.2)            
+        self.proc.wait(timeout=0.2)
         pass
