@@ -48,12 +48,14 @@ g_dir_skill_mask = []
 
 
 NUM_FRAME_PER_ACTION = 4
-BATCH_SIZE = 64 * 8
+BATCH_SIZE = 64 * 16
 EPOCH_NUM = 4
 LEARNING_RATE = 3e-3
 TIMESTEPS_PER_ACTOR_BATCH = 2048 * 8
 GAMMA = 0.99
 LAMBDA = 0.95
+# NOTE(Attention0 :Larger to reduce the lr
+#NUM_STEPS = 5000
 NUM_STEPS = 5000
 ENV_NAME = 'gym_moba:moba-multiplayer-v0'
 RANDOM_START_STEPS = 4
@@ -254,7 +256,7 @@ class MultiPlayerAgent():
         self.restrict_y_min = -0.5
         self.restrict_y_max = 0.5
 
-        # Full connection layer node size
+        # Full connection layer node size x 128
         self.layer_size = LAYER_SIZE
 
         self._init_input()
@@ -372,11 +374,32 @@ class MultiPlayerAgent():
         a_logits_arr_arr = []
         value_arr = []
 
+        a_output_matrix = []
+        a_query_matix = []
+
         with tf.variable_scope(scope):
             for actor_idx in range(actor_count):
                 input_pl = self.multi_s[:,actor_idx,:,:]
                 # Share weights
-                a_prob_arr, a_logits_arr, value = self._init_single_actor_net(scope, input_pl, trainable)
+
+                # Get input to Attention
+                a_output,a_query = self._init_pre_attention_net(scope, input_pl, trainable)
+
+                a_output_matrix.append(a_output)
+                a_query_matix.append(a_query)
+
+            # pass through self-attention
+            a_query_matix = tf.convert_to_tensor(a_query_matix)
+            a_output_matrix = tf.convert_to_tensor(a_output_matrix)
+            a_query_matix = tf.transpose(a_query_matix, perm=[1,0,2])
+            a_output_matrix = tf.transpose(a_output_matrix, perm=[1,0,2])
+
+            attention_output = tf.compat.v1.keras.layers.Attention()([a_query_matix, a_output_matrix])
+
+            for actor_idx in range(actor_count):
+                # extract the attention output
+                a_output = attention_output[:,actor_idx,:]
+                a_prob_arr, a_logits_arr, value = self._init_single_actor_net(scope, a_output, trainable)
                 a_prob_arr_arr.append(a_prob_arr)
                 a_logits_arr_arr.append(a_logits_arr)
                 value_arr.append(value)
@@ -385,7 +408,7 @@ class MultiPlayerAgent():
             return a_prob_arr_arr, a_logits_arr_arr, value_arr, merged_summary
         pass
 
-    def _init_single_actor_net(self, scope, input_pl, trainable=True):
+    def _init_pre_attention_net(self, scope, input_pl, trainable=True):
         my_initializer = tf.contrib.layers.xavier_initializer()
         with tf.variable_scope(scope, reuse=tf.AUTO_REUSE):
             flat_output_size = STATE_SIZE*C
@@ -412,6 +435,8 @@ class MultiPlayerAgent():
                 tf.summary.histogram("fc_b_1", fc_b_1)
 
                 output1 = tf.nn.relu(tf.matmul(input_after_embed, fc_W_1) + fc_b_1)
+                # TODO
+                assert False
             else:
                 fc_W_1 = tf.get_variable(shape=[flat_output_size, self.layer_size], name='fc_W_1',
                     trainable=trainable, initializer=my_initializer)
@@ -419,11 +444,29 @@ class MultiPlayerAgent():
                 fc_b_1 = tf.get_variable(shape=[self.layer_size], name='fc_b_1',
                     trainable=trainable, initializer=my_initializer)
 
+                # Query layer
+                fc_W_q = tf.get_variable(shape=[flat_output_size, self.layer_size], name='fc_W_q',
+                    trainable=trainable, initializer=my_initializer)
+
+                fc_b_q = tf.get_variable(shape=[self.layer_size], name='fc_b_q',
+                    trainable=trainable, initializer=my_initializer)
+
                 tf.summary.histogram("fc_W_1", fc_W_1)
                 tf.summary.histogram("fc_b_1", fc_b_1)
+                tf.summary.histogram("fc_W_q", fc_W_q)
+                tf.summary.histogram("fc_b_q", fc_b_q)
 
                 output1 = tf.nn.relu(tf.matmul(flat_output, fc_W_1) + fc_b_1)
+                query = tf.nn.relu(tf.matmul(flat_output, fc_W_q) + fc_b_q)
 
+                return output1, query
+
+
+
+
+    def _init_single_actor_net(self, scope, output1, trainable=True):
+        my_initializer = tf.contrib.layers.xavier_initializer()
+        with tf.variable_scope(scope, reuse=tf.AUTO_REUSE):
             fc_W_2 = tf.get_variable(shape=[self.layer_size, self.layer_size], name='fc_W_2',
                 trainable=trainable, initializer=my_initializer)
 
@@ -801,6 +844,7 @@ if __name__=='__main__':
     print("args: " + str(args))
 
     if g_is_train:
+        # import pdb; pdb.set_trace()
         learn(scene_id, num_steps=5000)
     else:
         play_game()

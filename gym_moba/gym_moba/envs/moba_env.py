@@ -17,9 +17,9 @@ class MobaEnv(gym.Env):
 		self.info = None
 		self.self_health = 0
 		self.oppo_health = 0
-		self.step_idx = 0	
+		self.step_idx = 0
 		self.full_self_health = 0
-		self.full_oppo_health = 0			
+		self.full_oppo_health = 0
 		pass
 
 	def __init__(self):
@@ -27,26 +27,26 @@ class MobaEnv(gym.Env):
 		is_train = True
 		root_folder = os.path.split(os.path.abspath(__file__))[0]
 		try:
-			# Read control file			
+			# Read control file
 			ctrl_file_path = '{}/../../../ctrl.txt'.format(root_folder)
 			file_handle = open(ctrl_file_path, 'r')
 			ctrl_str = file_handle.read()
-			file_handle.close()		
+			file_handle.close()
 			if int(ctrl_str) == 1:
 				is_train = True
 			else:
 				is_train = False
 
 		except:
-			pass		
-		
+			pass
+
 		manual_str = '-manual_enemy=false'
 		if not is_train:
 			manual_str = '-manual_enemy=true'
 		my_env = os.environ.copy()
 		my_env['TF_CPP_MIN_LOG_LEVEL'] = '3'
 		gamecore_file_path = '{}/../../../gamecore/gamecore'.format(root_folder)
-		self.proc = subprocess.Popen([gamecore_file_path, 
+		self.proc = subprocess.Popen([gamecore_file_path,
 								'-render=true', '-gym_mode=true', '-debug_log=true', '-slow_tick=false', manual_str],
 								stdin=subprocess.PIPE,
 								stdout=subprocess.PIPE,
@@ -67,11 +67,11 @@ class MobaEnv(gym.Env):
 
 		move_dir_encode = 0
 		if action[1] != -1:
-			move_dir_encode = (action[1] << 8)	
+			move_dir_encode = (action[1] << 8)
 
 		skill_dir_encode = 0
 		if action[2] != -1:
-			skill_dir_encode = (action[2] << 4)	
+			skill_dir_encode = (action[2] << 4)
 
 		encoded_action_val = (self.step_idx << 16) + action_encode + move_dir_encode + skill_dir_encode
 		self.proc.stdin.write('{}\n'.format(encoded_action_val).encode())
@@ -91,7 +91,7 @@ class MobaEnv(gym.Env):
 				if int(parts[0]) != self.step_idx:
 					print('Step::We expect:{}, while getting {}'.format(self.step_idx, int(parts[0])))
 					continue
-				jobj = json.loads(parts[1])	
+				jobj = json.loads(parts[1])
 			#	print('moba_env v2 step called with action:{}, result:{}'.format(action, jobj))
 				if jobj['SelfWin'] != 0:
 					self.done = True
@@ -118,9 +118,9 @@ class MobaEnv(gym.Env):
 				print('Parsing json failed, terminate this game.')
 				self.done = True
 				self.reward = 0
-				return self.state, self.reward, self.done, self.step_idx	
+				return self.state, self.reward, self.done, self.step_idx
 
-		norm_base = 1000.0	
+		norm_base = 1000.0
 		self.state[0] = jobj['SelfHeroPosX'] / norm_base - 0.5
 		self.state[1] = jobj['SelfHeroPosY'] / norm_base - 0.5
 		self.state[2] = jobj['SelfHeroHealth'] / self.full_self_health - 0.5
@@ -154,7 +154,7 @@ class MobaEnv(gym.Env):
 				if int(parts[0]) != self.step_idx:
 					print('Reset::We expect:{}, while getting {}'.format(self.step_idx, int(parts[0])))
 					continue
-				jobj = json.loads(parts[1])	
+				jobj = json.loads(parts[1])
 
 				self.full_self_health = jobj['SelfHeroHealth']
 				self.self_health = self.full_self_health
@@ -165,7 +165,7 @@ class MobaEnv(gym.Env):
 			except:
 				print('When resetting env, parsing json failed.')
 				continue
-	
+
 		return self.state
 
 
@@ -175,5 +175,5 @@ class MobaEnv(gym.Env):
 	def close(self):
 		self.proc.stdin.close()
 		self.proc.terminate()
-		self.proc.wait(timeout=0.2)			
+		self.proc.wait(timeout=0.2)
 		pass

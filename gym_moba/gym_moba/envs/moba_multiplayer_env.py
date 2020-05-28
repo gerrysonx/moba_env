@@ -97,9 +97,11 @@ class MobaMultiPlayerEnv(gym.Env):
         scene_id = my_env['moba_env_scene_id']
         do_render = my_env.get('moba_env_do_render', 'false')
 
+
         manual_str = '-manual_enemy=false'
-        if not is_train:
-            manual_str = '-manual_enemy=true'
+        # if not is_train:
+        #     manual_str = '-manual_enemy=true'
+
 
         my_env['TF_CPP_MIN_LOG_LEVEL'] = '3'
         gamecore_file_path = '{}/../../../gamecore/gamecore'.format(root_folder)
