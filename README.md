@@ -8,7 +8,7 @@
 1. gym_moba is the folder containing the interface needed to integrate the gamecore logic into gym env.
 
 ## Depends:
-1. go
+1. go 1.12
 1. gym env
 1. tensorflow 1.14.0
 1. opencv2, you can install by pip:  
